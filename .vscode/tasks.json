@@ -1,0 +1,14 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "type": "shell",
+      "label": "Delete templates types.ts",
+      "command": "rm -f apps/frontend/src/lib/templates/types.ts && echo 'removed'",
+      "group": "none",
+      "isBackground": false,
+      "problemMatcher": [],
+      "args": []
+    }
+  ]
+}

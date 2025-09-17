@@ -1,0 +1,23 @@
+{
+  "name": "shared-types",
+  "version": "1.0.0",
+  "main": "index.ts",
+  "types": "index.ts",
+  "private": true,
+  "exports": {
+    ".": {
+      "types": "./index.ts",
+      "default": "./index.ts"
+    }
+  },
+  "scripts": {
+    "type-check": "tsc --noEmit",
+    "types:build": "tsc"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.13.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}

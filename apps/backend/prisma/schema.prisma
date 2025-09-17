@@ -1,0 +1,250 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Company {
+  id             String   @id @default(cuid())
+  name           String
+  whatsappPhone  String?  @map("whatsapp_phone")
+  whatsappApiKey String?  @map("whatsapp_api_key")
+  whatsappApiUrl String?  @map("whatsapp_api_url")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  users             User[]
+  contacts          Contact[]
+  groups            Group[]
+  templates         Template[]
+  messages          Message[]
+  scheduledMessages ScheduledMessage[]
+  auditLogs         AuditLog[]
+
+  @@map("companies")
+}
+
+enum UserRole {
+  PLATFORM_ADMIN
+  PLATFORM_SUPPORT
+  COMPANY_ADMIN
+  COMPANY_SUPPORT
+}
+
+model User {
+  id           String    @id @default(cuid())
+  companyId    String    @map("company_id")
+  email        String    @unique
+  passwordHash String    @map("password_hash")
+  firstName    String    @map("first_name")
+  lastName     String    @map("last_name")
+  role         UserRole
+  isActive     Boolean   @default(true) @map("is_active")
+  lastLoginAt  DateTime? @map("last_login_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  company           Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  messages          Message[]
+  scheduledMessages ScheduledMessage[]
+  auditLogs         AuditLog[]
+
+  @@map("users")
+}
+
+model Contact {
+  id               String    @id @default(cuid())
+  companyId        String    @map("company_id")
+  firstName        String    @map("first_name")
+  lastName         String    @map("last_name")
+  phoneNumber      String    @map("phone_number")
+  email            String?
+  address          String?
+  birthDate        DateTime? @map("birth_date") @db.Date
+  telegramUsername String?   @map("telegram_username")
+  note             String?
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  company                    Company                     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  groupMembers               GroupMember[]
+  messageRecipients          MessageRecipient[]
+  scheduledMessageRecipients ScheduledMessageRecipient[]
+  messages                   Message[]
+
+  @@map("contacts")
+}
+
+model Group {
+  id          String   @id @default(cuid())
+  companyId   String   @map("company_id")
+  name        String
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  company                    Company                     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  members                    GroupMember[]
+  messageRecipients          MessageRecipient[]
+  scheduledMessageRecipients ScheduledMessageRecipient[]
+
+  @@map("groups")
+}
+
+model GroupMember {
+  id        String @id @default(cuid())
+  groupId   String @map("group_id")
+  contactId String @map("contact_id")
+
+  group   Group   @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  contact Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, contactId])
+  @@map("group_members")
+}
+
+model Template {
+  id        String   @id @default(cuid())
+  companyId String   @map("company_id")
+  name      String
+  content   String
+  variables String[] @default([])
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  company           Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  scheduledMessages ScheduledMessage[]
+
+  @@map("templates")
+}
+
+enum MessageStatus {
+  PENDING
+  SENT
+  DELIVERED
+  FAILED
+  READ
+}
+
+model Message {
+  id        String        @id @default(cuid())
+  companyId String        @map("company_id")
+  userId    String        @map("user_id")
+  contactId String        @map("contact_id")
+  content   String
+  status    MessageStatus @default(PENDING)
+  sentAt    DateTime?     @map("sent_at")
+  createdAt DateTime      @default(now()) @map("created_at")
+
+  company    Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user       User               @relation(fields: [userId], references: [id])
+  contact    Contact            @relation(fields: [contactId], references: [id])
+  recipients MessageRecipient[]
+
+  @@map("messages")
+}
+
+enum RecipientType {
+  CONTACT
+  GROUP
+}
+
+model MessageRecipient {
+  id            String        @id @default(cuid())
+  messageId     String        @map("message_id")
+  recipientType RecipientType @map("recipient_type")
+  contactId     String?       @map("contact_id")
+  groupId       String?       @map("group_id")
+  status        MessageStatus @default(PENDING)
+  deliveredAt   DateTime?     @map("delivered_at")
+
+  message Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  contact Contact? @relation(fields: [contactId], references: [id])
+  group   Group?   @relation(fields: [groupId], references: [id])
+
+  @@map("message_recipients")
+}
+
+enum ScheduleType {
+  ONE_TIME
+  BIRTHDAY
+  WEEKLY
+  MONTHLY
+  YEARLY
+}
+
+model ScheduledMessage {
+  id               String       @id @default(cuid())
+  companyId        String       @map("company_id")
+  userId           String       @map("user_id")
+  templateId       String       @map("template_id")
+  name             String
+  content          String
+  scheduleType     ScheduleType @map("schedule_type")
+  scheduledAt      DateTime?    @map("scheduled_at")
+  recurringPattern String?      @map("recurring_pattern") // JSON for complex patterns
+  isActive         Boolean      @default(true) @map("is_active")
+  lastExecutedAt   DateTime?    @map("last_executed_at")
+  nextExecutionAt  DateTime?    @map("next_execution_at")
+  createdAt        DateTime     @default(now()) @map("created_at")
+  updatedAt        DateTime     @updatedAt @map("updated_at")
+
+  company    Company                     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user       User                        @relation(fields: [userId], references: [id])
+  template   Template                    @relation(fields: [templateId], references: [id])
+  recipients ScheduledMessageRecipient[]
+
+  @@map("scheduled_messages")
+}
+
+model ScheduledMessageRecipient {
+  id                 String        @id @default(cuid())
+  scheduledMessageId String        @map("scheduled_message_id")
+  recipientType      RecipientType @map("recipient_type")
+  contactId          String?       @map("contact_id")
+  groupId            String?       @map("group_id")
+
+  scheduledMessage ScheduledMessage @relation(fields: [scheduledMessageId], references: [id], onDelete: Cascade)
+  contact          Contact?         @relation(fields: [contactId], references: [id])
+  group            Group?           @relation(fields: [groupId], references: [id])
+
+  @@map("scheduled_message_recipients")
+}
+
+enum AuditAction {
+  MESSAGE_SENT
+  SCHEDULE_ADDED
+  SCHEDULE_EDITED
+  SCHEDULE_DELETED
+  USER_CREATED
+  USER_UPDATED
+  USER_DELETED
+  CONTACT_CREATED
+  CONTACT_UPDATED
+  CONTACT_DELETED
+  GROUP_CREATED
+  GROUP_UPDATED
+  GROUP_DELETED
+  TEMPLATE_CREATED
+  TEMPLATE_UPDATED
+  TEMPLATE_DELETED
+}
+
+model AuditLog {
+  id           String      @id @default(cuid())
+  companyId    String      @map("company_id")
+  userId       String      @map("user_id")
+  action       AuditAction
+  resourceId   String?     @map("resource_id")
+  resourceType String?     @map("resource_type")
+  details      String? // JSON string for additional details
+  createdAt    DateTime    @default(now()) @map("created_at")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id])
+
+  @@map("audit_logs")
+}

@@ -1,0 +1,22 @@
+@import 'tailwindcss';
+
+:root {
+  color-scheme: light dark;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: #fafafa; /* light neutral (similar to Tailwind neutral-50) */
+}
+
+@media (prefers-color-scheme: dark) {
+  body {
+    background-color: #0a0a0a; /* dark neutral (similar to Tailwind neutral-950) */
+  }
+}

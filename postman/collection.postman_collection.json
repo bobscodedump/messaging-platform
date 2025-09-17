@@ -1,0 +1,230 @@
+{
+  "info": {
+    "_postman_id": "e1d6e35e-5f93-4ec8-9f25-8a0b4df6a9c4",
+    "name": "Messaging Platform API v1",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "GET /status",
+          "request": { "method": "GET", "url": "{{baseUrl}}/../status" }
+        },
+        {
+          "name": "GET /message/:name",
+          "request": { "method": "GET", "url": "{{baseUrl}}/../message/test" }
+        }
+      ]
+    },
+    {
+      "name": "Companies",
+      "item": [
+        {
+          "name": "GET /companies",
+          "request": { "method": "GET", "url": "{{baseUrl}}/companies" }
+        },
+        {
+          "name": "POST /companies",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Acme Inc\",\n  \"whatsappPhone\": \"+15550001111\",\n  \"whatsappApiKey\": \"secret-key\",\n  \"whatsappApiUrl\": \"https://api.whatsapp.com/send\"\n}"
+            },
+            "url": "{{baseUrl}}/companies"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Contacts",
+      "item": [
+        {
+          "name": "GET /companies/:companyId/contacts",
+          "request": { "method": "GET", "url": "{{baseUrl}}/companies/{{companyId}}/contacts" }
+        },
+        {
+          "name": "GET /companies/:companyId/contacts/search",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/companies/{{companyId}}/contacts/search?search=john",
+              "host": ["{{baseUrl}}"],
+              "path": ["companies", "{{companyId}}", "contacts", "search"],
+              "query": [{ "key": "search", "value": "john" }]
+            }
+          }
+        },
+        { "name": "GET /contacts/:id", "request": { "method": "GET", "url": "{{baseUrl}}/contacts/{{contactId}}" } },
+        {
+          "name": "POST /contacts",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"companyId\": \"{{companyId}}\",\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"phoneNumber\": \"+1234567890\",\n  \"email\": \"john.doe@example.com\",\n  \"address\": \"123 Main St\",\n  \"birthDate\": \"1990-01-01T00:00:00.000Z\",\n  \"note\": \"Test contact\"\n}"
+            },
+            "url": "{{baseUrl}}/contacts"
+          }
+        },
+        {
+          "name": "PUT /contacts/:id",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"firstName\": \"Johnny\",\n  \"note\": \"Updated note\"\n}" },
+            "url": "{{baseUrl}}/contacts/{{contactId}}"
+          }
+        },
+        {
+          "name": "DELETE /contacts/:id",
+          "request": { "method": "DELETE", "url": "{{baseUrl}}/contacts/{{contactId}}" }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        { "name": "GET /users", "request": { "method": "GET", "url": "{{baseUrl}}/users" } },
+        { "name": "GET /users/:id", "request": { "method": "GET", "url": "{{baseUrl}}/users/{{userId}}" } },
+        {
+          "name": "POST /users",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"companyId\": \"{{companyId}}\",\n  \"email\": \"new.user@example.com\",\n  \"password\": \"Passw0rd!\",\n  \"firstName\": \"New\",\n  \"lastName\": \"User\",\n  \"role\": \"ADMIN\"\n}"
+            },
+            "url": "{{baseUrl}}/users"
+          }
+        },
+        {
+          "name": "PUT /users/:id",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"firstName\": \"Updated\"\n}" },
+            "url": "{{baseUrl}}/users/{{userId}}"
+          }
+        },
+        { "name": "DELETE /users/:id", "request": { "method": "DELETE", "url": "{{baseUrl}}/users/{{userId}}" } }
+      ]
+    },
+    {
+      "name": "Messages",
+      "item": [
+        {
+          "name": "GET /companies/:companyId/messages",
+          "request": { "method": "GET", "url": "{{baseUrl}}/companies/{{companyId}}/messages" }
+        },
+        { "name": "GET /messages/:id", "request": { "method": "GET", "url": "{{baseUrl}}/messages/{{messageId}}" } },
+        {
+          "name": "POST /messages",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"companyId\": \"{{companyId}}\",\n  \"senderId\": \"{{userId}}\",\n  \"templateId\": \"{{templateId}}\",\n  \"recipientContactIds\": [\n    \"{{contactId}}\"\n  ],\n  \"variableFallbacks\": {\n    \"firstName\": \"FallbackFirstName\",\n    \"lastName\": \"FallbackLastName\",\n    \"name\": \"FallbackName\"\n  }\n}"
+            },
+            "url": "{{baseUrl}}/messages"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Templates",
+      "item": [
+        {
+          "name": "GET /companies/:companyId/templates",
+          "request": { "method": "GET", "url": "{{baseUrl}}/companies/{{companyId}}/templates" }
+        },
+        { "name": "GET /templates/:id", "request": { "method": "GET", "url": "{{baseUrl}}/templates/{{templateId}}" } },
+        {
+          "name": "POST /templates",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"companyId\": \"{{companyId}}\",\n  \"name\": \"Welcome\",\n  \"content\": \"Hi {{name}}\"\n}"
+            },
+            "url": "{{baseUrl}}/templates"
+          }
+        },
+        {
+          "name": "PUT /templates/:id",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Welcome v2\"\n}" },
+            "url": "{{baseUrl}}/templates/{{templateId}}"
+          }
+        },
+        {
+          "name": "DELETE /templates/:id",
+          "request": { "method": "DELETE", "url": "{{baseUrl}}/templates/{{templateId}}" }
+        }
+      ]
+    },
+    {
+      "name": "Groups",
+      "item": [
+        {
+          "name": "GET /companies/:companyId/groups",
+          "request": { "method": "GET", "url": "{{baseUrl}}/companies/{{companyId}}/groups" }
+        },
+        { "name": "GET /groups/:id", "request": { "method": "GET", "url": "{{baseUrl}}/groups/{{groupId}}" } },
+        {
+          "name": "POST /groups",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"companyId\": \"{{companyId}}\",\n  \"name\": \"VIPs\",\n  \"description\": \"Top clients\"\n}"
+            },
+            "url": "{{baseUrl}}/groups"
+          }
+        },
+        {
+          "name": "PUT /groups/:id",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"VIPs v2\"\n}" },
+            "url": "{{baseUrl}}/groups/{{groupId}}"
+          }
+        },
+        { "name": "DELETE /groups/:id", "request": { "method": "DELETE", "url": "{{baseUrl}}/groups/{{groupId}}" } },
+        {
+          "name": "POST /groups/:id/members",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"contactIds\": [\"{{contactId}}\"]\n}" },
+            "url": "{{baseUrl}}/groups/{{groupId}}/members"
+          }
+        },
+        {
+          "name": "DELETE /groups/:id/members",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"contactId\": \"{{contactId}}\"\n}" },
+            "url": "{{baseUrl}}/groups/{{groupId}}/members"
+          }
+        },
+        {
+          "name": "GET /groups/:id/members",
+          "request": { "method": "GET", "url": "{{baseUrl}}/groups/{{groupId}}/members" }
+        }
+      ]
+    }
+  ]
+}
