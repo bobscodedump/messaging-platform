@@ -8,7 +8,9 @@ import messagesRouter from "./routes/v1/messages";
 import templatesRouter from "./routes/v1/templates";
 import groupsRouter from "./routes/v1/groups";
 import companiesRouter from "./routes/v1/companies";
+import schedulerRouter from "./routes/v1/scheduler";
 import { notFoundHandler, errorHandler } from "./middleware/errorHandler";
+import { schedulerService } from "./services/schedulerService";
 
 export const createServer = (): Express => {
     const app = express();
@@ -20,6 +22,10 @@ export const createServer = (): Express => {
     apiV1.use(messagesRouter);
     apiV1.use(templatesRouter);
     apiV1.use(groupsRouter);
+    apiV1.use(schedulerRouter);
+
+    // Start the scheduler service
+    schedulerService.start();
 
     app
         .disable("x-powered-by")
