@@ -2,7 +2,8 @@ import { useMemo, useState } from 'react';
 import { useContacts } from '../contacts/hooks';
 import { useGroups, groupMembersQueryOptions } from '../groups/hooks';
 import type { Contact } from 'shared-types';
-import { useQueries } from '@tanstack/react-query';
+import { useQueries, useMutation } from '@tanstack/react-query';
+import { sendMessage as sendMessageApi } from './api';
 
 export function useMessageRecipients(companyId: string) {
   const { data: contacts = [], isLoading: loadingContacts } = useContacts(companyId);
@@ -71,4 +72,10 @@ export function useMessageRecipients(companyId: string) {
     recipientCount: uniqueRecipientIds.size,
     recipientContacts,
   };
+}
+
+export function useSendMessage() {
+  return useMutation({
+    mutationFn: sendMessageApi,
+  });
 }

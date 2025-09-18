@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import Card from '../common/layout/Card';
 import Button from '../common/ui/Button';
-import { useMessageRecipients } from '../../lib/messages/hooks';
+import { useMessageRecipients, useSendMessage } from '../../lib/messages/hooks';
 import { useTemplates } from '../../lib/templates/hooks';
 import type { Contact, Group } from 'shared-types';
 import FormField from '../common/ui/FormField';
@@ -37,21 +37,34 @@ export default function MessageWizard() {
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
   const [variableFallbacks, setVariableFallbacks] = useState<Record<string, string>>({});
 
+  const { mutate: sendMessage, isPending: isSending } = useSendMessage();
+
   const selectedTemplate = templates.find((t) => t.id === selectedTemplateId);
 
   const handleSend = () => {
     if (!selectedTemplate || recipientContacts.length === 0) return;
-    console.group('Sending messages...');
-    recipientContacts.forEach((contact) => {
-      const message = resolveTemplate(selectedTemplate.content, contact, variableFallbacks);
-      console.log(`To: ${contact.firstName} ${contact.lastName} (${contact.phoneNumber}, ${contact.email})`);
-      console.log('Message:', message);
-    });
-    console.groupEnd();
-    // Reset state
-    setStep('recipients');
-    setSelectedTemplateId(null);
-    setVariableFallbacks({});
+
+    sendMessage(
+      {
+        companyId,
+        senderId: 'cmf74juaz0003ohbmmsby0elj', // Replace with actual sender ID
+        templateId: selectedTemplate.id,
+        recipientContactIds: recipientContacts.map((c) => c.id),
+        variableFallbacks,
+      },
+      {
+        onSuccess: () => {
+          // Reset state
+          setStep('recipients');
+          setSelectedTemplateId(null);
+          setVariableFallbacks({});
+        },
+        onError: (error) => {
+          console.error('Failed to send messages:', error);
+          // Handle error state in UI
+        },
+      }
+    );
   };
 
   return (
@@ -75,16 +88,23 @@ export default function MessageWizard() {
       )}
 
       {step === 'template' && (
-        <Card title='Select a template' description='Choose the message template and provide fallback values for variables.'>
+        <Card
+          title='Select a template'
+          description='Choose the message template and provide fallback values for variables.'
+        >
           <div className='space-y-4'>
             <select
               className='w-full rounded-md border-neutral-300 dark:border-neutral-700 dark:bg-neutral-800'
               onChange={(e) => setSelectedTemplateId(e.target.value)}
               value={selectedTemplateId ?? ''}
             >
-              <option value='' disabled>-- Select a template --</option>
+              <option value='' disabled>
+                -- Select a template --
+              </option>
               {templates.map((t) => (
-                <option key={t.id} value={t.id}>{t.name}</option>
+                <option key={t.id} value={t.id}>
+                  {t.name}
+                </option>
               ))}
             </select>
             {selectedTemplate && (
@@ -111,8 +131,12 @@ export default function MessageWizard() {
       {step === 'review' && (
         <Card title='Review and Send' description='Confirm the details before sending.'>
           <div className='space-y-4'>
-            <div><strong>Recipients:</strong> {recipientCount} contacts</div>
-            <div><strong>Template:</strong> {selectedTemplate?.name}</div>
+            <div>
+              <strong>Recipients:</strong> {recipientCount} contacts
+            </div>
+            <div>
+              <strong>Template:</strong> {selectedTemplate?.name}
+            </div>
             <div>
               <strong>Preview:</strong>
               <div className='p-3 border rounded-md text-sm bg-neutral-50 dark:bg-neutral-900'>
@@ -130,13 +154,22 @@ export default function MessageWizard() {
           <span className='text-sm font-medium'>Recipients: {recipientCount}</span>
         </div>
         <div className='flex gap-2'>
-          {step !== 'recipients' && <Button variant='ghost' onClick={() => setStep(step === 'template' ? 'recipients' : 'template')}>Back</Button>}
+          {step !== 'recipients' && (
+            <Button variant='ghost' onClick={() => setStep(step === 'template' ? 'recipients' : 'template')}>
+              Back
+            </Button>
+          )}
           {step !== 'review' ? (
-            <Button onClick={() => setStep(step === 'recipients' ? 'template' : 'review')} disabled={recipientCount === 0}>
+            <Button
+              onClick={() => setStep(step === 'recipients' ? 'template' : 'review')}
+              disabled={recipientCount === 0}
+            >
               Next
             </Button>
           ) : (
-            <Button onClick={handleSend} disabled={!selectedTemplate}>Send Message</Button>
+            <Button onClick={handleSend} disabled={!selectedTemplate || isSending}>
+              {isSending ? 'Sending...' : 'Send Message'}
+            </Button>
           )}
         </div>
       </div>
