@@ -5,3 +5,4 @@ export * from './src/message-types';
 export * from './src/group-types';
 export * from './src/api-types'
 export * from './src/company-types';
+export * from './src/schedule-types';

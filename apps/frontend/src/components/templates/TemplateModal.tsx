@@ -73,7 +73,7 @@ export default function TemplateModal({ templateId, onClose }: TemplateModalProp
               <FormField label='Name' error={errors.name}>
                 <Input value={form.name} onChange={(e) => onChange('name', e.target.value)} />
               </FormField>
-              <FormField label='Content' error={errors.content} helperText='Use {{name}} for variables.'>
+              <FormField label='Content' error={errors.content} helpText='Use {{name}} for variables.'>
                 <Textarea rows={8} value={form.content} onChange={(e) => onChange('content', e.target.value)} />
               </FormField>
               <div className='text-sm text-neutral-600 dark:text-neutral-400'>

@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { scheduledMessageService } from '../services/scheduledMessageService';
 import { ScheduleType } from '@prisma/client';
@@ -6,7 +6,8 @@ import { ScheduleType } from '@prisma/client';
 const createScheduleSchema = z.object({
     companyId: z.string(),
     userId: z.string(),
-    templateId: z.string(),
+    templateId: z.string().optional(),
+    variables: z.record(z.string(), z.string()).optional(),
     name: z.string(),
     content: z.string(),
     scheduleType: z.nativeEnum(ScheduleType),
@@ -19,9 +20,16 @@ const createScheduleSchema = z.object({
 const updateScheduleSchema = createScheduleSchema.partial().omit({ companyId: true, userId: true });
 
 export class SchedulerController {
-    async createSchedule(req: Request, res: Response) {
+    async createSchedule(req: Request, res: Response, next: NextFunction) {
         try {
             const data = createScheduleSchema.parse(req.body);
+            // Additional validation: prevent past ONE_TIME
+            if (data.scheduleType === 'ONE_TIME' && data.scheduledAt) {
+                const when = new Date(data.scheduledAt);
+                if (when.getTime() < Date.now()) {
+                    return res.status(400).json({ success: false, message: 'scheduledAt must be in the future' });
+                }
+            }
             const schedule = await scheduledMessageService.createSchedule({
                 ...data,
                 scheduledAt: data.scheduledAt ? new Date(data.scheduledAt) : undefined,
@@ -31,23 +39,21 @@ export class SchedulerController {
             if (error instanceof z.ZodError) {
                 return res.status(400).json({ success: false, message: 'Invalid request body', errors: error.flatten() });
             }
-            console.error('Failed to create schedule:', error);
-            res.status(500).json({ success: false, message: 'Failed to create schedule' });
+            next(error);
         }
     }
 
-    async getSchedules(req: Request, res: Response) {
+    async getSchedules(req: Request, res: Response, next: NextFunction) {
         try {
             const { companyId } = req.params;
             const schedules = await scheduledMessageService.getSchedulesByCompany(companyId);
             res.status(200).json({ success: true, data: schedules });
         } catch (error) {
-            console.error('Failed to get schedules:', error);
-            res.status(500).json({ success: false, message: 'Failed to get schedules' });
+            next(error);
         }
     }
 
-    async getScheduleById(req: Request, res: Response) {
+    async getScheduleById(req: Request, res: Response, next: NextFunction) {
         try {
             const { id } = req.params;
             const schedule = await scheduledMessageService.getScheduleById(id);
@@ -56,12 +62,11 @@ export class SchedulerController {
             }
             res.status(200).json({ success: true, data: schedule });
         } catch (error) {
-            console.error(`Failed to get schedule ${req.params.id}:`, error);
-            res.status(500).json({ success: false, message: 'Failed to get schedule' });
+            next(error);
         }
     }
 
-    async updateSchedule(req: Request, res: Response) {
+    async updateSchedule(req: Request, res: Response, next: NextFunction) {
         try {
             const { id } = req.params;
             const data = updateScheduleSchema.parse(req.body);
@@ -74,19 +79,17 @@ export class SchedulerController {
             if (error instanceof z.ZodError) {
                 return res.status(400).json({ success: false, message: 'Invalid request body', errors: error.flatten() });
             }
-            console.error(`Failed to update schedule ${req.params.id}:`, error);
-            res.status(500).json({ success: false, message: 'Failed to update schedule' });
+            next(error);
         }
     }
 
-    async deleteSchedule(req: Request, res: Response) {
+    async deleteSchedule(req: Request, res: Response, next: NextFunction) {
         try {
             const { id } = req.params;
             await scheduledMessageService.deleteSchedule(id);
             res.status(204).send();
         } catch (error) {
-            console.error(`Failed to delete schedule ${req.params.id}:`, error);
-            res.status(500).json({ success: false, message: 'Failed to delete schedule' });
+            next(error);
         }
     }
 }

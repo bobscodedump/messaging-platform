@@ -2,9 +2,9 @@ import { useState } from 'react';
 import type { CreateContactDto, Contact } from 'shared-types';
 import ContactList, { ContactListItem } from './ContactList';
 import { ContactCard } from './ContactCard';
-import { useContacts, useCreateContact } from '../../lib/contacts/hooks';
+import { useContacts, useCreateContact, useDeleteContact } from '../../lib/contacts/hooks';
 import { ContactCreateForm } from './ContactCreateForm';
-import Button from '../common/ui/Button';
+import { Button } from '../common/ui/Button';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 export function ContactDashboard() {
@@ -14,11 +14,23 @@ export function ContactDashboard() {
 
   const { data: contacts = [], isLoading, error } = useContacts(companyId);
   const createContactMutation = useCreateContact();
+  const deleteContactMutation = useDeleteContact(companyId);
 
   const [selected, setSelected] = useState<ContactListItem | null>(null);
 
   const handleCreateContact = async (data: CreateContactDto) => {
     await createContactMutation.mutateAsync(data);
+  };
+
+  const handleDelete = async (c: ContactListItem) => {
+    if (!c.id) return;
+    const ok = window.confirm(`Delete contact "${[c.firstName, c.lastName].filter(Boolean).join(' ') || c.id}"?`);
+    if (!ok) return;
+    try {
+      await deleteContactMutation.mutateAsync(c.id);
+    } catch (e: any) {
+      alert(e.message || 'Failed to delete contact');
+    }
   };
 
   if (selected) {
@@ -27,7 +39,24 @@ export function ContactDashboard() {
         <Button variant='ghost' onClick={() => setSelected(null)} leftIcon={<ArrowBackIcon />}>
           Back to contacts
         </Button>
-        <ContactCard contact={selected as CreateContactDto} editingEnabled={false} onSave={async () => {}} />
+        <ContactCard
+          contact={selected as CreateContactDto}
+          editingEnabled={false}
+          onSave={async () => {}}
+          onDelete={async () => {
+            if (!selected?.id) return;
+            const ok = window.confirm(
+              `Delete contact "${[selected.firstName, selected.lastName].filter(Boolean).join(' ') || selected.id}"?`
+            );
+            if (!ok) return;
+            try {
+              await deleteContactMutation.mutateAsync(selected.id);
+              setSelected(null);
+            } catch (e: any) {
+              alert(e.message || 'Failed to delete contact');
+            }
+          }}
+        />
       </div>
     );
   }
@@ -63,6 +92,7 @@ export function ContactDashboard() {
         loading={isLoading}
         onPageChange={setPage}
         onSelect={(c) => setSelected(c)}
+        onDelete={handleDelete}
       />
     </div>
   );

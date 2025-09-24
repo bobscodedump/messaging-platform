@@ -49,7 +49,7 @@ export default function TemplateDashboard() {
                 <FormField label='Name' error={errors.name}>
                   <Input value={form.name} onChange={(e) => onChange('name', e.target.value)} placeholder='Welcome' />
                 </FormField>
-                <FormField label='Content' error={errors.content} helperText='Example: Hi {{firstName}}!'>
+                <FormField label='Content' error={errors.content} helpText='Example: Hi {{firstName}}!'>
                   <Textarea rows={6} value={form.content} onChange={(e) => onChange('content', e.target.value)} />
                 </FormField>
                 <div className='flex items-center justify-between'>

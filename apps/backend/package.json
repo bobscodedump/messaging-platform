@@ -12,6 +12,8 @@
     "test": "jest --detectOpenHandles",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev --skip-generate",
+    "db:migrate:template-optional": "prisma migrate dev --skip-generate --name make_templateId_optional_on_scheduled_message",
+    "db:reset": "prisma migrate reset --force",
     "db:deploy": "prisma migrate deploy"
   },
   "jest": {

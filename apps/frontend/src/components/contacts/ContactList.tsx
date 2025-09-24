@@ -11,6 +11,7 @@ export type ContactListProps = {
   loading?: boolean;
   onPageChange: (page: number) => void;
   onSelect: (contact: ContactListItem) => void;
+  onDelete?: (contact: ContactListItem) => void;
   className?: string;
 };
 
@@ -26,6 +27,7 @@ export default function ContactList({
   loading,
   onPageChange,
   onSelect,
+  onDelete,
   className,
 }: ContactListProps) {
   const pageCount = Math.max(1, Math.ceil(total / pageSize));
@@ -64,6 +66,18 @@ export default function ContactList({
                       >
                         View data
                       </button>
+                      {onDelete ? (
+                        <button
+                          type='button'
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onDelete(c);
+                          }}
+                          className='inline-flex items-center rounded-md bg-white px-2.5 py-1 text-xs font-medium text-red-700 shadow-sm ring-1 ring-inset ring-neutral-200 hover:bg-neutral-50 dark:bg-white/90 dark:text-red-600'
+                        >
+                          Delete
+                        </button>
+                      ) : null}
                     </Stack>
                   </div>
                 </ListItemButton>

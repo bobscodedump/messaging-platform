@@ -36,6 +36,8 @@ function sanitizeError(err: any) {
             stack: err?.stack,
             code: err?.code,
             meta: err?.meta,
+            cause: err?.cause,
+            validation: err?.errors || err?.issues,
         };
     } catch {
         return undefined;

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import Card from '../common/layout/Card';
 import Button from '../common/ui/Button';
-import { useMessageRecipients, useSendMessage } from '../../lib/messages/hooks';
+import { useMessageRecipients } from '../../lib/messages/hooks';
 import { useTemplates } from '../../lib/templates/hooks';
 import type { Contact, Group } from 'shared-types';
 import FormField from '../common/ui/FormField';
@@ -37,34 +37,21 @@ export default function MessageWizard() {
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
   const [variableFallbacks, setVariableFallbacks] = useState<Record<string, string>>({});
 
-  const { mutate: sendMessage, isPending: isSending } = useSendMessage();
-
   const selectedTemplate = templates.find((t) => t.id === selectedTemplateId);
 
   const handleSend = () => {
     if (!selectedTemplate || recipientContacts.length === 0) return;
-
-    sendMessage(
-      {
-        companyId,
-        senderId: 'cmf74juaz0003ohbmmsby0elj', // Replace with actual sender ID
-        templateId: selectedTemplate.id,
-        recipientContactIds: recipientContacts.map((c) => c.id),
-        variableFallbacks,
-      },
-      {
-        onSuccess: () => {
-          // Reset state
-          setStep('recipients');
-          setSelectedTemplateId(null);
-          setVariableFallbacks({});
-        },
-        onError: (error) => {
-          console.error('Failed to send messages:', error);
-          // Handle error state in UI
-        },
-      }
-    );
+    console.group('Sending messages...');
+    recipientContacts.forEach((contact) => {
+      const message = resolveTemplate(selectedTemplate.content, contact, variableFallbacks);
+      console.log(`To: ${contact.firstName} ${contact.lastName} (${contact.phoneNumber}, ${contact.email})`);
+      console.log('Message:', message);
+    });
+    console.groupEnd();
+    // Reset state
+    setStep('recipients');
+    setSelectedTemplateId(null);
+    setVariableFallbacks({});
   };
 
   return (
@@ -167,8 +154,8 @@ export default function MessageWizard() {
               Next
             </Button>
           ) : (
-            <Button onClick={handleSend} disabled={!selectedTemplate || isSending}>
-              {isSending ? 'Sending...' : 'Send Message'}
+            <Button onClick={handleSend} disabled={!selectedTemplate}>
+              Send Message
             </Button>
           )}
         </div>
@@ -195,9 +182,20 @@ function RecipientSelector({
           {items.map((item) => (
             <li key={item.id} className='flex items-center gap-3 p-2'>
               <input type='checkbox' checked={selected.has(item.id)} onChange={() => onToggle(item.id)} />
-              <label className='flex-1'>
-                {('firstName' in item ? `${item.firstName} ${item.lastName}` : item.name).trim()}
-              </label>
+              <div className='flex-1'>
+                {('firstName' in item) ? (
+                  <>
+                    <div className='font-medium'>
+                      {`${(item.firstName || '').trim()} ${(item.lastName || '').trim()}`.trim() || 'Unnamed contact'}
+                    </div>
+                    <div className='text-xs text-neutral-600 dark:text-neutral-400'>
+                      {[item.phoneNumber, item.email].filter(Boolean).join(' • ')}
+                    </div>
+                  </>
+                ) : (
+                  <div className='font-medium'>{(item as Group).name}</div>
+                )}
+              </div>
             </li>
           ))}
         </ul>

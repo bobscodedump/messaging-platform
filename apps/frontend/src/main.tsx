@@ -8,6 +8,7 @@ import ContactsPage from './pages/ContactsPage';
 import GroupsPage from './pages/GroupsPage';
 import TemplatesPage from './pages/TemplatesPage';
 import SendMessagePage from './pages/SendMessagePage';
+import SchedulesPage from './pages/SchedulesPage';
 
 const el = document.getElementById('root');
 if (el) {
@@ -32,6 +33,10 @@ if (el) {
             <Link to='/messages/new' className='text-white hover:underline'>
               Send Message
             </Link>
+            <span className='text-neutral-400'>|</span>
+            <Link to='/schedules/new' className='text-white hover:underline'>
+              New Schedule
+            </Link>
           </div>
           <Routes>
             <Route path='/' element={<Navigate to='/contacts' replace />} />
@@ -39,6 +44,7 @@ if (el) {
             <Route path='/groups' element={<GroupsPage />} />
             <Route path='/templates' element={<TemplatesPage />} />
             <Route path='/messages/new' element={<SendMessagePage />} />
+            <Route path='/schedules/new' element={<SchedulesPage />} />
           </Routes>
         </BrowserRouter>
       </QueryClientProvider>

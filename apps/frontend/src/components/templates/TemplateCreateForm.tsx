@@ -6,7 +6,7 @@ import Input from '../common/ui/Input';
 import Textarea from '../common/ui/Textarea';
 import Button from '../common/ui/Button';
 import type { CreateTemplateDto } from 'shared-types';
-import { extractTemplateVariables, useLocalTemplates, validateTemplateInput } from '../../lib/templates/hooks';
+import { extractTemplateVariables, useCreateTemplate, validateTemplateInput } from '../../lib/templates/hooks';
 
 export function TemplateCreateForm({ defaultCompanyId }: { defaultCompanyId: string }) {
   const [step, setStep] = useState<'edit' | 'verify' | 'done'>('edit');
@@ -14,7 +14,7 @@ export function TemplateCreateForm({ defaultCompanyId }: { defaultCompanyId: str
   const [errors, setErrors] = useState<Partial<Record<keyof CreateTemplateDto, string>>>({});
 
   const extracted = useMemo(() => extractTemplateVariables(form.content), [form.content]);
-  const { create } = useLocalTemplates();
+  const createMutation = useCreateTemplate();
 
   const onChange = (field: keyof CreateTemplateDto, value: string) => {
     setForm((f) => ({ ...f, [field]: value }));
@@ -29,7 +29,7 @@ export function TemplateCreateForm({ defaultCompanyId }: { defaultCompanyId: str
 
   const finalize = async () => {
     const dto: CreateTemplateDto = { ...form, variables: extracted };
-    await create(dto, extracted);
+    await createMutation.mutateAsync(dto);
     setStep('done');
     setForm({ companyId: defaultCompanyId, name: '', content: '' });
   };
@@ -51,7 +51,7 @@ export function TemplateCreateForm({ defaultCompanyId }: { defaultCompanyId: str
                 />
               </FormField>
 
-              <FormField label='Content' error={errors.content} helperText='Variables must be in the form {{name}}.'>
+              <FormField label='Content' error={errors.content} helpText='Variables must be in the form {{name}}.'>
                 <Textarea
                   rows={8}
                   placeholder='Hi {{firstName}}, welcome to {{company}}!'

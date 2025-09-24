@@ -74,23 +74,26 @@ class SchedulerService {
             const recipientContactIds = this.getUniqueContactIds(schedule as FullScheduledMessage);
 
             if (recipientContactIds.length > 0) {
+                if (!schedule.content || schedule.content.trim().length === 0) {
+                    console.warn(`Schedule "${schedule.name}" has no content. Skipping send.`);
+                    continue;
+                }
                 console.log(`Processing schedule "${schedule.name}" for ${recipientContactIds.length} recipients.`);
-                
-                // Here we use the existing messageService to send the messages
-                await messageService.sendMessageToRecipients(
+
+                // Send the schedule content as-is to recipients (do not override with template)
+                await messageService.sendPlainContentToRecipients(
                     schedule.companyId,
                     schedule.userId,
-                    schedule.templateId,
-                    recipientContactIds,
-                    {} // variableFallbacks can be added to the ScheduledMessage model later if needed
+                    schedule.content,
+                    recipientContactIds
                 );
 
                 // Mark the one-time schedule as executed and inactive
                 await prisma.scheduledMessage.update({
                     where: { id: schedule.id },
-                    data: { 
+                    data: {
                         lastExecutedAt: now,
-                        isActive: false 
+                        isActive: false
                     },
                 });
             }

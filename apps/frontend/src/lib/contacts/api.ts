@@ -1,5 +1,5 @@
 import { Contact, CreateContactDto } from "shared-types";
-import { get, isSuccess, post } from "../api/api-client";
+import { del, get, isSuccess, post } from "../api/api-client";
 
 export const getAllContacts = async (companyId: string) => {
     const response = await get<Contact[]>(`/companies/${companyId}/contacts`);
@@ -15,4 +15,12 @@ export const createContact = async (data: CreateContactDto) => {
         throw new Error(response.message ?? "Failed to create contact");
     }
     return response.data!;
+};
+
+export const deleteContact = async (id: string) => {
+    const response = await del<null>(`/contacts/${id}`);
+    if (!isSuccess(response)) {
+        throw new Error(response.message ?? 'Failed to delete contact');
+    }
+    return true;
 };
