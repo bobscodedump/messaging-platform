@@ -18,6 +18,11 @@ router.get(
 );
 router.get('/contacts/:id', asyncHandler(contactController.getContactById.bind(contactController)));
 router.post('/contacts', asyncHandler(contactController.createContact.bind(contactController)));
+router.post(
+    '/companies/:companyId/contacts/import',
+    contactController.uploadMiddleware,
+    asyncHandler(contactController.importContacts.bind(contactController))
+);
 router.put('/contacts/:id', asyncHandler(contactController.updateContact.bind(contactController)));
 router.delete('/contacts/:id', asyncHandler(contactController.deleteContact.bind(contactController)));
 

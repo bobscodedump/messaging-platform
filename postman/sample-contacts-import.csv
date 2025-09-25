@@ -1,0 +1,4 @@
+firstName,lastName,phoneNumber,email,address,birthDate,note,groups
+Dana,Diaz,+16595550001,dana.diaz@example.com,10 Palm Rd,1991-07-12,Early adopter,VIP;Leads
+Evan,Edwards,+16595550002,evan.edwards@example.com,22 Oak Ave,1993-03-05,Loyal customer,Clients
+Fiona,Frost,+16595550003,fiona.frost@example.com,35 Pine Blvd,1990-11-30,Seasonal promo,Leads;Winter

@@ -58,6 +58,27 @@
             }
           }
         },
+        {
+          "name": "POST /companies/:companyId/contacts/import (CSV)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "multipart/form-data" }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "sample-contacts-import.csv"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/companies/{{companyId}}/contacts/import",
+            "description": "Bulk import contacts with optional groups. 'groups' column accepts semicolon-separated group names. Phone number will be overridden by system to +6596964653 during import. Headers required: firstName,lastName,phoneNumber,email,address,birthDate,note,groups"
+          }
+        },
         { "name": "GET /contacts/:id", "request": { "method": "GET", "url": "{{baseUrl}}/contacts/{{contactId}}" } },
         {
           "name": "POST /contacts",
@@ -130,7 +151,7 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"companyId\": \"{{companyId}}\",\n  \"senderId\": \"{{userId}}\",\n  \"templateId\": \"{{templateId}}\",\n  \"recipientContactIds\": [\n    \"{{contactId}}\"\n  ],\n  \"variableFallbacks\": {\n    \"firstName\": \"FallbackFirstName\",\n    \"lastName\": \"FallbackLastName\",\n    \"name\": \"FallbackName\"\n  }\n}"
+              "raw": "{\n  \"companyId\": \"{{companyId}}\",\n  \"senderId\": \"{{userId}}\",\n  \"templateId\": \"{{templateId}}\",\n  \"recipientContactIds\": [\n    \"{{contactId}}\"\n  ],\n  \"variableFallbacks\": {\n    \"promo_code\": \"WELCOME10\"\n  }\n}\n\n// Note: Built-in variables like {{contact.first_name}} or {{company.name}} are auto-filled and do not belong in variableFallbacks."
             },
             "url": "{{baseUrl}}/messages"
           }
@@ -248,10 +269,7 @@
             {
               "listen": "test",
               "script": {
-                "exec": [
-                  "var response = pm.response.json();",
-                  "pm.environment.set(\"scheduleId\", response.data.id);"
-                ],
+                "exec": ["var response = pm.response.json();", "pm.environment.set(\"scheduleId\", response.data.id);"],
                 "type": "text/javascript"
               }
             }

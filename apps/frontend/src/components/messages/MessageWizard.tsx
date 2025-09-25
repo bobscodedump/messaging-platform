@@ -183,7 +183,7 @@ function RecipientSelector({
             <li key={item.id} className='flex items-center gap-3 p-2'>
               <input type='checkbox' checked={selected.has(item.id)} onChange={() => onToggle(item.id)} />
               <div className='flex-1'>
-                {('firstName' in item) ? (
+                {'firstName' in item ? (
                   <>
                     <div className='font-medium'>
                       {`${(item.firstName || '').trim()} ${(item.lastName || '').trim()}`.trim() || 'Unnamed contact'}

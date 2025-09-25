@@ -1,6 +1,11 @@
 import { Request, Response } from 'express';
 import prisma from '../../prisma/db';
 import { CreateContactDto } from 'shared-types';
+import { csvImportService } from '../services/csvService';
+import type { RequestHandler } from 'express';
+import multer from 'multer';
+
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 2 * 1024 * 1024 } });
 
 export class ContactController {
 
@@ -123,6 +128,21 @@ export class ContactController {
     }
 
     // importContacts
+    uploadMiddleware = upload.single('file');
+
+    importContacts: RequestHandler = async (req, res) => {
+        const companyId = req.params.companyId;
+        if (!req.file) {
+            return res.status(400).json({ success: false, message: 'No file uploaded (field name: file).' });
+        }
+        try {
+            const text = req.file.buffer.toString('utf-8');
+            const result = await csvImportService.importContacts(companyId, text);
+            res.status(201).json({ success: true, message: 'Import completed', data: result });
+        } catch (e: any) {
+            res.status(500).json({ success: false, message: 'Import failed', error: e.message });
+        }
+    };
 
     // exportContacts
 

@@ -1,5 +1,24 @@
 import { Contact, CreateContactDto } from "shared-types";
-import { del, get, isSuccess, post } from "../api/api-client";
+import { del, get, isSuccess, post, postFormData } from "../api/api-client";
+// CSV import (multipart)
+export const importContactsCsv = async (companyId: string, file: File) => {
+    const form = new FormData();
+    form.append('file', file);
+    const json = await postFormData<{
+        success: boolean;
+        message?: string;
+        data?: {
+            createdCount: number;
+            errorCount: number;
+            created: any[];
+            errors: { index: number; error: string }[];
+        };
+    }>(`/companies/${companyId}/contacts/import`, form);
+    if (!json.success) {
+        throw new Error(json.message || 'CSV import failed');
+    }
+    return json.data!;
+};
 
 export const getAllContacts = async (companyId: string) => {
     const response = await get<Contact[]>(`/companies/${companyId}/contacts`);

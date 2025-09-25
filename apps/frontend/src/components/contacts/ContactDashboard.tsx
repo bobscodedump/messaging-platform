@@ -3,6 +3,7 @@ import type { CreateContactDto, Contact } from 'shared-types';
 import ContactList, { ContactListItem } from './ContactList';
 import { ContactCard } from './ContactCard';
 import { useContacts, useCreateContact, useDeleteContact } from '../../lib/contacts/hooks';
+import ContactsCsvImport from './ContactsCsvImport';
 import { ContactCreateForm } from './ContactCreateForm';
 import { Button } from '../common/ui/Button';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -69,6 +70,7 @@ export function ContactDashboard() {
         loading={createContactMutation.isPending}
         defaultCompanyId={companyId}
       />
+  <ContactsCsvImport companyId={companyId} />
       {error ? (
         <div className='rounded-md border border-red-300 bg-red-50 p-3 text-red-700'>
           Failed to load contacts: {error.message}

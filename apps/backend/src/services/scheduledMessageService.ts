@@ -1,5 +1,6 @@
 import prisma from '../../prisma/db';
 import { Prisma, ScheduleType, RecipientType } from '@prisma/client';
+import { applyUserVariablesPreservingBuiltIns } from './templateRender';
 
 interface CreateScheduleDto {
     companyId: string;
@@ -49,7 +50,9 @@ class ScheduledMessageService {
             // Validate provided variables cover declared ones
             const requiredVars = template.variables ?? [];
             const vars = variables ?? {};
-            const missing = requiredVars.filter((v) => !(v in vars));
+            // Built-in variable names (namespaced) we auto-fill later in send/render phase
+            const builtInPrefixes = ['contact.', 'company.'];
+            const missing = requiredVars.filter((v) => !(v in vars) && !builtInPrefixes.some(p => v.startsWith(p)));
             if (missing.length > 0) {
                 const err: any = new Error(`Missing variables: ${missing.join(', ')}`);
                 err.status = 400;
@@ -57,11 +60,8 @@ class ScheduledMessageService {
                 err.meta = { missing, required: requiredVars };
                 throw err;
             }
-            // Simple mustache-style replace of {{var}}
-            finalContent = (template.content || '').replace(/\{\{\s*([a-zA-Z0-9_\.\-]+)\s*\}\}/g, (_m, key) => {
-                const k = String(key);
-                return vars[k] != null ? String(vars[k]) : '';
-            });
+            // Apply user variables only; keep built-ins (contact./company.) for send-time resolution
+            finalContent = applyUserVariablesPreservingBuiltIns(template.content || '', vars);
         }
 
         // Guard: don't create schedules with empty content

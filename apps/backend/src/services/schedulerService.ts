@@ -80,8 +80,8 @@ class SchedulerService {
                 }
                 console.log(`Processing schedule "${schedule.name}" for ${recipientContactIds.length} recipients.`);
 
-                // Send the schedule content as-is to recipients (do not override with template)
-                await messageService.sendPlainContentToRecipients(
+                // Render built-ins at send time (content may still contain built-in placeholders)
+                await messageService.sendPersonalizedContentToRecipients(
                     schedule.companyId,
                     schedule.userId,
                     schedule.content,

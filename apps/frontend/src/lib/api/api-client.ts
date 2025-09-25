@@ -1,7 +1,7 @@
 import axios from "axios";
 import { ApiResponse } from "shared-types";
 
-const api = axios.create({
+export const api = axios.create({
     baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001/api/v1',
     timeout: 10000,
     headers: {
@@ -76,4 +76,12 @@ export const delWithBody = async <T>(url: string, data: any): Promise<ApiRespons
             message: error instanceof Error ? error.message : 'Unknown error'
         };
     }
+};
+
+// Multipart form post helper (returns raw response for custom shapes)
+export const postFormData = async <T=any>(url: string, formData: FormData): Promise<T> => {
+    const response = await api.post(url, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+    });
+    return response.data as T;
 };

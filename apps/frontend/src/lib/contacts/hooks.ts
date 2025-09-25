@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { createContact, deleteContact, getAllContacts } from './api';
+import { createContact, deleteContact, getAllContacts, importContactsCsv } from './api';
 import type { Contact, CreateContactDto } from 'shared-types';
 
 export function useContacts(companyId: string) {
@@ -27,6 +27,16 @@ export function useDeleteContact(companyId: string) {
         mutationFn: (id: string) => deleteContact(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['contacts', companyId] });
+        },
+    });
+}
+
+export function useImportContacts(companyId: string) {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: (file: File) => importContactsCsv(companyId, file),
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['contacts', companyId] });
         },
     });
 }
