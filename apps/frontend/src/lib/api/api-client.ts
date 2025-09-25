@@ -79,7 +79,7 @@ export const delWithBody = async <T>(url: string, data: any): Promise<ApiRespons
 };
 
 // Multipart form post helper (returns raw response for custom shapes)
-export const postFormData = async <T=any>(url: string, formData: FormData): Promise<T> => {
+export const postFormData = async <T = any>(url: string, formData: FormData): Promise<T> => {
     const response = await api.post(url, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
     });

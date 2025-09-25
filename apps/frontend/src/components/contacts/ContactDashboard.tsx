@@ -70,7 +70,7 @@ export function ContactDashboard() {
         loading={createContactMutation.isPending}
         defaultCompanyId={companyId}
       />
-  <ContactsCsvImport companyId={companyId} />
+      <ContactsCsvImport companyId={companyId} />
       {error ? (
         <div className='rounded-md border border-red-300 bg-red-50 p-3 text-red-700'>
           Failed to load contacts: {error.message}

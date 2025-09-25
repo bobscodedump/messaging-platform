@@ -50,8 +50,8 @@ export function TemplateCreateForm({ defaultCompanyId }: { defaultCompanyId: str
                 (active
                   ? 'bg-indigo-600 text-white shadow'
                   : completed
-                  ? 'bg-green-500 text-white'
-                  : 'bg-neutral-200 dark:bg-neutral-700 text-neutral-600 dark:text-neutral-300')
+                    ? 'bg-green-500 text-white'
+                    : 'bg-neutral-200 dark:bg-neutral-700 text-neutral-600 dark:text-neutral-300')
               }
             >
               {i + 1}
@@ -68,10 +68,7 @@ export function TemplateCreateForm({ defaultCompanyId }: { defaultCompanyId: str
     <Section title='New Template'>
       <div className='space-y-10'>
         <div>
-          <Card
-            title='Define template'
-            description='Use {{variable}} syntax. Built-ins (contact./company.) auto-fill.'
-          >
+          <Card title='Define template' description='Use {{variable}} syntax. Built-ins (contact./company.) auto-fill.'>
             <div className='space-y-4'>
               <StepIndicator />
               {step === 'done' && (
@@ -124,7 +121,9 @@ export function TemplateCreateForm({ defaultCompanyId }: { defaultCompanyId: str
                         </span>
                       ))}
                       {extracted.length > 6 && (
-                        <span className='rounded bg-neutral-200 dark:bg-neutral-700 px-1.5 py-0.5 text-[10px] font-medium'>+{extracted.length - 6}</span>
+                        <span className='rounded bg-neutral-200 dark:bg-neutral-700 px-1.5 py-0.5 text-[10px] font-medium'>
+                          +{extracted.length - 6}
+                        </span>
                       )}
                     </div>
                   )}
@@ -164,7 +163,10 @@ export function TemplateCreateForm({ defaultCompanyId }: { defaultCompanyId: str
                 <div className='flex flex-wrap gap-1'>
                   {extracted.length === 0 && <span className='text-xs text-neutral-500'>None</span>}
                   {extracted.map((v) => (
-                    <span key={v} className='rounded bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300 px-2 py-0.5 text-[11px] font-medium'>
+                    <span
+                      key={v}
+                      className='rounded bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300 px-2 py-0.5 text-[11px] font-medium'
+                    >
                       {v}
                     </span>
                   ))}
@@ -197,8 +199,8 @@ export function TemplateCreateForm({ defaultCompanyId }: { defaultCompanyId: str
                   – Contact phone number
                 </li>
                 <li>
-                  <code className='px-1.5 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800'>{'{{company.name}}'}</code> –
-                  Company name
+                  <code className='px-1.5 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800'>{'{{company.name}}'}</code>{' '}
+                  – Company name
                 </li>
               </ul>
               <div className='mt-4 text-xs text-neutral-500 dark:text-neutral-400'>

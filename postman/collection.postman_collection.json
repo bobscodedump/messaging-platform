@@ -62,9 +62,7 @@
           "name": "POST /companies/:companyId/contacts/import (CSV)",
           "request": {
             "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "multipart/form-data" }
-            ],
+            "header": [{ "key": "Content-Type", "value": "multipart/form-data" }],
             "body": {
               "mode": "formdata",
               "formdata": [
