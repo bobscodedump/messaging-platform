@@ -23,7 +23,8 @@ const AuthCtx = createContext<AuthState | undefined>(undefined);
 const TOKEN_KEY = 'mp_auth_token';
 
 export function setAuthToken(token: string | null) {
-  if (token) localStorage.setItem(TOKEN_KEY, token); else localStorage.removeItem(TOKEN_KEY);
+  if (token) localStorage.setItem(TOKEN_KEY, token);
+  else localStorage.removeItem(TOKEN_KEY);
 }
 
 export function getAuthToken() {
@@ -57,7 +58,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           original.__isRetry = true;
           try {
             const resp = await api.post('/auth/refresh');
-            const token = (resp?.data?.data?.token) as string | undefined;
+            const token = resp?.data?.data?.token as string | undefined;
             if (token) {
               setAuthToken(token);
               setToken(token);
@@ -72,7 +73,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (status === 401 || status === 403) {
           try {
             // Best-effort clear server cookie
-            try { await api.post('/auth/logout'); } catch {}
+            try {
+              await api.post('/auth/logout');
+            } catch {}
             setAuthToken(null);
             setUser(null);
             setToken(null);
@@ -95,7 +98,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const boot = async () => {
       const t = getAuthToken();
-      if (!t) { setLoading(false); return; }
+      if (!t) {
+        setLoading(false);
+        return;
+      }
       setToken(t);
       try {
         const me = await api.get('/auth/me');
@@ -132,7 +138,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = async () => {
-    try { await api.post('/auth/logout'); } catch {}
+    try {
+      await api.post('/auth/logout');
+    } catch {}
     setAuthToken(null);
     setUser(null);
     setToken(null);

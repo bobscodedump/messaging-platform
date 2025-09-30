@@ -38,7 +38,7 @@ export const createServer = (): Express => {
     const corsOptions: cors.CorsOptions = {
         origin: (_origin, callback) => callback(null, true), // reflect request origin
         credentials: true,
-        methods: ['GET','HEAD','PUT','PATCH','POST','DELETE','OPTIONS'],
+        methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
         allowedHeaders: ['Content-Type', 'Authorization'],
     };
 
@@ -47,10 +47,10 @@ export const createServer = (): Express => {
         .use(morgan("dev"))
         .use(urlencoded({ extended: true }))
         .use(json())
-    .use(cookieParser())
-    .use(cors(corsOptions))
-    .options('*', cors(corsOptions))
-    .use(passport.initialize())
+        .use(cookieParser())
+        .use(cors(corsOptions))
+        .options('*', cors(corsOptions))
+        .use(passport.initialize())
         // Health and demo endpoints
         .get("/message/:name", (req, res) => {
             return res.json({ message: `hello ${req.params.name}` });

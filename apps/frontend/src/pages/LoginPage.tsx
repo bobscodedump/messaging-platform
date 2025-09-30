@@ -10,8 +10,15 @@ export default function LoginPage() {
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null); setLoading(true);
-    try { await login(email, password); } catch (e: any) { setError(e.message || 'Login failed'); } finally { setLoading(false); }
+    setError(null);
+    setLoading(true);
+    try {
+      await login(email, password);
+    } catch (e: any) {
+      setError(e.message || 'Login failed');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -21,13 +28,26 @@ export default function LoginPage() {
       <form onSubmit={onSubmit} className='space-y-3'>
         <div>
           <label className='block text-sm mb-1'>Email</label>
-          <input className='w-full rounded border border-neutral-300 bg-white px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900' type='email' value={email} onChange={(e)=>setEmail(e.target.value)} />
+          <input
+            className='w-full rounded border border-neutral-300 bg-white px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900'
+            type='email'
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
         </div>
         <div>
           <label className='block text-sm mb-1'>Password</label>
-          <input className='w-full rounded border border-neutral-300 bg-white px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900' type='password' value={password} onChange={(e)=>setPassword(e.target.value)} />
+          <input
+            className='w-full rounded border border-neutral-300 bg-white px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900'
+            type='password'
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
         </div>
-        <button disabled={loading} className='inline-flex items-center rounded bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60'>
+        <button
+          disabled={loading}
+          className='inline-flex items-center rounded bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60'
+        >
           {loading ? 'Signing in…' : 'Sign In'}
         </button>
       </form>

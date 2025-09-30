@@ -66,18 +66,53 @@ if (el) {
     <StrictMode>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
-        <BrowserRouter>
-          <NavBar />
-          <Routes>
-            <Route path='/' element={<Navigate to='/contacts' replace />} />
-            <Route path='/login' element={<LoginPage />} />
-            <Route path='/contacts' element={<Protected><ContactsPage /></Protected>} />
-            <Route path='/groups' element={<Protected><GroupsPage /></Protected>} />
-            <Route path='/templates' element={<Protected><TemplatesPage /></Protected>} />
-            <Route path='/messages/new' element={<Protected><SendMessagePage /></Protected>} />
-            <Route path='/schedules/new' element={<Protected><SchedulesPage /></Protected>} />
-          </Routes>
-        </BrowserRouter>
+          <BrowserRouter>
+            <NavBar />
+            <Routes>
+              <Route path='/' element={<Navigate to='/contacts' replace />} />
+              <Route path='/login' element={<LoginPage />} />
+              <Route
+                path='/contacts'
+                element={
+                  <Protected>
+                    <ContactsPage />
+                  </Protected>
+                }
+              />
+              <Route
+                path='/groups'
+                element={
+                  <Protected>
+                    <GroupsPage />
+                  </Protected>
+                }
+              />
+              <Route
+                path='/templates'
+                element={
+                  <Protected>
+                    <TemplatesPage />
+                  </Protected>
+                }
+              />
+              <Route
+                path='/messages/new'
+                element={
+                  <Protected>
+                    <SendMessagePage />
+                  </Protected>
+                }
+              />
+              <Route
+                path='/schedules/new'
+                element={
+                  <Protected>
+                    <SchedulesPage />
+                  </Protected>
+                }
+              />
+            </Routes>
+          </BrowserRouter>
         </AuthProvider>
       </QueryClientProvider>
     </StrictMode>
