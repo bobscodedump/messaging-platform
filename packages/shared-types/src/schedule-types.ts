@@ -1,8 +1,10 @@
 export type ScheduleType = 'ONE_TIME' | 'BIRTHDAY' | 'WEEKLY' | 'MONTHLY' | 'YEARLY';
 
 export interface CreateScheduleDto {
-    companyId: string;
-    userId: string;
+    // Optional on write: backend derives from the authenticated user if omitted
+    companyId?: string;
+    // Optional on write: backend derives this from the authenticated user if omitted
+    userId?: string;
     name: string;
     content: string;
     scheduleType: ScheduleType;

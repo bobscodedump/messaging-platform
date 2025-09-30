@@ -1,8 +1,9 @@
 import TemplateDashboard from '../components/templates/TemplateDashboard';
 import { TemplateCreateForm } from '../components/templates/TemplateCreateForm';
+import { useAuth } from '../lib/auth/auth-context';
 
 export default function TemplatesPage() {
-  const companyId = 'cmeic3bb30000oh3wub0sckq3'; // TODO: derive from auth/session context
+  const { user } = useAuth();
   return (
     <div className='mx-auto max-w-7xl p-4 sm:p-8 space-y-10'>
       <div className='flex items-center justify-between'>
@@ -10,10 +11,10 @@ export default function TemplatesPage() {
       </div>
       <div className='grid grid-cols-1 gap-10 lg:grid-cols-3'>
         <div className='lg:col-span-2 space-y-10'>
-          <TemplateCreateForm defaultCompanyId={companyId} />
+          <TemplateCreateForm />
         </div>
         <div className='lg:col-span-1'>
-          <TemplateDashboard companyId={companyId} />
+          <TemplateDashboard companyId={user!.companyId} />
         </div>
       </div>
     </div>

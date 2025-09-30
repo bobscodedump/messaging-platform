@@ -9,6 +9,55 @@ import GroupsPage from './pages/GroupsPage';
 import TemplatesPage from './pages/TemplatesPage';
 import SendMessagePage from './pages/SendMessagePage';
 import SchedulesPage from './pages/SchedulesPage';
+import LoginPage from './pages/LoginPage';
+import { AuthProvider, useAuth } from './lib/auth/auth-context';
+
+function Protected({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth();
+  if (loading) return <div className='p-6 text-sm text-neutral-500'>Loading…</div>;
+  if (!user) return <Navigate to='/login' replace />;
+  return <>{children}</>;
+}
+
+function NavBar() {
+  const { user, logout } = useAuth();
+  return (
+    <div className='mx-auto max-w-7xl px-4 sm:px-6 py-4 flex items-center justify-between text-sm'>
+      <div className='flex gap-4'>
+        <Link to='/contacts' className='text-white hover:underline'>
+          Contacts
+        </Link>
+        <span className='text-neutral-400'>|</span>
+        <Link to='/groups' className='text-white hover:underline'>
+          Groups
+        </Link>
+        <span className='text-neutral-400'>|</span>
+        <Link to='/templates' className='text-white hover:underline'>
+          Templates
+        </Link>
+        <span className='text-neutral-400'>|</span>
+        <Link to='/messages/new' className='text-white hover:underline'>
+          Send Message
+        </Link>
+        <span className='text-neutral-400'>|</span>
+        <Link to='/schedules/new' className='text-white hover:underline'>
+          New Schedule
+        </Link>
+      </div>
+      {user ? (
+        <div className='flex items-center gap-3'>
+          <span className='hidden sm:inline text-xs text-neutral-400'>{user.email}</span>
+          <button
+            onClick={logout}
+            className='rounded border border-neutral-600 px-2 py-1 text-xs text-neutral-200 hover:bg-neutral-800'
+          >
+            Logout
+          </button>
+        </div>
+      ) : null}
+    </div>
+  );
+}
 
 const el = document.getElementById('root');
 if (el) {
@@ -16,37 +65,20 @@ if (el) {
   root.render(
     <StrictMode>
       <QueryClientProvider client={queryClient}>
+        <AuthProvider>
         <BrowserRouter>
-          <div className='mx-auto max-w-7xl px-4 sm:px-6 py-4 flex gap-4 text-sm'>
-            <Link to='/contacts' className='text-white hover:underline'>
-              Contacts
-            </Link>
-            <span className='text-neutral-400'>|</span>
-            <Link to='/groups' className='text-white hover:underline'>
-              Groups
-            </Link>
-            <span className='text-neutral-400'>|</span>
-            <Link to='/templates' className='text-white hover:underline'>
-              Templates
-            </Link>
-            <span className='text-neutral-400'>|</span>
-            <Link to='/messages/new' className='text-white hover:underline'>
-              Send Message
-            </Link>
-            <span className='text-neutral-400'>|</span>
-            <Link to='/schedules/new' className='text-white hover:underline'>
-              New Schedule
-            </Link>
-          </div>
+          <NavBar />
           <Routes>
             <Route path='/' element={<Navigate to='/contacts' replace />} />
-            <Route path='/contacts' element={<ContactsPage />} />
-            <Route path='/groups' element={<GroupsPage />} />
-            <Route path='/templates' element={<TemplatesPage />} />
-            <Route path='/messages/new' element={<SendMessagePage />} />
-            <Route path='/schedules/new' element={<SchedulesPage />} />
+            <Route path='/login' element={<LoginPage />} />
+            <Route path='/contacts' element={<Protected><ContactsPage /></Protected>} />
+            <Route path='/groups' element={<Protected><GroupsPage /></Protected>} />
+            <Route path='/templates' element={<Protected><TemplatesPage /></Protected>} />
+            <Route path='/messages/new' element={<Protected><SendMessagePage /></Protected>} />
+            <Route path='/schedules/new' element={<Protected><SchedulesPage /></Protected>} />
           </Routes>
         </BrowserRouter>
+        </AuthProvider>
       </QueryClientProvider>
     </StrictMode>
   );

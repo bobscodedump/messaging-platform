@@ -5,29 +5,23 @@ import FormField from '../common/ui/FormField';
 import Input from '../common/ui/Input';
 import Textarea from '../common/ui/Textarea';
 import Button from '../common/ui/Button';
-import Select from '../common/ui/Select';
 
 export type GroupCreateFormProps = {
-  defaultCompanyId?: string;
   onCreate: (data: CreateGroupDto) => Promise<void> | void;
   loading?: boolean;
-  companies?: { label: string; value: string }[];
 };
 
-export function GroupCreateForm({
-  defaultCompanyId = 'company-1',
-  onCreate,
-  loading,
-  companies,
-}: GroupCreateFormProps) {
+import { useAuth } from '../../lib/auth/auth-context';
+
+export function GroupCreateForm({ onCreate, loading }: GroupCreateFormProps) {
+  const { user } = useAuth();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [companyId, setCompanyId] = useState(defaultCompanyId);
   const [touched, setTouched] = useState<Record<string, boolean>>({});
 
   const errors = {
     name: name.trim() ? undefined : 'Group name is required',
-    companyId: companyId.trim() ? undefined : 'Company ID is required',
+    companyId: user?.companyId ? undefined : 'Company ID is required',
   } as const;
 
   const isValid = !errors.name && !errors.companyId;
@@ -38,7 +32,7 @@ export function GroupCreateForm({
     if (!isValid) return;
 
     const payload: CreateGroupDto = {
-      companyId: companyId.trim(),
+      companyId: user!.companyId,
       name: name.trim(),
       description: description.trim() || undefined,
     };
@@ -52,33 +46,6 @@ export function GroupCreateForm({
     <Card title='Create Group' description='Organize contacts by creating a new group.'>
       <form onSubmit={handleSubmit} className='space-y-4'>
         <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-          <FormField
-            label='Company'
-            htmlFor='companyId'
-            required
-            helpText={companies ? 'Choose a company' : 'Enter the company ID'}
-            error={touched.companyId ? errors.companyId : undefined}
-          >
-            {companies ? (
-              <Select
-                id='companyId'
-                value={companyId}
-                onChange={(e) => setCompanyId(e.target.value)}
-                options={companies}
-                className='w-full'
-                error={touched.companyId ? errors.companyId : undefined}
-              />
-            ) : (
-              <Input
-                id='companyId'
-                value={companyId}
-                onChange={(e) => setCompanyId(e.target.value)}
-                placeholder='company-id'
-                onBlur={() => setTouched((t) => ({ ...t, companyId: true }))}
-              />
-            )}
-          </FormField>
-
           <FormField label='Group Name' htmlFor='groupName' required error={touched.name ? errors.name : undefined}>
             <Input
               id='groupName'

@@ -2,12 +2,13 @@ import axios from "axios";
 import { ApiResponse } from "shared-types";
 
 export const api = axios.create({
-    baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001/api/v1',
+    // Prefer same-origin proxy in dev so cookies work without extra CORS hurdles
+    baseURL: import.meta.env.VITE_API_BASE_URL || '/api/v1',
     timeout: 10000,
     headers: {
         'Content-Type': 'application/json',
     },
-    // withCredentials: true
+    withCredentials: true,
 });
 
 export const isSuccess = <T>(response: ApiResponse<T>): response is ApiResponse<T> & { success: true } => {

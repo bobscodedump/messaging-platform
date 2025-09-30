@@ -7,10 +7,12 @@ import Textarea from '../common/ui/Textarea';
 import Button from '../common/ui/Button';
 import type { CreateTemplateDto } from 'shared-types';
 import { extractTemplateVariables, useCreateTemplate, validateTemplateInput } from '../../lib/templates/hooks';
+import { useAuth } from '../../lib/auth/auth-context';
 
-export function TemplateCreateForm({ defaultCompanyId }: { defaultCompanyId: string }) {
+export function TemplateCreateForm() {
   const [step, setStep] = useState<'edit' | 'verify' | 'done'>('edit');
-  const [form, setForm] = useState<CreateTemplateDto>({ companyId: defaultCompanyId, name: '', content: '' });
+  const { user } = useAuth();
+  const [form, setForm] = useState<CreateTemplateDto>({ companyId: user!.companyId, name: '', content: '' });
   const [errors, setErrors] = useState<Partial<Record<keyof CreateTemplateDto, string>>>({});
   const [lastCreatedName, setLastCreatedName] = useState<string | null>(null);
 
@@ -33,7 +35,7 @@ export function TemplateCreateForm({ defaultCompanyId }: { defaultCompanyId: str
     await createMutation.mutateAsync(dto);
     setLastCreatedName(form.name);
     setStep('done');
-    setForm({ companyId: defaultCompanyId, name: '', content: '' });
+    setForm({ companyId: user!.companyId, name: '', content: '' });
   };
 
   const StepIndicator = () => (

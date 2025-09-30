@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { SchedulerController } from '../../controllers/schedulerController';
+import { requireCompanyParam, attachCompanyToBody } from '../../middleware/auth';
 
 const router: Router = Router();
 const schedulerController = new SchedulerController();
@@ -8,10 +9,10 @@ const asyncHandler = (fn: any) => (req: any, res: any, next: any) =>
     Promise.resolve(fn(req, res, next)).catch(next);
 
 // Route to get all schedules for a company
-router.get('/companies/:companyId/schedules', asyncHandler(schedulerController.getSchedules.bind(schedulerController)));
+router.get('/companies/:companyId/schedules', requireCompanyParam, asyncHandler(schedulerController.getSchedules.bind(schedulerController)));
 
 // Route to create a new schedule
-router.post('/schedules', asyncHandler(schedulerController.createSchedule.bind(schedulerController)));
+router.post('/schedules', attachCompanyToBody, asyncHandler(schedulerController.createSchedule.bind(schedulerController)));
 
 // Routes for a specific schedule by its ID
 router

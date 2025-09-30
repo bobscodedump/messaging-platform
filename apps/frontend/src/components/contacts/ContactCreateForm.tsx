@@ -11,19 +11,20 @@ import type { E164Number } from 'libphonenumber-js/core';
 import '../../styles/phone-input.css';
 
 export type ContactCreateFormProps = {
-  defaultCompanyId?: string;
   onCreate: (data: CreateContactDto) => Promise<void> | void;
   loading?: boolean;
 };
 
-export function ContactCreateForm({ defaultCompanyId = 'company-1', onCreate, loading }: ContactCreateFormProps) {
+import { useAuth } from '../../lib/auth/auth-context';
+
+export function ContactCreateForm({ onCreate, loading }: ContactCreateFormProps) {
+  const { user } = useAuth();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState<E164Number | undefined>();
   const [email, setEmail] = useState('');
   const [address, setAddress] = useState('');
   const [note, setNote] = useState('');
-  const [companyId, setCompanyId] = useState(defaultCompanyId);
   const [touched, setTouched] = useState<Record<string, boolean>>({});
 
   const errors = {
@@ -31,7 +32,7 @@ export function ContactCreateForm({ defaultCompanyId = 'company-1', onCreate, lo
     lastName: lastName.trim() ? undefined : 'Last name is required',
     phoneNumber:
       phoneNumber && isValidPhoneNumber(phoneNumber) ? undefined : 'A valid Singapore phone number is required',
-    companyId: companyId.trim() ? undefined : 'Company ID is required',
+    companyId: user?.companyId ? undefined : 'Company ID is required',
   };
 
   const isValid = !errors.firstName && !errors.lastName && !errors.phoneNumber && !errors.companyId;
@@ -42,7 +43,7 @@ export function ContactCreateForm({ defaultCompanyId = 'company-1', onCreate, lo
     if (!isValid || !phoneNumber) return;
 
     const payload: CreateContactDto = {
-      companyId: companyId.trim(),
+      companyId: user!.companyId,
       firstName: firstName.trim(),
       lastName: lastName.trim(),
       phoneNumber: phoneNumber,
@@ -63,22 +64,7 @@ export function ContactCreateForm({ defaultCompanyId = 'company-1', onCreate, lo
   return (
     <Card title='Create Contact' description='Add a new contact to your address book.'>
       <form onSubmit={handleSubmit} className='space-y-4'>
-        <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-          <FormField
-            label='Company ID'
-            htmlFor='companyId'
-            required
-            error={touched.companyId ? errors.companyId : undefined}
-          >
-            <Input
-              id='companyId'
-              value={companyId}
-              onChange={(e) => setCompanyId(e.target.value)}
-              placeholder='company-id'
-              onBlur={() => setTouched((t) => ({ ...t, companyId: true }))}
-            />
-          </FormField>
-        </div>
+        {/* companyId is inferred from the authenticated user */}
         <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
           <FormField
             label='First Name'

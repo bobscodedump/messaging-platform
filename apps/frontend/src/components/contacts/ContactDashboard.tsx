@@ -7,11 +7,13 @@ import ContactsCsvImport from './ContactsCsvImport';
 import { ContactCreateForm } from './ContactCreateForm';
 import { Button } from '../common/ui/Button';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import { useAuth } from '../../lib/auth/auth-context';
 
 export function ContactDashboard() {
   const [page, setPage] = useState(1);
   const pageSize = 50; // backend currently returns all; pagination placeholder
-  const companyId = 'cmeic3bb30000oh3wub0sckq3'; // TODO: derive from auth/session or UI state
+  const { user } = useAuth();
+  const companyId = user!.companyId;
 
   const { data: contacts = [], isLoading, error } = useContacts(companyId);
   const createContactMutation = useCreateContact();
@@ -65,11 +67,7 @@ export function ContactDashboard() {
   return (
     <div className='mx-auto max-w-4xl p-6 space-y-4'>
       <h1 className='text-xl font-semibold text-neutral-900 dark:text-neutral-100'>Contacts</h1>
-      <ContactCreateForm
-        onCreate={handleCreateContact}
-        loading={createContactMutation.isPending}
-        defaultCompanyId={companyId}
-      />
+      <ContactCreateForm onCreate={handleCreateContact} loading={createContactMutation.isPending} />
       <ContactsCsvImport companyId={companyId} />
       {error ? (
         <div className='rounded-md border border-red-300 bg-red-50 p-3 text-red-700'>

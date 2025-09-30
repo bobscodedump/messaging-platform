@@ -71,7 +71,7 @@ export function GroupsSample() {
       <Section title='Groups'>
         <div className='grid grid-cols-1 gap-6 md:grid-cols-3'>
           <div className='md:col-span-1'>
-            <GroupCreateForm defaultCompanyId='company-1' onCreate={handleCreate} />
+            <GroupCreateForm onCreate={handleCreate} />
           </div>
           <div className='md:col-span-2'>
             <GroupList groups={groups} onSelect={setActiveGroupId} onDelete={handleDelete} />

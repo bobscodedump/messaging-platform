@@ -15,10 +15,11 @@ import {
   useRemoveMemberFromGroup,
 } from '../../lib/groups/hooks';
 import { useContacts } from '../../lib/contacts/hooks';
+import { useAuth } from '../../lib/auth/auth-context';
 
 export function GroupsDashboard() {
-  // You can replace this with a real company selector or session-derived value
-  const companyId = 'cmeic3bb30000oh3wub0sckq3';
+  const { user } = useAuth();
+  const companyId = user!.companyId;
 
   const { data: groups = [], isLoading: loadingGroups } = useGroups(companyId);
   const [activeGroupId, setActiveGroupId] = useState<string | null>(null);
@@ -83,11 +84,7 @@ export function GroupsDashboard() {
       <div className='grid grid-cols-1 gap-6 md:grid-cols-3'>
         {/* Left column: creation + selected group info */}
         <div className='md:col-span-1'>
-          <GroupCreateForm
-            defaultCompanyId={companyId}
-            onCreate={handleCreate}
-            loading={createGroupMutation.isPending}
-          />
+          <GroupCreateForm onCreate={handleCreate} loading={createGroupMutation.isPending} />
 
           <Card
             className='mt-6'

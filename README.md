@@ -1,40 +1,43 @@
-# Turborepo kitchen sink starter
+## Messaging Platform Monorepo
 
-This Turborepo starter is maintained by the Turborepo core team.
+Apps
+- apps/backend: Express + Prisma API
+- apps/frontend: Vite + React SPA
 
-This example also shows how to use [Workspace Configurations](https://turborepo.com/docs/core-concepts/monorepos/configuring-workspaces).
+Packages
+- packages/shared-types, logger, jest-presets, eslint and tsconfig bases
 
-## Using this example
+### Development
+- Backend: pnpm -F backend dev
+- Frontend: pnpm -F frontend dev (Vite proxies /api to backend)
 
-Run the following command:
+### Auth overview
+- JWT-based auth (Bearer tokens) using Passport JWT on the backend
+- Frontend stores token in localStorage and injects Authorization header using an axios interceptor
+- All API routes under /api/v1 (except /auth/login, /auth/refresh and /status) require a valid JWT
 
-```sh
-npx create-turbo@latest -e kitchen-sink
-```
+Backend endpoints
+- POST /api/v1/auth/login { email, password } -> { token }
+- GET /api/v1/auth/me -> current user profile
+- POST /api/v1/auth/refresh -> rotates refresh cookie and returns a new access token
+- POST /api/v1/auth/logout -> clears refresh cookie
 
-## What's inside?
+Company scoping
+- Users belong to a company; protected routes validate companyId params against the token
+- Create endpoints auto-attach companyId from the authenticated user when not provided
 
-This Turborepo includes the following packages and apps:
+Environment variables
+- JWT_SECRET: secret for signing tokens (required in production)
+- JWT_EXPIRES_IN: token lifetime (default 2h). Examples: "2h", "1d"
+- REFRESH_SECRET: secret for refresh tokens (defaults to JWT_SECRET + '_refresh')
+- REFRESH_EXPIRES_IN: refresh token lifetime (default 7d)
+- DATABASE_URL: Prisma database connection string
 
-### Apps and Packages
+Frontend behavior
+- Unauthenticated users are redirected to /login
+- On 401/403 responses, the app first calls /auth/refresh once and retries the request. If refresh fails, it logs out and redirects to /login?next=...
+- After successful login, the app navigates to the requested page from the next param or to /
 
-- `api`: an [Express](https://expressjs.com/) server
-- `storefront`: a [Next.js](https://nextjs.org/) app
-- `admin`: a [Vite](https://vitejs.dev/) single page app
-- `blog`: a [Remix](https://remix.run/) blog
-- `@repo/eslint-config`: ESLint configurations used throughout the monorepo
-- `@repo/jest-presets`: Jest configurations
-- `@repo/logger`: isomorphic logger (a small wrapper around console.log)
-- `@repo/ui`: a dummy React UI library (which contains `<CounterButton>` and `<Link>` components)
-- `@repo/typescript-config`: tsconfig.json's used throughout the monorepo
-
-Each package and app is 100% [TypeScript](https://www.typescriptlang.org/).
-
-### Utilities
-
-This Turborepo has some additional tools already setup for you:
-
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Jest](https://jestjs.io) test runner for all things JavaScript
-- [Prettier](https://prettier.io) for code formatting
+Testing
+- Backend tests: pnpm -F backend test
+- The scheduler is disabled during tests (NODE_ENV=test)

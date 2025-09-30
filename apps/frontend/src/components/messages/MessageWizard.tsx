@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useAuth } from '../../lib/auth/auth-context';
 import Card from '../common/layout/Card';
 import Button from '../common/ui/Button';
 import { useMessageRecipients } from '../../lib/messages/hooks';
@@ -17,7 +18,8 @@ function resolveTemplate(template: string, contact: Contact, fallbacks: Record<s
 }
 
 export default function MessageWizard() {
-  const companyId = 'cmeic3bb30000oh3wub0sckq3';
+  const { user } = useAuth();
+  const companyId = user!.companyId;
   const [step, setStep] = useState<Step>('recipients');
 
   // Step 1 state

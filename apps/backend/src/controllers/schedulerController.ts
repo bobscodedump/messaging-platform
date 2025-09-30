@@ -5,7 +5,7 @@ import { ScheduleType } from '@prisma/client';
 
 const createScheduleSchema = z.object({
     companyId: z.string(),
-    userId: z.string(),
+    userId: z.string().optional(),
     templateId: z.string().optional(),
     variables: z.record(z.string(), z.string()).optional(),
     name: z.string(),
@@ -22,7 +22,10 @@ const updateScheduleSchema = createScheduleSchema.partial().omit({ companyId: tr
 export class SchedulerController {
     async createSchedule(req: Request, res: Response, next: NextFunction) {
         try {
-            const data = createScheduleSchema.parse(req.body);
+            const parsed = createScheduleSchema.parse(req.body);
+            const authedUserId = (req.user as any)?.id;
+            if (!authedUserId) return res.status(401).json({ success: false, message: 'Unauthorized' });
+            const data = { ...parsed, userId: authedUserId };
             // Additional validation: prevent past ONE_TIME
             if (data.scheduleType === 'ONE_TIME' && data.scheduledAt) {
                 const when = new Date(data.scheduledAt);

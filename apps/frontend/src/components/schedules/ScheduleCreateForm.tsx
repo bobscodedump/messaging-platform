@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useAuth } from '../../lib/auth/auth-context';
 import Card from '../common/layout/Card';
 import FormField from '../common/ui/FormField';
 import Input from '../common/ui/Input';
@@ -10,8 +11,8 @@ import { useTemplates } from '../../lib/templates/hooks';
 import { useCreateSchedule } from '../../lib/schedules/hooks';
 
 export default function ScheduleCreateForm() {
-  const companyId = 'cmeic3bb30000oh3wub0sckq3';
-  const userId = 'user-demo-1';
+  const { user } = useAuth();
+  const companyId = user!.companyId;
   const { data: contacts = [] } = useContacts(companyId);
   const { data: groups = [] } = useGroups(companyId);
   const { data: templates = [] } = useTemplates(companyId);
@@ -93,8 +94,6 @@ export default function ScheduleCreateForm() {
 
   async function onSubmit() {
     const dto = {
-      companyId,
-      userId,
       name,
       scheduleType,
       content: messageSource === 'content' ? content : '',

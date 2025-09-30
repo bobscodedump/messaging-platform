@@ -16,7 +16,7 @@ export function GroupList({ groups, onSelect, onDelete, loading }: GroupListProp
   };
 
   return (
-    <Card title="Groups" description="Browse and manage your groups.">
+    <Card title='Groups' description='Browse and manage your groups.'>
       {loading ? (
         <div className='py-8 text-center text-sm text-neutral-500'>Loading…</div>
       ) : (
