@@ -1,8 +1,12 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { PrismaClient, ScheduleType, RecipientType, Prisma } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
 import type { Template, ScheduledMessageSummary, CreateScheduleDto } from 'shared-types';
+const SCHEDULE_TYPE_VALUES = ['ONE_TIME', 'BIRTHDAY', 'WEEKLY', 'MONTHLY', 'YEARLY'] as const;
+type ScheduleTypeValue = (typeof SCHEDULE_TYPE_VALUES)[number];
+type RecipientTypeValue = 'CONTACT' | 'GROUP';
+
 
 const COMPANY_ID = process.env.MCP_COMPANY_ID ?? process.env.DEFAULT_COMPANY_ID;
 const USER_ID = process.env.MCP_USER_ID ?? process.env.DEFAULT_USER_ID;
@@ -189,7 +193,7 @@ function applyUserVariablesPreservingBuiltIns(templateContent: string, userVars:
 const scheduleCreateSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   content: z.string().optional(),
-  scheduleType: z.nativeEnum(ScheduleType),
+  scheduleType: z.enum(SCHEDULE_TYPE_VALUES),
   templateId: z.string().min(1).optional(),
   variables: z.record(z.string(), z.string()).optional(),
   scheduledAt: z.string().datetime().optional(),
@@ -558,11 +562,11 @@ async function main() {
       inputSchema: scheduleCreateSchema.shape
     },
     async (input: z.infer<typeof scheduleCreateSchema>) => {
-      const parsed = scheduleCreateSchema.parse(input);
-      const userId = parsed.userId ?? ensureUserId();
-      const contactIds = parsed.contactIds ?? [];
-      const groupIds = parsed.groupIds ?? [];
-      const scheduleType = parsed.scheduleType;
+  const parsed = scheduleCreateSchema.parse(input);
+  const userId = parsed.userId ?? ensureUserId();
+  const contactIds: string[] = parsed.contactIds ?? [];
+  const groupIds: string[] = parsed.groupIds ?? [];
+  const scheduleType = parsed.scheduleType as ScheduleTypeValue;
 
       if (scheduleType === 'ONE_TIME' && parsed.scheduledAt) {
         const scheduledAtDate = new Date(parsed.scheduledAt);
@@ -584,7 +588,7 @@ async function main() {
         }
 
         const requiredVars = template.variables ?? [];
-        const suppliedVars = parsed.variables ?? {};
+  const suppliedVars: Record<string, string> = parsed.variables ?? {};
         const builtInPrefixes = ['contact.', 'company.'];
         const missing = requiredVars.filter((variable) => !(variable in suppliedVars) && !builtInPrefixes.some((prefix) => variable.startsWith(prefix)));
         if (missing.length > 0) {
@@ -621,7 +625,7 @@ async function main() {
       }
 
       const scheduledAtDate = parsed.scheduledAt ? new Date(parsed.scheduledAt) : undefined;
-      const createData: Prisma.ScheduledMessageCreateArgs['data'] = {
+      const createData = {
         companyId,
         userId,
         name: parsed.name,
@@ -629,23 +633,20 @@ async function main() {
         scheduleType,
         scheduledAt: scheduledAtDate,
         recurringPattern: parsed.recurringPattern,
+        templateId: parsed.templateId,
         recipients: {
           create: [
             ...contactIds.map((contactId) => ({
-              recipientType: RecipientType.CONTACT,
+              recipientType: 'CONTACT' as RecipientTypeValue,
               contactId
             })),
             ...groupIds.map((groupId) => ({
-              recipientType: RecipientType.GROUP,
+              recipientType: 'GROUP' as RecipientTypeValue,
               groupId
             }))
           ]
         }
       };
-
-      if (parsed.templateId) {
-        createData.templateId = parsed.templateId;
-      }
 
       const schedule = await prisma.scheduledMessage.create({
         data: createData,
