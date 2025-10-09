@@ -587,10 +587,10 @@ async function main() {
                     throw new Error('Template not found for this company.');
                 }
 
-                const requiredVars = template.variables ?? [];
+                const requiredVars: string[] = template.variables ?? [];
                 const suppliedVars: Record<string, string> = parsed.variables ?? {};
                 const builtInPrefixes = ['contact.', 'company.'];
-                const missing = requiredVars.filter((variable) => !(variable in suppliedVars) && !builtInPrefixes.some((prefix) => variable.startsWith(prefix)));
+                const missing = requiredVars.filter((variable: string) => !(variable in suppliedVars) && !builtInPrefixes.some((prefix) => variable.startsWith(prefix)));
                 if (missing.length > 0) {
                     throw Object.assign(
                         new Error(`Missing variables: ${missing.join(', ')}`),
