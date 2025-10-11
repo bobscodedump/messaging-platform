@@ -22,7 +22,7 @@ async function main() {
     });
 
     // Upsert user under that company
-    const passwordHash = await bcrypt.hash('', 10);
+    const passwordHash = await bcrypt.hash('demo-password', 10);
     const user = await prisma.user.upsert({
       where: { id: demoUserId },
       update: { firstName: 'Demo', lastName: 'User', email: 'demo@example.com', role: 'COMPANY_ADMIN' },

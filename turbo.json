@@ -30,6 +30,9 @@
       "cache": false,
       "persistent": true
     },
+    "db:reset": {
+      "cache": false
+    },
     "db:deploy": {
       "cache": false
     },

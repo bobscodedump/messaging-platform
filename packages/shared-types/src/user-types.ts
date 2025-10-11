@@ -1,4 +1,20 @@
-import type { UserRole } from '@prisma/client';
+import { UserRole } from '@prisma/client';
+import { z } from 'zod';
+
+export const userSchema = z.object({
+    id: z.string(),
+    companyId: z.string(),
+    email: z.string().email(),
+    firstName: z.string().min(1),
+    lastName: z.string().min(1),
+    role: z.nativeEnum(UserRole),
+    isActive: z.boolean().optional(),
+    lastLoginAt: z.string().nullable().optional(),
+    createdAt: z.string().optional(),
+    updatedAt: z.string().optional(),
+});
+
+export type User = z.infer<typeof userSchema>;
 
 export interface CreateUserDto {
     companyId: string;
@@ -8,6 +24,15 @@ export interface CreateUserDto {
     lastName: string;
     role: UserRole;
 }
+
+export const updateUserSchema = z.object({
+    email: z.string().email().optional(),
+    firstName: z.string().min(1).optional(),
+    lastName: z.string().min(1).optional(),
+    role: z.nativeEnum(UserRole).optional(),
+});
+
+export type UpdateUserDto = z.infer<typeof updateUserSchema>;
 
 // model User {
 //   id          String   @id @default(cuid())

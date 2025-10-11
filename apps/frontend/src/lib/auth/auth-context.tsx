@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useState, useCallback } from 'react';
 import { api, post } from '../api/api-client';
 
 type User = {
@@ -16,6 +16,7 @@ type AuthState = {
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
+  refreshUser: () => Promise<void>;
 };
 
 const AuthCtx = createContext<AuthState | undefined>(undefined);
@@ -53,8 +54,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       async (error) => {
         const status = error?.response?.status;
         const original = error?.config;
-        if ((status === 401 || status === 403) && original && !original.__isRetry) {
-          // Try refresh once
+        const url: string | undefined = original?.url;
+        const isAuthEndpoint = typeof url === 'string' && url.includes('/auth/');
+        const isRefreshRequest = typeof url === 'string' && url.includes('/auth/refresh');
+
+        if ((status === 401 || status === 403) && original && !original.__isRetry && !isAuthEndpoint) {
+          // Try refresh once for non-auth endpoints
           original.__isRetry = true;
           try {
             const resp = await api.post('/auth/refresh');
@@ -70,12 +75,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             // fallthrough to logout
           }
         }
-        if (status === 401 || status === 403) {
+
+  if (status === 401 || status === 403 || isRefreshRequest || isAuthEndpoint) {
           try {
-            // Best-effort clear server cookie
-            try {
-              await api.post('/auth/logout');
-            } catch {}
+            if (!isRefreshRequest) {
+              // Best-effort clear server cookie unless refresh already failed
+              try {
+                await api.post('/auth/logout');
+              } catch {}
+            }
             setAuthToken(null);
             setUser(null);
             setToken(null);
@@ -148,7 +156,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     window.location.assign('/login');
   };
 
-  const value = useMemo<AuthState>(() => ({ user, token, loading, login, logout }), [user, token, loading]);
+  const refreshUser = useCallback(async () => {
+    const t = getAuthToken();
+    if (!t) {
+      setUser(null);
+      setToken(null);
+      return;
+    }
+    try {
+      const me = await api.get('/auth/me');
+      const json = me.data as any;
+      if (json?.success) setUser(json.data);
+    } catch {
+      setAuthToken(null);
+      setUser(null);
+      setToken(null);
+    }
+  }, []);
+
+  const value = useMemo<AuthState>(
+    () => ({ user, token, loading, login, logout, refreshUser }),
+    [user, token, loading, refreshUser]
+  );
   return <AuthCtx.Provider value={value}>{children}</AuthCtx.Provider>;
 };
 
