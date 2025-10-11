@@ -76,7 +76,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         }
 
-  if (status === 401 || status === 403 || isRefreshRequest || isAuthEndpoint) {
+        if (status === 401 || status === 403 || isRefreshRequest || isAuthEndpoint) {
           try {
             if (!isRefreshRequest) {
               // Best-effort clear server cookie unless refresh already failed

@@ -55,8 +55,8 @@ describe('CompanyController', () => {
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
         };
-    const updateMock = prisma.company.update as any;
-    updateMock.mockResolvedValue(mockCompany);
+        const updateMock = prisma.company.update as any;
+        updateMock.mockResolvedValue(mockCompany);
         const req: any = {
             params: { companyId: 'company-1' },
             body: { name: 'New Name' },
