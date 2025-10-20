@@ -1,6 +1,7 @@
 import prisma from '../../prisma/db';
 import { Prisma, ScheduleType, RecipientType } from '@prisma/client';
 import { applyUserVariablesPreservingBuiltIns } from './templateRender';
+import { computeNextExecutionAt } from './schedulerUtils';
 
 interface CreateScheduleDto {
     companyId: string;
@@ -87,6 +88,35 @@ class ScheduledMessageService {
                 throw Object.assign(new Error('At least one selected contact must have a birth date for BIRTHDAY schedules'), { status: 400, code: 'SCHEDULE_BIRTHDAY_NO_CONTACT_BIRTHDAYS' });
             }
         }
+        if (scheduleType !== 'ONE_TIME' && !recurringPattern) {
+            const err: any = new Error('Recurring schedules require a recurringPattern payload');
+            err.status = 400;
+            err.code = 'SCHEDULE_PATTERN_REQUIRED';
+            throw err;
+        }
+
+        const now = new Date();
+
+        const nextExecutionAt = computeNextExecutionAt({
+            scheduleType,
+            scheduledAt,
+            recurringPattern,
+            from: now,
+        });
+
+        if (scheduleType === 'ONE_TIME') {
+            if (!scheduledAt) {
+                const err: any = new Error('scheduledAt must be provided for ONE_TIME schedules');
+                err.status = 400;
+                err.code = 'SCHEDULE_TIME_REQUIRED';
+                throw err;
+            }
+        } else if (!nextExecutionAt) {
+            const err: any = new Error('Unable to compute a next execution for this schedule');
+            err.status = 400;
+            err.code = 'SCHEDULE_NEXT_TIME_UNDETERMINED';
+            throw err;
+        }
 
         const createData: any = {
             companyId,
@@ -110,6 +140,12 @@ class ScheduledMessageService {
             },
         };
         if (templateId) createData.templateId = templateId;
+        if (nextExecutionAt) {
+            createData.nextExecutionAt = nextExecutionAt;
+        }
+        if (scheduleType !== 'ONE_TIME' && !scheduledAt) {
+            createData.scheduledAt = nextExecutionAt;
+        }
 
         return prisma.scheduledMessage.create({
             data: createData,
@@ -152,25 +188,19 @@ class ScheduledMessageService {
             throw err;
         }
 
-        const transactionSteps: Prisma.PrismaPromise<any>[] = [
-            prisma.scheduledMessage.update({
+        return prisma.$transaction(async (tx) => {
+            await tx.scheduledMessage.update({
                 where: { id },
                 data: cleanedUpdateData,
-            }),
-        ];
+            });
 
-        if (contactIds || groupIds) {
-            // If recipients are being updated, first remove existing ones
-            transactionSteps.push(
-                prisma.scheduledMessageRecipient.deleteMany({
+            if (contactIds || groupIds) {
+                await tx.scheduledMessageRecipient.deleteMany({
                     where: { scheduledMessageId: id },
-                })
-            );
+                });
 
-            // Then, create the new recipient links
-            if (contactIds?.length || groupIds?.length) {
-                transactionSteps.push(
-                    prisma.scheduledMessage.update({
+                if (contactIds?.length || groupIds?.length) {
+                    await tx.scheduledMessage.update({
                         where: { id },
                         data: {
                             recipients: {
@@ -186,12 +216,52 @@ class ScheduledMessageService {
                                 ],
                             },
                         },
-                    })
-                );
+                    });
+                }
             }
-        }
 
-        return prisma.$transaction(transactionSteps);
+            const refreshed = await tx.scheduledMessage.findUnique({
+                where: { id },
+                include: {
+                    recipients: {
+                        include: {
+                            contact: true,
+                            group: true,
+                        },
+                    },
+                },
+            });
+
+            if (!refreshed) {
+                throw new Error('Schedule not found after update');
+            }
+
+            const nextExecutionAt = refreshed.isActive
+                ? computeNextExecutionAt({
+                    scheduleType: refreshed.scheduleType,
+                    scheduledAt: refreshed.scheduledAt,
+                    recurringPattern: refreshed.recurringPattern,
+                    from: new Date(),
+                })
+                : null;
+
+            const final = await tx.scheduledMessage.update({
+                where: { id },
+                data: {
+                    nextExecutionAt,
+                },
+                include: {
+                    recipients: {
+                        include: {
+                            contact: true,
+                            group: true,
+                        },
+                    },
+                },
+            });
+
+            return final;
+        });
     }
 
     async deleteSchedule(id: string) {

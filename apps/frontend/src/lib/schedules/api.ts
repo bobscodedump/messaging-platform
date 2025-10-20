@@ -1,5 +1,24 @@
-import { get, post, put, del } from '../api/api-client';
+import { get, post, put, del, postFormData } from '../api/api-client';
 import type { CreateScheduleDto, ScheduledMessageSummary } from 'shared-types';
+
+export async function importSchedulesCsv(companyId: string, file: File) {
+    const form = new FormData();
+    form.append('file', file);
+    const json = await postFormData<{
+        success: boolean;
+        message?: string;
+        data?: {
+            createdCount: number;
+            errorCount: number;
+            created: any[];
+            errors: { index: number; error: string; row?: string }[];
+        };
+    }>(`/companies/${companyId}/schedules/import`, form);
+    if (!json.success) {
+        throw new Error(json.message || 'CSV import failed');
+    }
+    return json.data!;
+}
 
 export async function getSchedules(companyId: string) {
     return get<ScheduledMessageSummary[]>(`/companies/${companyId}/schedules`);

@@ -1,7 +1,11 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response, NextFunction, RequestHandler } from 'express';
 import { z } from 'zod';
 import { scheduledMessageService } from '../services/scheduledMessageService';
 import { ScheduleType } from '@prisma/client';
+import multer from 'multer';
+import { scheduleCsvImportService } from '../services/csvService';
+
+const upload = multer({ storage: multer.memoryStorage() });
 
 const createScheduleSchema = z.object({
     companyId: z.string(),
@@ -95,4 +99,25 @@ export class SchedulerController {
             next(error);
         }
     }
+
+    // CSV import
+    uploadMiddleware = upload.single('file');
+
+    importSchedules: RequestHandler = async (req, res) => {
+        const companyId = req.params.companyId;
+        const authedUserId = (req.user as any)?.id;
+        if (!authedUserId) {
+            return res.status(401).json({ success: false, message: 'Unauthorized' });
+        }
+        if (!req.file) {
+            return res.status(400).json({ success: false, message: 'No file uploaded (field name: file).' });
+        }
+        try {
+            const text = req.file.buffer.toString('utf-8');
+            const result = await scheduleCsvImportService.importSchedules(companyId, authedUserId, text);
+            res.status(201).json({ success: true, message: 'Import completed', data: result });
+        } catch (e: any) {
+            res.status(500).json({ success: false, message: 'Import failed', error: e.message });
+        }
+    };
 }

@@ -67,3 +67,17 @@ export function useDeleteSchedule(companyId?: string) {
         },
     });
 }
+
+export function useImportSchedules(companyId: string) {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: async (file: File) => {
+            const { importSchedulesCsv } = await import('./api');
+            const result = await importSchedulesCsv(companyId, file);
+            return result;
+        },
+        onSuccess: () => {
+            qc.invalidateQueries({ queryKey: ['schedules', companyId] });
+        },
+    });
+}

@@ -2,6 +2,7 @@ import * as cron from 'node-cron';
 import prisma from '../../prisma/db';
 import { messageService } from './messageService';
 import { ScheduledMessage, ScheduledMessageRecipient, Contact, Group, GroupMember } from '@prisma/client';
+import { computeNextExecutionAt, isBirthdayToday } from './schedulerUtils';
 
 type FullScheduledMessage = ScheduledMessage & {
     recipients: (ScheduledMessageRecipient & {
@@ -37,16 +38,24 @@ class SchedulerService {
         console.log(`[${new Date().toISOString()}] Checking for scheduled messages...`);
         const now = new Date();
 
-        // For now, we will only handle ONE_TIME schedules.
-        // Recurring schedules (WEEKLY, MONTHLY, etc.) will require a more complex check involving cron-parser.
         const dueSchedules = await prisma.scheduledMessage.findMany({
             where: {
                 isActive: true,
-                scheduleType: 'ONE_TIME',
-                scheduledAt: {
-                    lte: now,
-                },
-                lastExecutedAt: null, // Make sure it hasn't been executed yet
+                OR: [
+                    {
+                        nextExecutionAt: {
+                            lte: now,
+                        },
+                    },
+                    {
+                        nextExecutionAt: null,
+                        scheduleType: 'ONE_TIME',
+                        scheduledAt: {
+                            lte: now,
+                        },
+                        lastExecutedAt: null,
+                    },
+                ],
             },
             include: {
                 recipients: {
@@ -67,55 +76,109 @@ class SchedulerService {
         });
 
         if (dueSchedules.length > 0) {
-            console.log(`Found ${dueSchedules.length} one-time schedule(s) to process.`);
+            console.log(`Found ${dueSchedules.length} schedule(s) to process.`);
         }
 
         for (const schedule of dueSchedules) {
-            const recipientContactIds = this.getUniqueContactIds(schedule as FullScheduledMessage);
-
-            if (recipientContactIds.length > 0) {
-                if (!schedule.content || schedule.content.trim().length === 0) {
-                    console.warn(`Schedule "${schedule.name}" has no content. Skipping send.`);
-                    continue;
-                }
-                console.log(`Processing schedule "${schedule.name}" for ${recipientContactIds.length} recipients.`);
-
-                // Render built-ins at send time (content may still contain built-in placeholders)
-                await messageService.sendPersonalizedContentToRecipients(
-                    schedule.companyId,
-                    schedule.userId,
-                    schedule.content,
-                    recipientContactIds
-                );
-
-                // Mark the one-time schedule as executed and inactive
-                await prisma.scheduledMessage.update({
-                    where: { id: schedule.id },
-                    data: {
-                        lastExecutedAt: now,
-                        isActive: false
-                    },
-                });
-            }
+            await this.processSchedule(schedule as FullScheduledMessage, now);
         }
     }
 
-    private getUniqueContactIds(schedule: FullScheduledMessage): string[] {
-        const contactIds = new Set<string>();
+    private async processSchedule(schedule: FullScheduledMessage, now: Date) {
+        if (!schedule.content || schedule.content.trim().length === 0) {
+            console.warn(`Schedule "${schedule.name}" has no content. Skipping.`);
+            await this.scheduleNextRun(schedule, now, false);
+            return;
+        }
+
+        const contacts = this.collectRecipientContacts(schedule);
+
+        let targetContactIds: string[] = [];
+
+        if (schedule.scheduleType === 'BIRTHDAY') {
+            targetContactIds = contacts
+                .filter((contact) => contact.birthDate && isBirthdayToday(contact.birthDate, now))
+                .map((contact) => contact.id);
+
+            if (targetContactIds.length === 0) {
+                console.log(`No birthday matches for schedule "${schedule.name}" today.`);
+                await this.scheduleNextRun(schedule, now, false);
+                return;
+            }
+        } else {
+            targetContactIds = contacts.map((contact) => contact.id);
+        }
+
+        if (targetContactIds.length === 0) {
+            console.warn(`Schedule "${schedule.name}" has no recipients after expansion.`);
+            await this.scheduleNextRun(schedule, now, false);
+            return;
+        }
+
+        console.log(`Processing schedule "${schedule.name}" for ${targetContactIds.length} recipients.`);
+
+        await messageService.sendPersonalizedContentToRecipients(
+            schedule.companyId,
+            schedule.userId,
+            schedule.content,
+            targetContactIds
+        );
+
+        await this.scheduleNextRun(schedule, now, true);
+    }
+
+    private collectRecipientContacts(schedule: FullScheduledMessage): Contact[] {
+        const contacts = new Map<string, Contact>();
 
         schedule.recipients.forEach((recipient) => {
             if (recipient.recipientType === 'CONTACT' && recipient.contact) {
-                contactIds.add(recipient.contact.id);
+                contacts.set(recipient.contact.id, recipient.contact);
             } else if (recipient.recipientType === 'GROUP' && recipient.group) {
                 recipient.group.members.forEach((member) => {
                     if (member.contact) {
-                        contactIds.add(member.contact.id);
+                        contacts.set(member.contact.id, member.contact);
                     }
                 });
             }
         });
 
-        return Array.from(contactIds);
+        return Array.from(contacts.values());
+    }
+
+    private async scheduleNextRun(schedule: FullScheduledMessage, now: Date, executed: boolean) {
+        const nextExecutionAt = schedule.scheduleType === 'ONE_TIME'
+            ? null
+            : computeNextExecutionAt({
+                scheduleType: schedule.scheduleType,
+                scheduledAt: schedule.scheduledAt,
+                recurringPattern: schedule.recurringPattern,
+                from: new Date(now.getTime() + 60_000),
+            });
+
+        const data: any = {
+            lastExecutedAt: executed ? now : schedule.lastExecutedAt,
+        };
+
+        if (schedule.scheduleType === 'ONE_TIME') {
+            data.isActive = false;
+            data.nextExecutionAt = null;
+            if (!schedule.lastExecutedAt) {
+                data.lastExecutedAt = now;
+            }
+        } else {
+            data.nextExecutionAt = nextExecutionAt;
+            if (executed) {
+                data.lastExecutedAt = now;
+            }
+            if (!nextExecutionAt) {
+                data.isActive = false;
+            }
+        }
+
+        await prisma.scheduledMessage.update({
+            where: { id: schedule.id },
+            data,
+        });
     }
 }
 

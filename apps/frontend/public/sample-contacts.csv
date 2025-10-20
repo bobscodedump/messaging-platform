@@ -1,1 +1,4 @@
 firstName,lastName,phoneNumber,email,address,birthDate,note,groups
+Ada,Lovelace,+1-555-0101,ada@example.com,"123 Computing St, London",1815-12-10,First computer programmer,VIP
+Grace,Hopper,+1-555-0102,grace@example.com,"456 Navy Ave, NY",12/09/1906,Invented COBOL,"Staff,All"
+Alan,Turing,+1-555-0103,alan@example.com,"789 Enigma Rd, Cambridge",6/23/1912,Father of computer science,VIP

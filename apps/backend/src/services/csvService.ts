@@ -27,6 +27,37 @@ interface ParsedCsvResult {
     header: string[];
 }
 
+// Parse a CSV line respecting quoted fields (RFC 4180 compliant)
+function parseCsvLine(line: string): string[] {
+    const result: string[] = [];
+    let current = '';
+    let inQuotes = false;
+    
+    for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        const nextChar = line[i + 1];
+        
+        if (char === '"') {
+            if (inQuotes && nextChar === '"') {
+                // Escaped quote
+                current += '"';
+                i++; // Skip next quote
+            } else {
+                // Toggle quote state
+                inQuotes = !inQuotes;
+            }
+        } else if (char === ',' && !inQuotes) {
+            // Field separator
+            result.push(current.trim());
+            current = '';
+        } else {
+            current += char;
+        }
+    }
+    result.push(current.trim());
+    return result;
+}
+
 function parseCsv(text: string, { maxRows = 2000 }: { maxRows?: number } = {}): ParsedCsvResult {
     const errors: { index: number; error: string }[] = [];
     if (!text || !text.trim()) {
@@ -36,7 +67,7 @@ function parseCsv(text: string, { maxRows = 2000 }: { maxRows?: number } = {}): 
     if (lines.length === 0) {
         return { rows: [], errors: [{ index: -1, error: 'No data lines' }], header: [] };
     }
-    const header = lines[0].split(',').map(h => h.trim());
+    const header = parseCsvLine(lines[0]);
     const missing = REQUIRED_HEADERS.filter(h => !header.includes(h));
     if (missing.length) {
         errors.push({ index: -1, error: `Missing required headers: ${missing.join(', ')}` });
@@ -49,7 +80,7 @@ function parseCsv(text: string, { maxRows = 2000 }: { maxRows?: number } = {}): 
     for (let i = 1; i <= limit; i++) {
         const raw = lines[i];
         if (!raw) continue;
-        const cols = raw.split(',').map(c => c.trim());
+        const cols = parseCsvLine(raw);
         const row: any = {};
         header.forEach((h, idx) => {
             row[h] = cols[idx] ?? '';
@@ -93,6 +124,49 @@ function normalizeToIsoDate(raw: string): string | undefined {
             if (!isNaN(dt.getTime())) return iso;
         }
     }
+    return undefined;
+}
+
+// Normalize datetime formats to ISO 8601 (YYYY-MM-DDTHH:mm:ssZ)
+// Supported formats:
+//   - ISO with timezone: "2025-12-01T10:00:00Z" or "2025-12-01T10:00:00-05:00"
+//   - ISO without timezone: "2025-12-01T10:00:00" (assumes UTC)
+//   - Date and time with space: "2025-12-01 10:00" or "2025-12-01 10:00:00" (assumes UTC)
+//   - Date with slash and time: "2025/12/01 10:00" (assumes UTC)
+//   - US format with time: "12/01/2025 10:00" or "12-01-2025 10:00" (assumes UTC)
+// Returns undefined if input cannot be parsed
+function normalizeToIsoDateTime(raw: string): string | undefined {
+    const trimmed = raw.trim();
+    if (!trimmed) return undefined;
+
+    // Pattern: YYYY-MM-DD HH:mm or YYYY-MM-DD HH:mm:ss (space or T separator, no timezone)
+    let m = trimmed.match(/^(\d{4})[-/](\d{2})[-/](\d{2})[T\s](\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+    if (m) {
+        const [, year, month, day, hour, minute, second = '00'] = m;
+        const isoStr = `${year}-${month}-${day}T${hour.padStart(2, '0')}:${minute}:${second.padStart(2, '0')}Z`;
+        const dt = new Date(isoStr);
+        if (!isNaN(dt.getTime())) return dt.toISOString();
+    }
+
+    // Pattern: MM/DD/YYYY HH:mm or MM-DD-YYYY HH:mm (US format with time)
+    m = trimmed.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})[T\s](\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+    if (m) {
+        const [, month, day, year, hour, minute, second = '00'] = m;
+        const mm = month.padStart(2, '0');
+        const dd = day.padStart(2, '0');
+        const hh = hour.padStart(2, '0');
+        const isoStr = `${year}-${mm}-${dd}T${hh}:${minute}:${second.padStart(2, '0')}Z`;
+        const dt = new Date(isoStr);
+        if (!isNaN(dt.getTime())) return dt.toISOString();
+    }
+
+    // Try parsing as-is last (handles full ISO with timezone)
+    // This handles formats like "2025-12-01T10:00:00Z" or "2025-12-01T10:00:00-05:00"
+    const dt = new Date(trimmed);
+    if (!isNaN(dt.getTime())) {
+        return dt.toISOString();
+    }
+
     return undefined;
 }
 
@@ -246,3 +320,253 @@ export class CsvImportService {
 }
 
 export const csvImportService = new CsvImportService();
+
+// =========== Schedule CSV Import ===========
+
+export interface ImportedScheduleRow {
+    name: string;
+    scheduleType: string; // ONE_TIME, WEEKLY, MONTHLY, YEARLY, BIRTHDAY
+    content: string;
+    recipientContacts?: string; // comma/semicolon separated contact names "FirstName LastName"
+    recipientGroups?: string; // comma/semicolon separated group names
+    scheduledAt?: string; // ISO datetime for ONE_TIME
+    recurringDay?: string; // For WEEKLY: MO, TU, WE, TH, FR, SA, SU
+    recurringDayOfMonth?: string; // For MONTHLY: 1-28
+    recurringMonth?: string; // For YEARLY: 1-12
+    recurringDayOfYear?: string; // For YEARLY: 1-31
+}
+
+const SCHEDULE_REQUIRED_HEADERS = [
+    'name',
+    'scheduleType',
+    'content',
+    'recipientContacts',
+    'recipientGroups',
+    'scheduledAt',
+    'recurringDay',
+    'recurringDayOfMonth',
+    'recurringMonth',
+    'recurringDayOfYear',
+];
+
+interface ParsedScheduleCsvResult {
+    rows: ImportedScheduleRow[];
+    errors: { index: number; error: string }[];
+    header: string[];
+}
+
+function parseSchedulesCsv(
+    text: string,
+    { maxRows = 500 }: { maxRows?: number } = {}
+): ParsedScheduleCsvResult {
+    const errors: { index: number; error: string }[] = [];
+    if (!text || !text.trim()) {
+        return { rows: [], errors: [{ index: -1, error: 'Empty file' }], header: [] };
+    }
+    const lines = text.split(/\r?\n/).filter((l) => l.trim().length > 0);
+    if (lines.length === 0) {
+        return { rows: [], errors: [{ index: -1, error: 'No data lines' }], header: [] };
+    }
+    const header = parseCsvLine(lines[0]);
+    const missing = SCHEDULE_REQUIRED_HEADERS.filter((h) => !header.includes(h));
+    if (missing.length) {
+        errors.push({ index: -1, error: `Missing required headers: ${missing.join(', ')}` });
+    }
+    if (lines.length - 1 > maxRows) {
+        errors.push({ index: -1, error: `Row limit exceeded. Max ${maxRows} rows allowed.` });
+    }
+    const rows: ImportedScheduleRow[] = [];
+    const limit = Math.min(lines.length - 1, maxRows);
+    for (let i = 1; i <= limit; i++) {
+        const raw = lines[i];
+        if (!raw) continue;
+        const cols = parseCsvLine(raw);
+        const row: any = {};
+        header.forEach((h, idx) => {
+            row[h] = cols[idx] ?? '';
+        });
+        rows.push(row as ImportedScheduleRow);
+    }
+    return { rows, errors, header };
+}
+
+export class ScheduleCsvImportService {
+    async importSchedules(companyId: string, userId: string, csvContent: string) {
+        const { rows, errors: parseErrors } = parseSchedulesCsv(csvContent, { maxRows: 500 });
+        const created: any[] = [];
+        const errors: any[] = [...parseErrors];
+
+        for (let index = 0; index < rows.length; index++) {
+            const row = rows[index];
+            try {
+                if (!row.name?.trim()) throw new Error('Missing name');
+                if (!row.scheduleType?.trim()) throw new Error('Missing scheduleType');
+                if (!row.content?.trim()) throw new Error('Missing content');
+
+                const scheduleType = row.scheduleType.trim().toUpperCase();
+                const validTypes = ['ONE_TIME', 'WEEKLY', 'MONTHLY', 'YEARLY', 'BIRTHDAY'];
+                if (!validTypes.includes(scheduleType)) {
+                    throw new Error(`Invalid scheduleType: ${row.scheduleType}`);
+                }
+
+                // Validate recipients
+                const recipientContactNames = row.recipientContacts
+                    ? row.recipientContacts.split(/\s*[;,]\s*/).filter(Boolean)
+                    : [];
+                const recipientGroupNames = row.recipientGroups
+                    ? row.recipientGroups.split(/\s*[;,]\s*/).filter(Boolean)
+                    : [];
+
+                if (recipientContactNames.length === 0 && recipientGroupNames.length === 0) {
+                    throw new Error('At least one recipient (contact or group) required');
+                }
+
+                // Resolve contact IDs
+                const contactIds: string[] = [];
+                for (const fullName of recipientContactNames) {
+                    const parts = fullName.trim().split(/\s+/);
+                    if (parts.length < 2) {
+                        throw new Error(`Invalid contact name format: "${fullName}" (expected "FirstName LastName")`);
+                    }
+                    const firstName = parts[0];
+                    const lastName = parts.slice(1).join(' ');
+                    const contact = await prisma.contact.findFirst({
+                        where: {
+                            companyId,
+                            firstName: { equals: firstName, mode: 'insensitive' },
+                            lastName: { equals: lastName, mode: 'insensitive' },
+                        },
+                    });
+                    if (!contact) {
+                        throw new Error(`Contact not found: "${fullName}"`);
+                    }
+                    contactIds.push(contact.id);
+                }
+
+                // Resolve group IDs
+                const groupIds: string[] = [];
+                for (const groupName of recipientGroupNames) {
+                    const group = await prisma.group.findFirst({
+                        where: { companyId, name: { equals: groupName.trim(), mode: 'insensitive' } },
+                    });
+                    if (!group) {
+                        throw new Error(`Group not found: "${groupName}"`);
+                    }
+                    groupIds.push(group.id);
+                }
+
+                // Build recurringPattern and scheduledAt based on type
+                let recurringPattern: string | undefined;
+                let scheduledAt: Date | undefined;
+
+                switch (scheduleType) {
+                    case 'ONE_TIME': {
+                        if (!row.scheduledAt?.trim()) {
+                            throw new Error('ONE_TIME requires scheduledAt');
+                        }
+                        const normalized = normalizeToIsoDateTime(row.scheduledAt.trim());
+                        if (!normalized) {
+                            throw new Error(
+                                `Invalid scheduledAt: "${row.scheduledAt}". Use format like "2025-12-01 10:00" or "12/01/2025 10:00"`
+                            );
+                        }
+                        scheduledAt = new Date(normalized);
+                        break;
+                    }
+                    case 'WEEKLY': {
+                        if (!row.recurringDay?.trim()) {
+                            throw new Error('WEEKLY requires recurringDay');
+                        }
+                        const day = row.recurringDay.trim().toUpperCase();
+                        const validDays = ['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU'];
+                        if (!validDays.includes(day)) {
+                            throw new Error(`Invalid recurringDay: ${row.recurringDay}`);
+                        }
+                        recurringPattern = JSON.stringify({ day, time: '09:00' });
+                        break;
+                    }
+                    case 'MONTHLY': {
+                        if (!row.recurringDayOfMonth?.trim()) {
+                            throw new Error('MONTHLY requires recurringDayOfMonth');
+                        }
+                        const day = parseInt(row.recurringDayOfMonth.trim(), 10);
+                        if (isNaN(day) || day < 1 || day > 28) {
+                            throw new Error(`Invalid recurringDayOfMonth: ${row.recurringDayOfMonth} (must be 1-28)`);
+                        }
+                        recurringPattern = JSON.stringify({ day, time: '09:00' });
+                        break;
+                    }
+                    case 'YEARLY': {
+                        if (!row.recurringMonth?.trim() || !row.recurringDayOfYear?.trim()) {
+                            throw new Error('YEARLY requires recurringMonth and recurringDayOfYear');
+                        }
+                        const month = parseInt(row.recurringMonth.trim(), 10);
+                        const day = parseInt(row.recurringDayOfYear.trim(), 10);
+                        if (isNaN(month) || month < 1 || month > 12) {
+                            throw new Error(`Invalid recurringMonth: ${row.recurringMonth} (must be 1-12)`);
+                        }
+                        if (isNaN(day) || day < 1 || day > 31) {
+                            throw new Error(`Invalid recurringDayOfYear: ${row.recurringDayOfYear} (must be 1-31)`);
+                        }
+                        recurringPattern = JSON.stringify({ month, day, time: '09:00' });
+                        break;
+                    }
+                    case 'BIRTHDAY': {
+                        recurringPattern = JSON.stringify({ rule: 'BIRTHDAY', time: '09:00' });
+                        // Validate at least one contact has a birthDate
+                        const contactsWithBirthDate = await prisma.contact.count({
+                            where: {
+                                companyId,
+                                id: { in: contactIds },
+                                birthDate: { not: null },
+                            },
+                        });
+                        if (contactsWithBirthDate === 0) {
+                            throw new Error('BIRTHDAY schedules require at least one contact with a birthDate');
+                        }
+                        break;
+                    }
+                }
+
+                // Create schedule using scheduledMessageService pattern
+                const scheduleData: any = {
+                    companyId,
+                    userId,
+                    name: row.name.trim(),
+                    content: row.content.trim(),
+                    scheduleType: scheduleType as any,
+                    contactIds,
+                    groupIds,
+                };
+
+                if (scheduledAt) {
+                    scheduleData.scheduledAt = scheduledAt;
+                }
+                if (recurringPattern) {
+                    scheduleData.recurringPattern = recurringPattern;
+                }
+
+                // Import via Prisma directly (mirroring contact import pattern)
+                const { scheduledMessageService } = await import('./scheduledMessageService');
+                const schedule = await scheduledMessageService.createSchedule(scheduleData);
+
+                created.push(schedule);
+            } catch (e: any) {
+                errors.push({
+                    index,
+                    error: e.message,
+                    row: row.name,
+                });
+            }
+        }
+
+        return {
+            createdCount: created.length,
+            errorCount: errors.length,
+            created,
+            errors,
+        };
+    }
+}
+
+export const scheduleCsvImportService = new ScheduleCsvImportService();
