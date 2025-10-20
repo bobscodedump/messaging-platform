@@ -32,11 +32,11 @@ function parseCsvLine(line: string): string[] {
     const result: string[] = [];
     let current = '';
     let inQuotes = false;
-    
+
     for (let i = 0; i < line.length; i++) {
         const char = line[i];
         const nextChar = line[i + 1];
-        
+
         if (char === '"') {
             if (inQuotes && nextChar === '"') {
                 // Escaped quote

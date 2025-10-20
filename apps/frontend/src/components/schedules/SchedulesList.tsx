@@ -38,45 +38,43 @@ function ScheduleRow({ schedule, onDelete }: ScheduleRowProps) {
     }
   }
 
-  const scheduledDisplay = schedule.scheduledAt 
-    ? new Date(schedule.scheduledAt).toLocaleString()
-    : recurringDisplay;
+  const scheduledDisplay = schedule.scheduledAt ? new Date(schedule.scheduledAt).toLocaleString() : recurringDisplay;
 
-  const lastExecuted = schedule.lastExecutedAt
-    ? new Date(schedule.lastExecutedAt).toLocaleString()
-    : 'Never';
+  const lastExecuted = schedule.lastExecutedAt ? new Date(schedule.lastExecutedAt).toLocaleString() : 'Never';
 
   return (
     <tr className='border-t border-neutral-200 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-900'>
       <td className='px-4 py-3'>
         <div className='font-medium text-neutral-900 dark:text-white'>{schedule.name}</div>
-        <div className='text-xs text-neutral-500 dark:text-neutral-400 mt-1 max-w-md truncate'>
-          {schedule.content}
-        </div>
+        <div className='text-xs text-neutral-500 dark:text-neutral-400 mt-1 max-w-md truncate'>{schedule.content}</div>
       </td>
       <td className='px-4 py-3'>
-        <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-          schedule.scheduleType === 'ONE_TIME' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' :
-          schedule.scheduleType === 'WEEKLY' ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' :
-          schedule.scheduleType === 'MONTHLY' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300' :
-          schedule.scheduleType === 'YEARLY' ? 'bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300' :
-          'bg-pink-100 text-pink-700 dark:bg-pink-900 dark:text-pink-300'
-        }`}>
+        <span
+          className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
+            schedule.scheduleType === 'ONE_TIME'
+              ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
+              : schedule.scheduleType === 'WEEKLY'
+                ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
+                : schedule.scheduleType === 'MONTHLY'
+                  ? 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300'
+                  : schedule.scheduleType === 'YEARLY'
+                    ? 'bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300'
+                    : 'bg-pink-100 text-pink-700 dark:bg-pink-900 dark:text-pink-300'
+          }`}
+        >
           {schedule.scheduleType}
         </span>
       </td>
-      <td className='px-4 py-3 text-sm text-neutral-600 dark:text-neutral-400'>
-        {scheduledDisplay}
-      </td>
-      <td className='px-4 py-3 text-sm text-neutral-600 dark:text-neutral-400'>
-        {lastExecuted}
-      </td>
+      <td className='px-4 py-3 text-sm text-neutral-600 dark:text-neutral-400'>{scheduledDisplay}</td>
+      <td className='px-4 py-3 text-sm text-neutral-600 dark:text-neutral-400'>{lastExecuted}</td>
       <td className='px-4 py-3'>
-        <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-          schedule.isActive 
-            ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
-            : 'bg-gray-100 text-gray-700 dark:bg-gray-900 dark:text-gray-300'
-        }`}>
+        <span
+          className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
+            schedule.isActive
+              ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
+              : 'bg-gray-100 text-gray-700 dark:bg-gray-900 dark:text-gray-300'
+          }`}
+        >
           {schedule.isActive ? 'Active' : 'Inactive'}
         </span>
       </td>
@@ -130,37 +128,36 @@ export function SchedulesList({ onDelete }: Props) {
 
   // Filter schedules based on tab
   const now = new Date();
-  const activeSchedules = schedules?.filter(s => {
-    // Recurring schedules are always "active" unless manually deactivated
-    if (['WEEKLY', 'MONTHLY', 'YEARLY', 'BIRTHDAY'].includes(s.scheduleType)) {
-      return s.isActive;
-    }
-    // ONE_TIME schedules are active if not yet executed and in the future
-    if (s.scheduleType === 'ONE_TIME' && s.scheduledAt) {
-      return new Date(s.scheduledAt) > now && s.isActive;
-    }
-    return false;
-  }) || [];
+  const activeSchedules =
+    schedules?.filter((s) => {
+      // Recurring schedules are always "active" unless manually deactivated
+      if (['WEEKLY', 'MONTHLY', 'YEARLY', 'BIRTHDAY'].includes(s.scheduleType)) {
+        return s.isActive;
+      }
+      // ONE_TIME schedules are active if not yet executed and in the future
+      if (s.scheduleType === 'ONE_TIME' && s.scheduledAt) {
+        return new Date(s.scheduledAt) > now && s.isActive;
+      }
+      return false;
+    }) || [];
 
-  const pastSchedules = schedules?.filter(s => {
-    // ONE_TIME schedules that have passed or been executed
-    if (s.scheduleType === 'ONE_TIME' && s.scheduledAt) {
-      return new Date(s.scheduledAt) <= now || !s.isActive;
-    }
-    // Recurring schedules that have been deactivated
-    if (['WEEKLY', 'MONTHLY', 'YEARLY', 'BIRTHDAY'].includes(s.scheduleType)) {
-      return !s.isActive;
-    }
-    return false;
-  }) || [];
+  const pastSchedules =
+    schedules?.filter((s) => {
+      // ONE_TIME schedules that have passed or been executed
+      if (s.scheduleType === 'ONE_TIME' && s.scheduledAt) {
+        return new Date(s.scheduledAt) <= now || !s.isActive;
+      }
+      // Recurring schedules that have been deactivated
+      if (['WEEKLY', 'MONTHLY', 'YEARLY', 'BIRTHDAY'].includes(s.scheduleType)) {
+        return !s.isActive;
+      }
+      return false;
+    }) || [];
 
   const displaySchedules = activeTab === 'active' ? activeSchedules : pastSchedules;
 
   return (
-    <Card
-      title='Schedules'
-      description='View and manage all your scheduled messages'
-    >
+    <Card title='Schedules' description='View and manage all your scheduled messages'>
       {/* Tabs */}
       <div className='border-b border-neutral-200 dark:border-neutral-800 mb-4'>
         <nav className='-mb-px flex space-x-8'>
@@ -191,7 +188,7 @@ export function SchedulesList({ onDelete }: Props) {
       {displaySchedules.length === 0 ? (
         <div className='text-center py-12 text-neutral-500 dark:text-neutral-400'>
           <p className='text-sm'>
-            {activeTab === 'active' 
+            {activeTab === 'active'
               ? 'No active schedules. Create one to get started!'
               : 'No past or inactive schedules.'}
           </p>
@@ -222,12 +219,8 @@ export function SchedulesList({ onDelete }: Props) {
               </tr>
             </thead>
             <tbody>
-              {displaySchedules.map(schedule => (
-                <ScheduleRow
-                  key={schedule.id}
-                  schedule={schedule}
-                  onDelete={onDelete}
-                />
+              {displaySchedules.map((schedule) => (
+                <ScheduleRow key={schedule.id} schedule={schedule} onDelete={onDelete} />
               ))}
             </tbody>
           </table>
@@ -235,15 +228,16 @@ export function SchedulesList({ onDelete }: Props) {
       )}
 
       {/* Recurring schedules info */}
-      {activeTab === 'active' && activeSchedules.some(s => ['WEEKLY', 'MONTHLY', 'YEARLY', 'BIRTHDAY'].includes(s.scheduleType)) && (
-        <div className='mt-4 rounded-md border border-blue-200 bg-blue-50 p-3 text-xs text-blue-700 dark:border-blue-800 dark:bg-blue-900 dark:text-blue-300'>
-          <p className='font-medium'>ℹ️ About Recurring Schedules</p>
-          <p className='mt-1'>
-            Recurring schedules (Weekly, Monthly, Yearly, Birthday) will continue to execute based on their pattern until you deactivate them.
-            The "Last Executed" column shows when the schedule last ran.
-          </p>
-        </div>
-      )}
+      {activeTab === 'active' &&
+        activeSchedules.some((s) => ['WEEKLY', 'MONTHLY', 'YEARLY', 'BIRTHDAY'].includes(s.scheduleType)) && (
+          <div className='mt-4 rounded-md border border-blue-200 bg-blue-50 p-3 text-xs text-blue-700 dark:border-blue-800 dark:bg-blue-900 dark:text-blue-300'>
+            <p className='font-medium'>ℹ️ About Recurring Schedules</p>
+            <p className='mt-1'>
+              Recurring schedules (Weekly, Monthly, Yearly, Birthday) will continue to execute based on their pattern
+              until you deactivate them. The "Last Executed" column shows when the schedule last ran.
+            </p>
+          </div>
+        )}
     </Card>
   );
 }

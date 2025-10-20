@@ -34,11 +34,11 @@ function parseCsvLine(line: string): string[] {
   const result: string[] = [];
   let current = '';
   let inQuotes = false;
-  
+
   for (let i = 0; i < line.length; i++) {
     const char = line[i];
     const nextChar = line[i + 1];
-    
+
     if (char === '"') {
       if (inQuotes && nextChar === '"') {
         current += '"';
@@ -87,8 +87,10 @@ function parseCsvClient(text: string) {
     // Type-specific validations
     if (scheduleType === 'ONE_TIME') {
       if (!raw.scheduledAt) errors.push('ONE_TIME requires scheduledAt');
-      else if (!/^\d{4}[-/]\d{2}[-/]\d{2}[T\s]\d{1,2}:\d{2}/.test(raw.scheduledAt) && 
-               !/^\d{1,2}[-/]\d{1,2}[-/]\d{4}[T\s]\d{1,2}:\d{2}/.test(raw.scheduledAt)) {
+      else if (
+        !/^\d{4}[-/]\d{2}[-/]\d{2}[T\s]\d{1,2}:\d{2}/.test(raw.scheduledAt) &&
+        !/^\d{1,2}[-/]\d{1,2}[-/]\d{4}[T\s]\d{1,2}:\d{2}/.test(raw.scheduledAt)
+      ) {
         warnings.push('scheduledAt format: "2025-12-01 10:00" or "12/01/2025 10:00"');
       }
     }

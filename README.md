@@ -56,11 +56,13 @@ Testing
 The platform supports bulk imports for contacts and schedules with flexible date/time formats.
 
 **Contacts CSV** (`/sample-contacts.csv`):
+
 - Required headers: `firstName`, `lastName`, `phoneNumber`, `email`, `address`, `birthDate`, `note`, `groups`
 - `birthDate` formats: `YYYY-MM-DD`, `M/D/YY`, `M/D/YYYY`, `MM/DD/YY`, `MM/DD/YYYY`
 - `groups`: comma or semicolon-separated group names (auto-created if they don't exist)
 
 **Schedules CSV** (`/sample-schedules.csv`):
+
 - Required headers: `name`, `scheduleType`, `content`, `recipientContacts`, `recipientGroups`, `scheduledAt`, `recurringDay`, `recurringDayOfMonth`, `recurringMonth`, `recurringDayOfYear`
 - `scheduleType`: `ONE_TIME`, `WEEKLY`, `MONTHLY`, `YEARLY`, `BIRTHDAY`
 - `scheduledAt` (for ONE_TIME): flexible formats like `2025-12-01 10:00`, `12/01/2025 10:00`, or full ISO `2025-12-01T10:00:00Z`
@@ -68,6 +70,7 @@ The platform supports bulk imports for contacts and schedules with flexible date
 - `recipientGroups`: comma/semicolon-separated group names
 
 **Supported datetime formats** (all times assumed UTC unless timezone specified):
+
 - `2025-12-01 10:00` or `2025-12-01 10:00:00`
 - `2025/12/01 10:00`
 - `12/01/2025 10:00` (US format)
