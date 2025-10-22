@@ -58,7 +58,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const isAuthEndpoint = typeof url === 'string' && url.includes('/auth/');
         const isRefreshRequest = typeof url === 'string' && url.includes('/auth/refresh');
 
-        if ((status === 401 || status === 403) && original && !original.__isRetry && !isAuthEndpoint) {
+        // Only attempt a token refresh when the server returned 401 (unauthenticated).
+        // A 403 (forbidden) indicates the user is authenticated but not allowed to access
+        // the resource (access control), and should not trigger a token refresh.
+        if (status === 401 && original && !original.__isRetry && !isAuthEndpoint) {
           // Try refresh once for non-auth endpoints
           original.__isRetry = true;
           try {
@@ -78,7 +81,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         if (status === 401 || status === 403 || isRefreshRequest || isAuthEndpoint) {
           try {
-            if (!isRefreshRequest) {
+            // Avoid calling the logout endpoint recursively if the failing request is
+            // itself an auth endpoint (e.g. /auth/logout or /auth/refresh). Only
+            // attempt the server-side logout when a non-auth endpoint failed.
+            if (!isRefreshRequest && !isAuthEndpoint) {
               // Best-effort clear server cookie unless refresh already failed
               try {
                 await api.post('/auth/logout');
