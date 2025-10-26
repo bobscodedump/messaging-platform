@@ -483,12 +483,12 @@ export class ScheduleCsvImportService {
                             );
                         }
                         const originalDate = new Date(normalized);
-                        
+
                         // Subtract reminder days if specified
                         if (reminderDaysBefore && reminderDaysBefore > 0) {
                             originalDate.setDate(originalDate.getDate() - reminderDaysBefore);
                         }
-                        
+
                         scheduledAt = originalDate;
                         break;
                     }
@@ -632,11 +632,11 @@ function parseMessagesCsv(
     if (lines.length - 1 > maxRows) {
         errors.push({ index: -1, error: `Row limit exceeded. Max ${maxRows} rows allowed.` });
     }
-    
+
     // Identify built-in columns vs custom variable columns
     const builtInColumns = ['phoneNumber', 'firstName', 'lastName', 'email', 'address', 'birthDate', 'note', 'telegramUsername'];
     const variableColumns = header.filter(h => !builtInColumns.includes(h));
-    
+
     const rows: ImportedMessageRow[] = [];
     const limit = Math.min(lines.length - 1, maxRows);
     for (let i = 1; i <= limit; i++) {

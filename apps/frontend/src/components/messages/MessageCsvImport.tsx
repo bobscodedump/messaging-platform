@@ -63,8 +63,17 @@ function parseCsvClient(text: string): {
   if (missing.length) headerErrors.push(`Missing required headers: ${missing.join(', ')}`);
 
   // Identify built-in vs custom variable columns
-  const builtInColumns = ['phoneNumber', 'firstName', 'lastName', 'email', 'address', 'birthDate', 'note', 'telegramUsername'];
-  const variableColumns = header.filter(h => !builtInColumns.includes(h));
+  const builtInColumns = [
+    'phoneNumber',
+    'firstName',
+    'lastName',
+    'email',
+    'address',
+    'birthDate',
+    'note',
+    'telegramUsername',
+  ];
+  const variableColumns = header.filter((h) => !builtInColumns.includes(h));
 
   const rows: ParsedRow[] = [];
   for (let i = 1; i < lines.length && i <= 200; i++) {
@@ -93,7 +102,7 @@ export function MessageCsvImport({ companyId, userId }: Props) {
   const [parseResult, setParseResult] = useState<ReturnType<typeof parseCsvClient> | null>(null);
   const [globalError, setGlobalError] = useState<string | null>(null);
 
-  const selectedTemplate = templates.find(t => t.id === selectedTemplateId);
+  const selectedTemplate = templates.find((t) => t.id === selectedTemplateId);
 
   // Extract and validate template variables against CSV columns
   const templateVariables = useMemo(() => {
@@ -104,15 +113,22 @@ export function MessageCsvImport({ companyId, userId }: Props) {
   // Check which template variables are missing from CSV
   const missingVariables = useMemo(() => {
     if (!parseResult || !selectedTemplate) return [];
-    
-    const builtInVariables = ['contact.firstName', 'contact.lastName', 'contact.phoneNumber', 'contact.email', 
-                               'contact.birthDate', 'contact.address', 'company.name'];
+
+    const builtInVariables = [
+      'contact.firstName',
+      'contact.lastName',
+      'contact.phoneNumber',
+      'contact.email',
+      'contact.birthDate',
+      'contact.address',
+      'company.name',
+    ];
     const availableVars = new Set([
       ...parseResult.variableColumns, // Custom variables from CSV
-      ...builtInVariables.map(v => v.split('.')[1]) // Built-in variable names without prefix
+      ...builtInVariables.map((v) => v.split('.')[1]), // Built-in variable names without prefix
     ]);
 
-    return templateVariables.filter(v => {
+    return templateVariables.filter((v) => {
       // Check if it's a built-in variable (has dot notation)
       if (v.includes('.')) {
         return !builtInVariables.includes(v);
@@ -170,7 +186,10 @@ export function MessageCsvImport({ companyId, userId }: Props) {
   const totalErrors = rows.reduce((a, r) => a + r.errors.length, 0);
 
   return (
-    <Card title='Bulk Send Messages via CSV' description='Upload CSV with contacts and custom variables to send templated messages.'>
+    <Card
+      title='Bulk Send Messages via CSV'
+      description='Upload CSV with contacts and custom variables to send templated messages.'
+    >
       <div className='mb-3 flex flex-wrap items-center gap-3 text-xs text-neutral-600 dark:text-neutral-400'>
         <a
           href='/sample-messages.csv'
@@ -209,7 +228,8 @@ export function MessageCsvImport({ companyId, userId }: Props) {
             <div className='whitespace-pre-wrap text-neutral-700 dark:text-neutral-300'>{selectedTemplate.content}</div>
             {templateVariables.length > 0 && (
               <div className='mt-2 text-xs text-neutral-500'>
-                <span className='font-medium'>Template variables:</span> {templateVariables.map(v => `{{${v}}}`).join(', ')}
+                <span className='font-medium'>Template variables:</span>{' '}
+                {templateVariables.map((v) => `{{${v}}}`).join(', ')}
               </div>
             )}
             {selectedTemplate.variables.length > 0 && (
@@ -233,16 +253,15 @@ export function MessageCsvImport({ companyId, userId }: Props) {
                 className='group relative flex items-center rounded bg-neutral-100 px-1.5 py-0.5 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-200'
               >
                 <code className='text-[11px] font-mono'>{`{{${varName}}}`}</code>
-                <span
-                  className='pointer-events-none absolute left-0 top-full z-10 mt-1 w-max max-w-xs translate-y-0 whitespace-nowrap rounded border border-neutral-300 bg-neutral-900 px-2 py-1 text-[10px] font-medium text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100 dark:border-neutral-700'
-                >
+                <span className='pointer-events-none absolute left-0 top-full z-10 mt-1 w-max max-w-xs translate-y-0 whitespace-nowrap rounded border border-neutral-300 bg-neutral-900 px-2 py-1 text-[10px] font-medium text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100 dark:border-neutral-700'>
                   Use in template: {`{{${varName}}}`}
                 </span>
               </span>
             ))}
           </div>
           <div className='mt-2 text-xs text-neutral-600 dark:text-neutral-400'>
-            These columns will be available as variables in your template. Built-in variables like {`{{contact.firstName}}`} are always available.
+            These columns will be available as variables in your template. Built-in variables like{' '}
+            {`{{contact.firstName}}`} are always available.
           </div>
         </div>
       )}
@@ -258,18 +277,24 @@ export function MessageCsvImport({ companyId, userId }: Props) {
           </div>
           <div className='flex flex-wrap gap-1.5 mb-2'>
             {missingVariables.map((varName) => (
-              <code key={varName} className='px-2 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/40 text-[11px] font-mono text-yellow-900 dark:text-yellow-300'>
+              <code
+                key={varName}
+                className='px-2 py-0.5 rounded bg-yellow-100 dark:bg-yellow-900/40 text-[11px] font-mono text-yellow-900 dark:text-yellow-300'
+              >
                 {`{{${varName}}}`}
               </code>
             ))}
           </div>
           <div className='text-xs text-yellow-700 dark:text-yellow-400'>
-            These variables will be replaced with empty strings in the sent messages. Add these columns to your CSV or update your template.
+            These variables will be replaced with empty strings in the sent messages. Add these columns to your CSV or
+            update your template.
           </div>
         </div>
       )}
 
-      {globalError && <div className='mb-3 rounded border border-red-300 bg-red-50 p-3 text-sm text-red-700'>{globalError}</div>}
+      {globalError && (
+        <div className='mb-3 rounded border border-red-300 bg-red-50 p-3 text-sm text-red-700'>{globalError}</div>
+      )}
 
       {step === 'idle' && (
         <div
@@ -278,13 +303,7 @@ export function MessageCsvImport({ companyId, userId }: Props) {
           className='flex flex-col items-center justify-center gap-3 rounded-md border border-dashed border-neutral-300 bg-neutral-50 p-6 text-center dark:border-neutral-700 dark:bg-neutral-900'
         >
           <div className='text-sm text-neutral-600 dark:text-neutral-400'>Drag and drop CSV or click to browse</div>
-          <input
-            ref={fileInputRef}
-            type='file'
-            accept='.csv,text/csv'
-            onChange={onInputChange}
-            className='hidden'
-          />
+          <input ref={fileInputRef} type='file' accept='.csv,text/csv' onChange={onInputChange} className='hidden' />
           <Button variant='secondary' onClick={() => fileInputRef.current?.click()} disabled={!selectedTemplateId}>
             {selectedTemplateId ? 'Choose File' : 'Select Template First'}
           </Button>
@@ -315,8 +334,10 @@ export function MessageCsvImport({ companyId, userId }: Props) {
                     <th className='px-3 py-2 text-left'>Phone</th>
                     <th className='px-3 py-2 text-left'>First Name</th>
                     <th className='px-3 py-2 text-left'>Last Name</th>
-                    {variableColumns.map(col => (
-                      <th key={col} className='px-3 py-2 text-left'>{col}</th>
+                    {variableColumns.map((col) => (
+                      <th key={col} className='px-3 py-2 text-left'>
+                        {col}
+                      </th>
                     ))}
                     <th className='px-3 py-2 text-left'>Status</th>
                   </tr>
@@ -328,8 +349,10 @@ export function MessageCsvImport({ companyId, userId }: Props) {
                       <td className='px-3 py-2'>{r.raw.phoneNumber}</td>
                       <td className='px-3 py-2'>{r.raw.firstName || '-'}</td>
                       <td className='px-3 py-2'>{r.raw.lastName || '-'}</td>
-                      {variableColumns.map(col => (
-                        <td key={col} className='px-3 py-2'>{r.raw[col] || '-'}</td>
+                      {variableColumns.map((col) => (
+                        <td key={col} className='px-3 py-2'>
+                          {r.raw[col] || '-'}
+                        </td>
                       ))}
                       <td className='px-3 py-2'>
                         {r.errors.length > 0 ? (
@@ -355,7 +378,10 @@ export function MessageCsvImport({ companyId, userId }: Props) {
                   {missingVariables.length} variable{missingVariables.length !== 1 ? 's' : ''} missing
                 </span>
               )}
-              <Button onClick={confirmUpload} disabled={headerErrors.length > 0 || totalErrors > 0 || !selectedTemplateId}>
+              <Button
+                onClick={confirmUpload}
+                disabled={headerErrors.length > 0 || totalErrors > 0 || !selectedTemplateId}
+              >
                 Import &amp; Send {rows.length} Message{rows.length !== 1 ? 's' : ''}
               </Button>
             </div>

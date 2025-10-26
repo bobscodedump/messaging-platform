@@ -88,7 +88,9 @@ export default function ProfilePage() {
     <div className='mx-auto max-w-5xl p-4 sm:p-6 space-y-8'>
       <div>
         <h1 className='text-2xl font-semibold text-neutral-900 dark:text-white'>Profile</h1>
-        <p className='text-sm text-neutral-600 dark:text-neutral-400'>Manage your personal information and company configuration.</p>
+        <p className='text-sm text-neutral-600 dark:text-neutral-400'>
+          Manage your personal information and company configuration.
+        </p>
       </div>
 
       <section className='rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900/60 p-6 shadow-sm'>
@@ -174,7 +176,9 @@ export default function ProfilePage() {
         ) : (
           <form className='grid gap-4 sm:grid-cols-2' onSubmit={handleCompanySubmit}>
             <label className='flex flex-col gap-1 sm:col-span-2'>
-              <span className='text-xs uppercase tracking-wide text-neutral-500 dark:text-neutral-400'>Company name</span>
+              <span className='text-xs uppercase tracking-wide text-neutral-500 dark:text-neutral-400'>
+                Company name
+              </span>
               <input
                 type='text'
                 value={companyForm.name}
@@ -185,7 +189,9 @@ export default function ProfilePage() {
               />
             </label>
             <label className='flex flex-col gap-1'>
-              <span className='text-xs uppercase tracking-wide text-neutral-500 dark:text-neutral-400'>WhatsApp phone</span>
+              <span className='text-xs uppercase tracking-wide text-neutral-500 dark:text-neutral-400'>
+                WhatsApp phone
+              </span>
               <input
                 type='text'
                 value={companyForm.whatsappPhone}
@@ -196,7 +202,9 @@ export default function ProfilePage() {
               />
             </label>
             <label className='flex flex-col gap-1'>
-              <span className='text-xs uppercase tracking-wide text-neutral-500 dark:text-neutral-400'>WhatsApp API key</span>
+              <span className='text-xs uppercase tracking-wide text-neutral-500 dark:text-neutral-400'>
+                WhatsApp API key
+              </span>
               <input
                 type='text'
                 value={companyForm.whatsappApiKey}
@@ -207,7 +215,9 @@ export default function ProfilePage() {
               />
             </label>
             <label className='flex flex-col gap-1 sm:col-span-2'>
-              <span className='text-xs uppercase tracking-wide text-neutral-500 dark:text-neutral-400'>WhatsApp API URL</span>
+              <span className='text-xs uppercase tracking-wide text-neutral-500 dark:text-neutral-400'>
+                WhatsApp API URL
+              </span>
               <input
                 type='url'
                 value={companyForm.whatsappApiUrl}
