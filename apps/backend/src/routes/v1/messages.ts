@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { MessageController } from '../../controllers/messageController';
+import { MessageController, uploadMiddleware } from '../../controllers/messageController';
 import { requireCompanyParam, attachCompanyToBody } from '../../middleware/auth';
 
 const router: Router = Router();
@@ -11,5 +11,6 @@ const asyncHandler = (fn: any) => (req: any, res: any, next: any) =>
 router.get('/companies/:companyId/messages', requireCompanyParam, asyncHandler(messageController.getAllMessages.bind(messageController)));
 router.get('/messages/:id', asyncHandler(messageController.getMessageById.bind(messageController)));
 router.post('/messages', attachCompanyToBody, asyncHandler(messageController.sendMessage.bind(messageController)));
+router.post('/companies/:companyId/messages/import', requireCompanyParam, uploadMiddleware, asyncHandler(messageController.importMessages.bind(messageController)));
 
 export default router;

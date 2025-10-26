@@ -23,6 +23,7 @@ const REQUIRED_HEADERS = [
   'recipientContacts',
   'recipientGroups',
   'scheduledAt',
+  'reminderDaysBefore',
   'recurringDay',
   'recurringDayOfMonth',
   'recurringMonth',
@@ -92,6 +93,14 @@ function parseCsvClient(text: string) {
         !/^\d{1,2}[-/]\d{1,2}[-/]\d{4}[T\s]\d{1,2}:\d{2}/.test(raw.scheduledAt)
       ) {
         warnings.push('scheduledAt format: "2025-12-01 10:00" or "12/01/2025 10:00"');
+      }
+      
+      // Validate reminderDaysBefore if provided
+      if (raw.reminderDaysBefore && raw.reminderDaysBefore.trim()) {
+        const days = parseInt(raw.reminderDaysBefore.trim(), 10);
+        if (isNaN(days) || days < 0 || days > 365) {
+          errors.push('reminderDaysBefore must be 0-365');
+        }
       }
     }
     if (scheduleType === 'WEEKLY' && !raw.recurringDay) {

@@ -177,20 +177,21 @@ enum ScheduleType {
 }
 
 model ScheduledMessage {
-  id               String       @id @default(cuid())
-  companyId        String       @map("company_id")
-  userId           String       @map("user_id")
-  templateId       String?      @map("template_id")
-  name             String
-  content          String
-  scheduleType     ScheduleType @map("schedule_type")
-  scheduledAt      DateTime?    @map("scheduled_at")
-  recurringPattern String?      @map("recurring_pattern") // JSON for complex patterns
-  isActive         Boolean      @default(true) @map("is_active")
-  lastExecutedAt   DateTime?    @map("last_executed_at")
-  nextExecutionAt  DateTime?    @map("next_execution_at")
-  createdAt        DateTime     @default(now()) @map("created_at")
-  updatedAt        DateTime     @updatedAt @map("updated_at")
+  id                String       @id @default(cuid())
+  companyId         String       @map("company_id")
+  userId            String       @map("user_id")
+  templateId        String?      @map("template_id")
+  name              String
+  content           String
+  scheduleType      ScheduleType @map("schedule_type")
+  scheduledAt       DateTime?    @map("scheduled_at")
+  recurringPattern  String?      @map("recurring_pattern") // JSON for complex patterns
+  reminderDaysBefore Int?        @map("reminder_days_before") // Send N days before the scheduled date
+  isActive          Boolean      @default(true) @map("is_active")
+  lastExecutedAt    DateTime?    @map("last_executed_at")
+  nextExecutionAt   DateTime?    @map("next_execution_at")
+  createdAt         DateTime     @default(now()) @map("created_at")
+  updatedAt         DateTime     @updatedAt @map("updated_at")
 
   company    Company                     @relation(fields: [companyId], references: [id], onDelete: Cascade)
   user       User                        @relation(fields: [userId], references: [id])

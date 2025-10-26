@@ -330,6 +330,7 @@ export interface ImportedScheduleRow {
     recipientContacts?: string; // comma/semicolon separated contact names "FirstName LastName"
     recipientGroups?: string; // comma/semicolon separated group names
     scheduledAt?: string; // ISO datetime for ONE_TIME
+    reminderDaysBefore?: string; // Days before scheduled date to send (e.g., "3" for 3 days before)
     recurringDay?: string; // For WEEKLY: MO, TU, WE, TH, FR, SA, SU
     recurringDayOfMonth?: string; // For MONTHLY: 1-28
     recurringMonth?: string; // For YEARLY: 1-12
@@ -343,6 +344,7 @@ const SCHEDULE_REQUIRED_HEADERS = [
     'recipientContacts',
     'recipientGroups',
     'scheduledAt',
+    'reminderDaysBefore',
     'recurringDay',
     'recurringDayOfMonth',
     'recurringMonth',
@@ -458,6 +460,16 @@ export class ScheduleCsvImportService {
                 // Build recurringPattern and scheduledAt based on type
                 let recurringPattern: string | undefined;
                 let scheduledAt: Date | undefined;
+                let reminderDaysBefore: number | undefined;
+
+                // Parse reminderDaysBefore if provided
+                if (row.reminderDaysBefore?.trim()) {
+                    const days = parseInt(row.reminderDaysBefore.trim(), 10);
+                    if (isNaN(days) || days < 0 || days > 365) {
+                        throw new Error(`Invalid reminderDaysBefore: ${row.reminderDaysBefore} (must be 0-365)`);
+                    }
+                    reminderDaysBefore = days;
+                }
 
                 switch (scheduleType) {
                     case 'ONE_TIME': {
@@ -470,7 +482,14 @@ export class ScheduleCsvImportService {
                                 `Invalid scheduledAt: "${row.scheduledAt}". Use format like "2025-12-01 10:00" or "12/01/2025 10:00"`
                             );
                         }
-                        scheduledAt = new Date(normalized);
+                        const originalDate = new Date(normalized);
+                        
+                        // Subtract reminder days if specified
+                        if (reminderDaysBefore && reminderDaysBefore > 0) {
+                            originalDate.setDate(originalDate.getDate() - reminderDaysBefore);
+                        }
+                        
+                        scheduledAt = originalDate;
                         break;
                     }
                     case 'WEEKLY': {
@@ -545,6 +564,9 @@ export class ScheduleCsvImportService {
                 if (recurringPattern) {
                     scheduleData.recurringPattern = recurringPattern;
                 }
+                if (reminderDaysBefore !== undefined && reminderDaysBefore > 0) {
+                    scheduleData.reminderDaysBefore = reminderDaysBefore;
+                }
 
                 // Import via Prisma directly (mirroring contact import pattern)
                 const { scheduledMessageService } = await import('./scheduledMessageService');
@@ -570,3 +592,194 @@ export class ScheduleCsvImportService {
 }
 
 export const scheduleCsvImportService = new ScheduleCsvImportService();
+
+// ========================== MESSAGE CSV IMPORT ==========================
+
+export interface ImportedMessageRow {
+    phoneNumber: string;
+    firstName?: string;
+    lastName?: string;
+    // Any additional columns become custom variables
+    [key: string]: string | undefined;
+}
+
+const MESSAGE_REQUIRED_HEADERS = ['phoneNumber'];
+
+interface ParsedMessageCsvResult {
+    rows: ImportedMessageRow[];
+    errors: { index: number; error: string }[];
+    header: string[];
+    variableColumns: string[]; // Custom variable column names (excluding built-ins)
+}
+
+function parseMessagesCsv(
+    text: string,
+    { maxRows = 1000 }: { maxRows?: number } = {}
+): ParsedMessageCsvResult {
+    const errors: { index: number; error: string }[] = [];
+    if (!text || !text.trim()) {
+        return { rows: [], errors: [{ index: -1, error: 'Empty file' }], header: [], variableColumns: [] };
+    }
+    const lines = text.split(/\r?\n/).filter((l) => l.trim().length > 0);
+    if (lines.length === 0) {
+        return { rows: [], errors: [{ index: -1, error: 'No data lines' }], header: [], variableColumns: [] };
+    }
+    const header = parseCsvLine(lines[0]);
+    const missing = MESSAGE_REQUIRED_HEADERS.filter((h) => !header.includes(h));
+    if (missing.length) {
+        errors.push({ index: -1, error: `Missing required headers: ${missing.join(', ')}` });
+    }
+    if (lines.length - 1 > maxRows) {
+        errors.push({ index: -1, error: `Row limit exceeded. Max ${maxRows} rows allowed.` });
+    }
+    
+    // Identify built-in columns vs custom variable columns
+    const builtInColumns = ['phoneNumber', 'firstName', 'lastName', 'email', 'address', 'birthDate', 'note', 'telegramUsername'];
+    const variableColumns = header.filter(h => !builtInColumns.includes(h));
+    
+    const rows: ImportedMessageRow[] = [];
+    const limit = Math.min(lines.length - 1, maxRows);
+    for (let i = 1; i <= limit; i++) {
+        const raw = lines[i];
+        if (!raw) continue;
+        const cols = parseCsvLine(raw);
+        const row: any = {};
+        header.forEach((h, idx) => {
+            row[h] = cols[idx] ?? '';
+        });
+        rows.push(row as ImportedMessageRow);
+    }
+    return { rows, errors, header, variableColumns };
+}
+
+export class MessageCsvImportService {
+    async importMessages(companyId: string, userId: string, templateId: string, csvContent: string) {
+        const { rows, errors: parseErrors, variableColumns } = parseMessagesCsv(csvContent, { maxRows: 1000 });
+        const created: any[] = [];
+        const errors: any[] = [...parseErrors];
+
+        // Fetch template and company
+        const [template, company] = await Promise.all([
+            prisma.template.findUnique({ where: { id: templateId } }),
+            prisma.company.findUnique({ where: { id: companyId } }),
+        ]);
+
+        if (!template) {
+            errors.push({ index: -1, error: 'Template not found' });
+            return { createdCount: 0, errorCount: errors.length, created, errors };
+        }
+
+        for (let index = 0; index < rows.length; index++) {
+            const row = rows[index];
+            try {
+                if (!row.phoneNumber?.trim()) {
+                    throw new Error('Missing phoneNumber');
+                }
+
+                const phoneNumber = row.phoneNumber.trim();
+
+                // Find or create contact
+                let contact = await prisma.contact.findFirst({
+                    where: {
+                        companyId,
+                        phoneNumber: { equals: phoneNumber, mode: 'insensitive' },
+                    },
+                });
+
+                if (!contact) {
+                    // Create contact with provided data
+                    contact = await prisma.contact.create({
+                        data: {
+                            companyId,
+                            phoneNumber,
+                            firstName: row.firstName?.trim() || 'Unknown',
+                            lastName: row.lastName?.trim() || '',
+                            email: row.email?.trim() || undefined,
+                        },
+                    });
+                }
+
+                // Build custom variables from extra columns
+                const customVariables: Record<string, string> = {};
+                for (const varCol of variableColumns) {
+                    if (row[varCol]) {
+                        customVariables[varCol] = row[varCol]!.trim();
+                    }
+                }
+
+                // Resolve template content with variables
+                const content = this.resolveTemplate(template.content, contact, company, customVariables);
+
+                // Create message record
+                const messageRecord = await prisma.message.create({
+                    data: {
+                        companyId,
+                        userId,
+                        contactId: contact.id,
+                        content,
+                        status: 'PENDING',
+                    },
+                });
+
+                // Send via WhatsApp
+                const { whatsappService } = await import('./whatsappService');
+                const sendResult = await whatsappService.sendMessage(contact.phoneNumber, content);
+
+                const finalStatus = sendResult.success ? 'SENT' : 'FAILED';
+
+                await prisma.message.update({
+                    where: { id: messageRecord.id },
+                    data: { status: finalStatus },
+                });
+
+                created.push({
+                    messageId: messageRecord.id,
+                    contactId: contact.id,
+                    phoneNumber: contact.phoneNumber,
+                    status: finalStatus,
+                    success: sendResult.success,
+                });
+
+                // Add delay between sends (except last one)
+                const SEND_DELAY_MS = Number.parseInt(process.env.WHATSAPP_SEND_DELAY_MS || '5000', 10);
+                if (index < rows.length - 1 && SEND_DELAY_MS > 0) {
+                    await new Promise((res) => setTimeout(res, SEND_DELAY_MS));
+                }
+            } catch (e: any) {
+                errors.push({
+                    index,
+                    error: e.message,
+                    row: row.phoneNumber,
+                });
+            }
+        }
+
+        return {
+            createdCount: created.length,
+            errorCount: errors.length,
+            created,
+            errors,
+        };
+    }
+
+    private resolveTemplate(
+        templateContent: string,
+        contact: any,
+        company: any,
+        userVariables: Record<string, string>
+    ): string {
+        // First substitute user variables (excluding built-ins)
+        const withUserVars = templateContent.replace(/\{\{\s*([a-zA-Z0-9_\.]+)\s*\}\}/g, (m, key) => {
+            const k = String(key);
+            if (k.startsWith('contact.') || k.startsWith('company.')) return m; // built-ins resolved later
+            if (userVariables[k] != null) return String(userVariables[k]);
+            return ''; // unmatched user var becomes empty
+        });
+
+        // Then render built-ins
+        const { renderBuiltIns } = require('./templateRender');
+        return renderBuiltIns(withUserVars, contact, company);
+    }
+}
+
+export const messageCsvImportService = new MessageCsvImportService();

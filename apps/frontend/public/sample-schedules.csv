@@ -1,6 +1,7 @@
-name,scheduleType,content,recipientContacts,recipientGroups,scheduledAt,recurringDay,recurringDayOfMonth,recurringMonth,recurringDayOfYear
-Weekly Newsletter,WEEKLY,"Hi {{contact.firstName}}! Check out this week's updates.",,"VIP,All",,FR,,
-Monthly Reminder,MONTHLY,"Don't forget your monthly check-in, {{contact.firstName}}!",,"Staff",,,,15,
-Birthday Greeting,BIRTHDAY,"Happy Birthday {{contact.firstName}}! 🎉 Have an amazing day!","Ada Lovelace,Grace Hopper",,,,,
-Yearly Anniversary,YEARLY,"Happy anniversary! Thanks for being with us, {{contact.firstName}}.","Alan Turing",,,,,1,15
-One-Time Launch,ONE_TIME,"Exciting news coming soon!",,"All",2025-12-01 10:00,,,
+name,scheduleType,content,recipientContacts,recipientGroups,scheduledAt,reminderDaysBefore,recurringDay,recurringDayOfMonth,recurringMonth,recurringDayOfYear
+Weekly Newsletter,WEEKLY,"Hi {{contact.firstName}}! Check out this week's updates.",,"VIP,All",,0,FR,,
+Monthly Reminder,MONTHLY,"Don't forget your monthly check-in, {{contact.firstName}}!",,"Staff",,0,,,15,
+Birthday Greeting,BIRTHDAY,"Happy Birthday {{contact.firstName}}! 🎉 Have an amazing day!","Ada Lovelace,Grace Hopper",,,0,,,,
+Yearly Anniversary,YEARLY,"Happy anniversary! Thanks for being with us, {{contact.firstName}}.","Alan Turing",,,0,,,1,15
+One-Time Launch,ONE_TIME,"Exciting news coming soon!",,"All",2025-12-01 10:00,0,,,
+Appointment Reminder,ONE_TIME,"Reminder: Your appointment is in 3 days on December 15th at 2 PM.",,"All",2025-12-15 14:00,3,,,

@@ -85,16 +85,16 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className='mx-auto max-w-5xl p-4 sm:p-6 space-y-8 text-neutral-100'>
+    <div className='mx-auto max-w-5xl p-4 sm:p-6 space-y-8'>
       <div>
-        <h1 className='text-2xl font-semibold text-white'>Profile</h1>
-        <p className='text-sm text-neutral-400'>Manage your personal information and company configuration.</p>
+        <h1 className='text-2xl font-semibold text-neutral-900 dark:text-white'>Profile</h1>
+        <p className='text-sm text-neutral-600 dark:text-neutral-400'>Manage your personal information and company configuration.</p>
       </div>
 
-      <section className='rounded-lg border border-neutral-800 bg-neutral-900/60 p-6 shadow-sm'>
+      <section className='rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900/60 p-6 shadow-sm'>
         <header className='mb-4 flex items-center justify-between'>
           <div>
-            <h2 className='text-lg font-medium text-white'>User details</h2>
+            <h2 className='text-lg font-medium text-neutral-900 dark:text-white'>User details</h2>
             <p className='text-xs text-neutral-500'>Update the information associated with your account.</p>
           </div>
           {userLoading && <span className='text-xs text-neutral-500'>Loading…</span>}
@@ -106,34 +106,34 @@ export default function ProfilePage() {
         ) : (
           <form className='grid gap-4 sm:grid-cols-2' onSubmit={handleUserSubmit}>
             <label className='flex flex-col gap-1'>
-              <span className='text-xs uppercase tracking-wide text-neutral-400'>First name</span>
+              <span className='text-xs uppercase tracking-wide text-neutral-500 dark:text-neutral-400'>First name</span>
               <input
                 type='text'
                 value={userForm.firstName}
                 onChange={(event) => setUserForm((prev) => ({ ...prev, firstName: event.target.value }))}
-                className='rounded border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-white focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40'
+                className='rounded border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-950 px-3 py-2 text-sm text-neutral-900 dark:text-white focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40'
                 required
                 disabled={updateUserMutation.isPending}
               />
             </label>
             <label className='flex flex-col gap-1'>
-              <span className='text-xs uppercase tracking-wide text-neutral-400'>Last name</span>
+              <span className='text-xs uppercase tracking-wide text-neutral-500 dark:text-neutral-400'>Last name</span>
               <input
                 type='text'
                 value={userForm.lastName}
                 onChange={(event) => setUserForm((prev) => ({ ...prev, lastName: event.target.value }))}
-                className='rounded border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-white focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40'
+                className='rounded border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-950 px-3 py-2 text-sm text-neutral-900 dark:text-white focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40'
                 required
                 disabled={updateUserMutation.isPending}
               />
             </label>
             <label className='flex flex-col gap-1 sm:col-span-2'>
-              <span className='text-xs uppercase tracking-wide text-neutral-400'>Email</span>
+              <span className='text-xs uppercase tracking-wide text-neutral-500 dark:text-neutral-400'>Email</span>
               <input
                 type='email'
                 value={userForm.email}
                 onChange={(event) => setUserForm((prev) => ({ ...prev, email: event.target.value }))}
-                className='rounded border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-white focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40'
+                className='rounded border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-950 px-3 py-2 text-sm text-neutral-900 dark:text-white focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40'
                 required
                 disabled={updateUserMutation.isPending}
               />
@@ -150,7 +150,7 @@ export default function ProfilePage() {
             </div>
             {userFeedback && (
               <p
-                className={`sm:col-span-2 text-sm ${updateUserMutation.isError ? 'text-red-300' : 'text-emerald-300'}`}
+                className={`sm:col-span-2 text-sm ${updateUserMutation.isError ? 'text-red-600 dark:text-red-300' : 'text-emerald-600 dark:text-emerald-300'}`}
               >
                 {userFeedback}
               </p>
@@ -159,10 +159,10 @@ export default function ProfilePage() {
         )}
       </section>
 
-      <section className='rounded-lg border border-neutral-800 bg-neutral-900/60 p-6 shadow-sm'>
+      <section className='rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900/60 p-6 shadow-sm'>
         <header className='mb-4 flex items-center justify-between'>
           <div>
-            <h2 className='text-lg font-medium text-white'>Company details</h2>
+            <h2 className='text-lg font-medium text-neutral-900 dark:text-white'>Company details</h2>
             <p className='text-xs text-neutral-500'>Information visible to members of your organisation.</p>
           </div>
           {companyLoading && <span className='text-xs text-neutral-500'>Loading…</span>}
@@ -174,45 +174,45 @@ export default function ProfilePage() {
         ) : (
           <form className='grid gap-4 sm:grid-cols-2' onSubmit={handleCompanySubmit}>
             <label className='flex flex-col gap-1 sm:col-span-2'>
-              <span className='text-xs uppercase tracking-wide text-neutral-400'>Company name</span>
+              <span className='text-xs uppercase tracking-wide text-neutral-500 dark:text-neutral-400'>Company name</span>
               <input
                 type='text'
                 value={companyForm.name}
                 onChange={(event) => setCompanyForm((prev) => ({ ...prev, name: event.target.value }))}
-                className='rounded border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-white focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40'
+                className='rounded border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-950 px-3 py-2 text-sm text-neutral-900 dark:text-white focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40'
                 required
                 disabled={updateCompanyMutation.isPending}
               />
             </label>
             <label className='flex flex-col gap-1'>
-              <span className='text-xs uppercase tracking-wide text-neutral-400'>WhatsApp phone</span>
+              <span className='text-xs uppercase tracking-wide text-neutral-500 dark:text-neutral-400'>WhatsApp phone</span>
               <input
                 type='text'
                 value={companyForm.whatsappPhone}
                 onChange={(event) => setCompanyForm((prev) => ({ ...prev, whatsappPhone: event.target.value }))}
-                className='rounded border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-white focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40'
+                className='rounded border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-950 px-3 py-2 text-sm text-neutral-900 dark:text-white focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40'
                 placeholder='+65 1234 5678'
                 disabled={updateCompanyMutation.isPending}
               />
             </label>
             <label className='flex flex-col gap-1'>
-              <span className='text-xs uppercase tracking-wide text-neutral-400'>WhatsApp API key</span>
+              <span className='text-xs uppercase tracking-wide text-neutral-500 dark:text-neutral-400'>WhatsApp API key</span>
               <input
                 type='text'
                 value={companyForm.whatsappApiKey}
                 onChange={(event) => setCompanyForm((prev) => ({ ...prev, whatsappApiKey: event.target.value }))}
-                className='rounded border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-white focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40'
+                className='rounded border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-950 px-3 py-2 text-sm text-neutral-900 dark:text-white focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40'
                 placeholder='Optional'
                 disabled={updateCompanyMutation.isPending}
               />
             </label>
             <label className='flex flex-col gap-1 sm:col-span-2'>
-              <span className='text-xs uppercase tracking-wide text-neutral-400'>WhatsApp API URL</span>
+              <span className='text-xs uppercase tracking-wide text-neutral-500 dark:text-neutral-400'>WhatsApp API URL</span>
               <input
                 type='url'
                 value={companyForm.whatsappApiUrl}
                 onChange={(event) => setCompanyForm((prev) => ({ ...prev, whatsappApiUrl: event.target.value }))}
-                className='rounded border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-white focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40'
+                className='rounded border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-950 px-3 py-2 text-sm text-neutral-900 dark:text-white focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40'
                 placeholder='https://api.whatsapp.com/...'
                 disabled={updateCompanyMutation.isPending}
               />
@@ -229,7 +229,7 @@ export default function ProfilePage() {
             </div>
             {companyFeedback && (
               <p
-                className={`sm:col-span-2 text-sm ${updateCompanyMutation.isError ? 'text-red-300' : 'text-emerald-300'}`}
+                className={`sm:col-span-2 text-sm ${updateCompanyMutation.isError ? 'text-red-600 dark:text-red-300' : 'text-emerald-600 dark:text-emerald-300'}`}
               >
                 {companyFeedback}
               </p>

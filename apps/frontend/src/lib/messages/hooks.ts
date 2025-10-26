@@ -3,7 +3,7 @@ import { useContacts } from '../contacts/hooks';
 import { useGroups, groupMembersQueryOptions } from '../groups/hooks';
 import type { Contact } from 'shared-types';
 import { useQueries, useMutation } from '@tanstack/react-query';
-import { sendMessage as sendMessageApi } from './api';
+import { sendMessage as sendMessageApi, importMessagesCsv } from './api';
 
 export function useMessageRecipients(companyId: string) {
   const { data: contacts = [], isLoading: loadingContacts } = useContacts(companyId);
@@ -77,5 +77,11 @@ export function useMessageRecipients(companyId: string) {
 export function useSendMessage() {
   return useMutation({
     mutationFn: sendMessageApi,
+  });
+}
+
+export function useImportMessages(companyId: string, userId: string, templateId: string) {
+  return useMutation({
+    mutationFn: (file: File) => importMessagesCsv(companyId, userId, templateId, file),
   });
 }

@@ -24,46 +24,48 @@ function NavBar() {
   const { user, logout } = useAuth();
   const displayName = [user?.firstName, user?.lastName].filter(Boolean).join(' ');
   return (
-    <div className='mx-auto max-w-7xl px-4 sm:px-6 py-4 flex items-center justify-between text-sm'>
-      <div className='flex gap-4'>
-        <Link to='/contacts' className='text-white hover:underline'>
-          Contacts
-        </Link>
-        <span className='text-neutral-400'>|</span>
-        <Link to='/groups' className='text-white hover:underline'>
-          Groups
-        </Link>
-        <span className='text-neutral-400'>|</span>
-        <Link to='/templates' className='text-white hover:underline'>
-          Templates
-        </Link>
-        {/* <span className='text-neutral-400'>|</span> */}
-        {/* <Link to='/messages/new' className='text-white hover:underline'>
-          Send Message
-        </Link> */}
-        <span className='text-neutral-400'>|</span>
-        <Link to='/schedules/new' className='text-white hover:underline'>
-          New Schedule
-        </Link>
-        <span className='text-neutral-400'>|</span>
-        <Link to='/profile' className='text-white hover:underline'>
-          Profile
-        </Link>
-      </div>
-      {user ? (
-        <div className='flex items-center gap-3'>
-          <span className='hidden sm:flex flex-col text-xs text-neutral-400'>
-            <span className='font-medium text-neutral-200'>{displayName || user.email}</span>
-            <span className='text-neutral-500'>{user.email}</span>
-          </span>
-          <button
-            onClick={logout}
-            className='rounded border border-neutral-600 px-2 py-1 text-xs text-neutral-200 hover:bg-neutral-800'
-          >
-            Logout
-          </button>
+    <div className='bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800'>
+      <div className='mx-auto max-w-7xl px-4 sm:px-6 py-4 flex items-center justify-between text-sm'>
+        <div className='flex gap-4'>
+          <Link to='/contacts' className='text-neutral-900 dark:text-white hover:underline'>
+            Contacts
+          </Link>
+          <span className='text-neutral-400'>|</span>
+          <Link to='/groups' className='text-neutral-900 dark:text-white hover:underline'>
+            Groups
+          </Link>
+          <span className='text-neutral-400'>|</span>
+          <Link to='/templates' className='text-neutral-900 dark:text-white hover:underline'>
+            Templates
+          </Link>
+          <span className='text-neutral-400'>|</span>
+          <Link to='/messages/new' className='text-neutral-900 dark:text-white hover:underline'>
+            Send Messages
+          </Link>
+          <span className='text-neutral-400'>|</span>
+          <Link to='/schedules/new' className='text-neutral-900 dark:text-white hover:underline'>
+            New Schedule
+          </Link>
+          <span className='text-neutral-400'>|</span>
+          <Link to='/profile' className='text-neutral-900 dark:text-white hover:underline'>
+            Profile
+          </Link>
         </div>
-      ) : null}
+        {user ? (
+          <div className='flex items-center gap-3'>
+            <span className='hidden sm:flex flex-col text-xs text-neutral-500 dark:text-neutral-400'>
+              <span className='font-medium text-neutral-900 dark:text-neutral-200'>{displayName || user.email}</span>
+              <span className='text-neutral-500'>{user.email}</span>
+            </span>
+            <button
+              onClick={logout}
+              className='rounded border border-neutral-300 dark:border-neutral-600 px-2 py-1 text-xs text-neutral-700 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800'
+            >
+              Logout
+            </button>
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }

@@ -2,6 +2,10 @@ import { Request, Response } from 'express';
 import { messageService } from '../services/messageService';
 import { z } from 'zod';
 import prisma from '../../prisma/db';
+import multer from 'multer';
+
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
+export const uploadMiddleware = upload.single('file');
 
 const sendMessageSchema = z.object({
     companyId: z.string(),
@@ -85,6 +89,37 @@ export class MessageController {
                 message: 'An unexpected error occurred on the server.',
                 error: error.message,
             });
+        }
+    }
+
+    async importMessages(req: Request, res: Response) {
+        try {
+            if (!req.file) {
+                return res.status(400).json({ success: false, message: 'No file uploaded' });
+            }
+
+            const { companyId } = req.params;
+            const { userId, templateId } = req.body;
+
+            if (!userId || !templateId) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'userId and templateId are required'
+                });
+            }
+
+            const csvContent = req.file.buffer.toString('utf-8');
+            const { messageCsvImportService } = await import('../services/csvService');
+            const result = await messageCsvImportService.importMessages(companyId, userId, templateId, csvContent);
+
+            res.status(result.errorCount > 0 ? 207 : 201).json({
+                success: result.errorCount === 0,
+                message: `Imported ${result.createdCount} messages. ${result.errorCount} errors.`,
+                data: result,
+            });
+        } catch (error: any) {
+            console.error('Message CSV import error:', error);
+            res.status(500).json({ success: false, message: error.message || 'Failed to import messages' });
         }
     }
 

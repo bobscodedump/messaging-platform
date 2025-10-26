@@ -26,6 +26,7 @@ export default function ScheduleCreateForm() {
   const [templateVars, setTemplateVars] = useState<Record<string, string>>({});
   const [scheduleType, setScheduleType] = useState<ScheduleType>('ONE_TIME');
   const [scheduledAt, setScheduledAt] = useState<string>(''); // ISO string for ONE_TIME
+  const [reminderDaysBefore, setReminderDaysBefore] = useState<number>(0); // Days before to send reminder
   const [weeklyDay, setWeeklyDay] = useState<string>('MO'); // e.g., MO, TU, ...
   const [monthlyDay, setMonthlyDay] = useState<number>(1); // 1-28
   const [yearlyMonth, setYearlyMonth] = useState<number>(1); // 1-12
@@ -93,13 +94,24 @@ export default function ScheduleCreateForm() {
   const recipientCount = selectedContacts.size + selectedGroups.size; // rough count preview
 
   async function onSubmit() {
+    // Calculate adjusted scheduledAt by subtracting reminderDaysBefore
+    let adjustedScheduledAt: string | undefined;
+    if (scheduleType === 'ONE_TIME' && scheduledAt) {
+      const originalDate = new Date(scheduledAt);
+      if (reminderDaysBefore > 0) {
+        originalDate.setDate(originalDate.getDate() - reminderDaysBefore);
+      }
+      adjustedScheduledAt = originalDate.toISOString();
+    }
+
     const dto = {
       name,
       scheduleType,
       content: messageSource === 'content' ? content : '',
       templateId: messageSource === 'template' ? templateId : undefined,
       variables: messageSource === 'template' ? templateVars : undefined,
-      scheduledAt: scheduleType === 'ONE_TIME' && scheduledAt ? new Date(scheduledAt).toISOString() : undefined,
+      scheduledAt: adjustedScheduledAt,
+      reminderDaysBefore: reminderDaysBefore > 0 ? reminderDaysBefore : undefined,
       recurringPattern:
         scheduleType === 'WEEKLY'
           ? JSON.stringify({ day: weeklyDay })
@@ -274,20 +286,36 @@ export default function ScheduleCreateForm() {
 
         {/* Type-specific inputs */}
         {scheduleType === 'ONE_TIME' && (
-          <FormField
-            label='When'
-            htmlFor='scheduledAt'
-            helpText='Pick the exact date and time.'
-            error={isOneTimePast ? 'Time must be in the future' : undefined}
-          >
-            <Input
-              id='scheduledAt'
-              type='datetime-local'
-              min={nowLocalForInput}
-              value={scheduledAt}
-              onChange={(e) => setScheduledAt(e.target.value)}
-            />
-          </FormField>
+          <>
+            <FormField
+              label='When'
+              htmlFor='scheduledAt'
+              helpText='Pick the exact date and time.'
+              error={isOneTimePast ? 'Time must be in the future' : undefined}
+            >
+              <Input
+                id='scheduledAt'
+                type='datetime-local'
+                min={nowLocalForInput}
+                value={scheduledAt}
+                onChange={(e) => setScheduledAt(e.target.value)}
+              />
+            </FormField>
+            <FormField
+              label='Reminder (days before)'
+              htmlFor='reminderDaysBefore'
+              helpText='Send this message N days before the scheduled date. Leave at 0 to send on the exact date.'
+            >
+              <Input
+                id='reminderDaysBefore'
+                type='number'
+                min={0}
+                max={365}
+                value={reminderDaysBefore}
+                onChange={(e) => setReminderDaysBefore(Number(e.target.value))}
+              />
+            </FormField>
+          </>
         )}
         {scheduleType === 'WEEKLY' && (
           <FormField label='Day of week' htmlFor='weeklyDay'>
