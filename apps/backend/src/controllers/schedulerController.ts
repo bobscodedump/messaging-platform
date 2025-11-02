@@ -53,8 +53,11 @@ export class SchedulerController {
     async getSchedules(req: Request, res: Response, next: NextFunction) {
         try {
             const { companyId } = req.params;
-            const schedules = await scheduledMessageService.getSchedulesByCompany(companyId);
-            res.status(200).json({ success: true, data: schedules });
+            const page = parseInt(req.query.page as string) || 1;
+            const limit = parseInt(req.query.limit as string) || 20;
+
+            const result = await scheduledMessageService.getSchedulesByCompany(companyId, page, limit);
+            res.status(200).json({ success: true, data: result });
         } catch (error) {
             next(error);
         }

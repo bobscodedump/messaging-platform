@@ -242,21 +242,39 @@ export function ContactsCsvImport({ companyId }: Props) {
 
       {step === 'done' && importMutation.data && (
         <div className='space-y-3'>
-          <div className='rounded-md border border-green-300 bg-green-50 p-3 text-sm text-green-700'>
-            Imported {importMutation.data.createdCount} contacts. Backend reported {importMutation.data.errorCount}{' '}
-            error(s).
-          </div>
+          {importMutation.data.errorCount === 0 ? (
+            <div className='rounded-md border border-green-300 bg-green-50 p-3 text-sm text-green-700 dark:border-green-700 dark:bg-green-900/20 dark:text-green-400'>
+              <div className='font-medium'>✓ Import Successful!</div>
+              <div className='text-xs mt-1'>Imported {importMutation.data.createdCount} contact(s).</div>
+            </div>
+          ) : importMutation.data.createdCount === 0 ? (
+            <div className='rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-700 dark:border-red-700 dark:bg-red-900/20 dark:text-red-400'>
+              <div className='font-medium'>✗ Import Failed</div>
+              <div className='text-xs mt-1'>All {importMutation.data.errorCount} row(s) had errors.</div>
+            </div>
+          ) : (
+            <div className='rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-700 dark:border-amber-700 dark:bg-amber-900/20 dark:text-amber-400'>
+              <div className='font-medium'>⚠ Partial Success</div>
+              <div className='text-xs mt-1'>
+                Imported {importMutation.data.createdCount} contact(s). {importMutation.data.errorCount} failed.
+              </div>
+            </div>
+          )}
           {importMutation.data.errors.length > 0 && (
-            <div className='max-h-40 overflow-auto rounded-md border border-neutral-200 p-3 dark:border-neutral-800'>
-              <p className='mb-2 text-xs font-semibold'>Server Errors ({importMutation.data.errors.length}):</p>
+            <div className='max-h-40 overflow-auto rounded-md border border-red-300 bg-red-50 p-3 dark:border-red-800 dark:bg-red-900/20'>
+              <p className='mb-2 text-xs font-semibold text-red-800 dark:text-red-300'>
+                {importMutation.data.errors.length} Error(s):
+              </p>
               <ul className='space-y-1 text-xs'>
                 {importMutation.data.errors.slice(0, 50).map((er) => (
-                  <li key={er.index} className='text-red-500'>
-                    Row {er.index + 2}: {er.error}
+                  <li key={er.index} className='text-red-700 dark:text-red-400 font-mono'>
+                    <span className='font-semibold'>Row {er.index + 2}</span>: {er.error}
                   </li>
                 ))}
                 {importMutation.data.errors.length > 50 && (
-                  <li className='text-neutral-500'>+ {importMutation.data.errors.length - 50} more…</li>
+                  <li className='text-neutral-500 dark:text-neutral-400'>
+                    + {importMutation.data.errors.length - 50} more errors…
+                  </li>
                 )}
               </ul>
             </div>

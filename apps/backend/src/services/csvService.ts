@@ -85,6 +85,11 @@ function parseCsv(text: string, { maxRows = 2000 }: { maxRows?: number } = {}): 
         header.forEach((h, idx) => {
             row[h] = cols[idx] ?? '';
         });
+
+        // Skip rows where all fields are empty
+        const hasContent = Object.values(row).some((val) => String(val).trim().length > 0);
+        if (!hasContent) continue;
+
         rows.push(row as ImportedContactRow);
     }
     return { rows, errors, header };
@@ -128,40 +133,105 @@ function normalizeToIsoDate(raw: string): string | undefined {
 }
 
 // Normalize datetime formats to ISO 8601 (YYYY-MM-DDTHH:mm:ssZ)
-// Supported formats:
-//   - ISO with timezone: "2025-12-01T10:00:00Z" or "2025-12-01T10:00:00-05:00"
-//   - ISO without timezone: "2025-12-01T10:00:00" (assumes UTC)
-//   - Date and time with space: "2025-12-01 10:00" or "2025-12-01 10:00:00" (assumes UTC)
-//   - Date with slash and time: "2025/12/01 10:00" (assumes UTC)
-//   - US format with time: "12/01/2025 10:00" or "12-01-2025 10:00" (assumes UTC)
+// Supported formats (all assume UTC unless timezone specified):
+//   - ISO: "2025-12-01T10:00:00Z", "2025-12-01T10:00:00-05:00"
+//   - ISO no timezone: "2025-12-01T10:00:00", "2025-12-01T10:00"
+//   - Space separator: "2025-12-01 10:00", "2025-12-01 10:00:00"
+//   - Slash separator: "2025/12/01 10:00", "2025/12/01 10:00:00"
+//   - US format: "12/01/2025 10:00", "12-01-2025 10:00:00"
+//   - US short year: "12/01/25 10:00", "12-01-25 14:30"
+//   - EU format: "01.12.2025 10:00", "01/12/2025 10:00" (DD/MM/YYYY when ambiguous)
+//   - Compact: "20251201 1000", "20251201100000"
+//   - Various time formats: "10:00", "10:00:00", "10:00 AM", "2:30 PM"
 // Returns undefined if input cannot be parsed
 function normalizeToIsoDateTime(raw: string): string | undefined {
     const trimmed = raw.trim();
     if (!trimmed) return undefined;
 
-    // Pattern: YYYY-MM-DD HH:mm or YYYY-MM-DD HH:mm:ss (space or T separator, no timezone)
-    let m = trimmed.match(/^(\d{4})[-/](\d{2})[-/](\d{2})[T\s](\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+    // Pattern 1: YYYY-MM-DD or YYYY/MM/DD with optional time (HH:mm or HH:mm:ss)
+    let m = trimmed.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})(?:[T\s]+(\d{1,2}):(\d{2})(?::(\d{2}))?(?:\s*([AP]M))?)?$/i);
+    if (m) {
+        const [, year, month, day, hour = '00', minute = '00', second = '00', ampm] = m;
+        let h = parseInt(hour, 10);
+        if (ampm) {
+            if (ampm.toUpperCase() === 'PM' && h < 12) h += 12;
+            if (ampm.toUpperCase() === 'AM' && h === 12) h = 0;
+        }
+        const isoStr = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${h.toString().padStart(2, '0')}:${minute}:${second.padStart(2, '0')}Z`;
+        const dt = new Date(isoStr);
+        if (!isNaN(dt.getTime())) return dt.toISOString();
+    }
+
+    // Pattern 2: MM/DD/YYYY or MM-DD-YYYY with optional time (US format)
+    m = trimmed.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})(?:[T\s]+(\d{1,2}):(\d{2})(?::(\d{2}))?(?:\s*([AP]M))?)?$/i);
+    if (m) {
+        const [, month, day, year, hour = '00', minute = '00', second = '00', ampm] = m;
+        let h = parseInt(hour, 10);
+        if (ampm) {
+            if (ampm.toUpperCase() === 'PM' && h < 12) h += 12;
+            if (ampm.toUpperCase() === 'AM' && h === 12) h = 0;
+        }
+        const isoStr = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${h.toString().padStart(2, '0')}:${minute}:${second.padStart(2, '0')}Z`;
+        const dt = new Date(isoStr);
+        if (!isNaN(dt.getTime())) return dt.toISOString();
+    }
+
+    // Pattern 3: MM/DD/YY with time (short year, US format)
+    m = trimmed.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{2})(?:[T\s]+(\d{1,2}):(\d{2})(?::(\d{2}))?(?:\s*([AP]M))?)?$/i);
+    if (m) {
+        const [, month, day, yy, hour = '00', minute = '00', second = '00', ampm] = m;
+        let year = parseInt(yy, 10);
+        year = year <= 30 ? 2000 + year : 1900 + year;
+        let h = parseInt(hour, 10);
+        if (ampm) {
+            if (ampm.toUpperCase() === 'PM' && h < 12) h += 12;
+            if (ampm.toUpperCase() === 'AM' && h === 12) h = 0;
+        }
+        const isoStr = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${h.toString().padStart(2, '0')}:${minute}:${second.padStart(2, '0')}Z`;
+        const dt = new Date(isoStr);
+        if (!isNaN(dt.getTime())) return dt.toISOString();
+    }
+
+    // Pattern 4: DD.MM.YYYY or DD/MM/YYYY with time (EU format - day first when > 12)
+    m = trimmed.match(/^(\d{1,2})[./](\d{1,2})[./](\d{4})(?:[T\s]+(\d{1,2}):(\d{2})(?::(\d{2}))?(?:\s*([AP]M))?)?$/i);
+    if (m) {
+        const [, first, second, year, hour = '00', minute = '00', sec = '00', ampm] = m;
+        const f = parseInt(first, 10);
+        const s = parseInt(second, 10);
+        // If first number > 12, it must be day (DD/MM format)
+        // Otherwise, check if second > 12 to determine format
+        let day: string, month: string;
+        if (f > 12) {
+            day = first;
+            month = second;
+        } else if (s > 12) {
+            day = second;
+            month = first;
+        } else {
+            // Ambiguous - default to DD/MM (EU format)
+            day = first;
+            month = second;
+        }
+        let h = parseInt(hour, 10);
+        if (ampm) {
+            if (ampm.toUpperCase() === 'PM' && h < 12) h += 12;
+            if (ampm.toUpperCase() === 'AM' && h === 12) h = 0;
+        }
+        const isoStr = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${h.toString().padStart(2, '0')}:${minute}:${sec.padStart(2, '0')}Z`;
+        const dt = new Date(isoStr);
+        if (!isNaN(dt.getTime())) return dt.toISOString();
+    }
+
+    // Pattern 5: Compact format YYYYMMDD HHmm or YYYYMMDD HHmmss
+    m = trimmed.match(/^(\d{4})(\d{2})(\d{2})[\s]?(\d{2})(\d{2})(\d{2})?$/);
     if (m) {
         const [, year, month, day, hour, minute, second = '00'] = m;
-        const isoStr = `${year}-${month}-${day}T${hour.padStart(2, '0')}:${minute}:${second.padStart(2, '0')}Z`;
+        const isoStr = `${year}-${month}-${day}T${hour}:${minute}:${second}Z`;
         const dt = new Date(isoStr);
         if (!isNaN(dt.getTime())) return dt.toISOString();
     }
 
-    // Pattern: MM/DD/YYYY HH:mm or MM-DD-YYYY HH:mm (US format with time)
-    m = trimmed.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})[T\s](\d{1,2}):(\d{2})(?::(\d{2}))?$/);
-    if (m) {
-        const [, month, day, year, hour, minute, second = '00'] = m;
-        const mm = month.padStart(2, '0');
-        const dd = day.padStart(2, '0');
-        const hh = hour.padStart(2, '0');
-        const isoStr = `${year}-${mm}-${dd}T${hh}:${minute}:${second.padStart(2, '0')}Z`;
-        const dt = new Date(isoStr);
-        if (!isNaN(dt.getTime())) return dt.toISOString();
-    }
-
-    // Try parsing as-is last (handles full ISO with timezone)
-    // This handles formats like "2025-12-01T10:00:00Z" or "2025-12-01T10:00:00-05:00"
+    // Try parsing as-is (handles full ISO with timezone like "2025-12-01T10:00:00Z" or "2025-12-01T10:00:00-05:00")
     const dt = new Date(trimmed);
     if (!isNaN(dt.getTime())) {
         return dt.toISOString();
@@ -344,7 +414,6 @@ const SCHEDULE_REQUIRED_HEADERS = [
     'recipientContacts',
     'recipientGroups',
     'scheduledAt',
-    'reminderDaysBefore',
     'recurringDay',
     'recurringDayOfMonth',
     'recurringMonth',
@@ -387,6 +456,11 @@ function parseSchedulesCsv(
         header.forEach((h, idx) => {
             row[h] = cols[idx] ?? '';
         });
+
+        // Skip rows where all fields are empty
+        const hasContent = Object.values(row).some((val) => String(val).trim().length > 0);
+        if (!hasContent) continue;
+
         rows.push(row as ImportedScheduleRow);
     }
     return { rows, errors, header };
@@ -421,6 +495,10 @@ export class ScheduleCsvImportService {
 
                 if (recipientContactNames.length === 0 && recipientGroupNames.length === 0) {
                     throw new Error('At least one recipient (contact or group) required');
+                }
+
+                if (recipientContactNames.length > 0 && recipientGroupNames.length > 0) {
+                    throw new Error('Cannot specify both recipientContacts and recipientGroups - choose one per schedule');
                 }
 
                 // Resolve contact IDs
@@ -647,6 +725,11 @@ function parseMessagesCsv(
         header.forEach((h, idx) => {
             row[h] = cols[idx] ?? '';
         });
+
+        // Skip rows where all fields are empty
+        const hasContent = Object.values(row).some((val) => String(val).trim().length > 0);
+        if (!hasContent) continue;
+
         rows.push(row as ImportedMessageRow);
     }
     return { rows, errors, header, variableColumns };

@@ -2,12 +2,18 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { CreateScheduleDto, ScheduledMessageSummary } from 'shared-types';
 import { createSchedule, deleteSchedule, getScheduleById, getSchedules, updateSchedule } from './api';
 
-export function useSchedules(companyId: string) {
-    return useQuery<ScheduledMessageSummary[], Error>({
-        queryKey: ['schedules', companyId],
-        queryFn: () => getSchedules(companyId).then((res) => {
+export function useSchedules(companyId: string, page = 1, limit = 20) {
+    return useQuery<{
+        schedules: ScheduledMessageSummary[];
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+    }, Error>({
+        queryKey: ['schedules', companyId, page, limit],
+        queryFn: () => getSchedules(companyId, page, limit).then((res) => {
             if (!res.success) throw new Error(res.message || 'Failed to load schedules');
-            return res.data || [];
+            return res.data || { schedules: [], total: 0, page, limit, totalPages: 0 };
         }),
         enabled: !!companyId,
         staleTime: 30_000,

@@ -82,6 +82,11 @@ function parseCsvClient(text: string): {
     const cols = parseCsvLine(raw);
     const row: Record<string, string> = {};
     header.forEach((h, idx) => (row[h] = cols[idx] ?? ''));
+
+    // Skip rows where all fields are empty
+    const hasContent = Object.values(row).some((val) => val.trim().length > 0);
+    if (!hasContent) continue;
+
     const errors: string[] = [];
     const warnings: string[] = [];
 
@@ -137,8 +142,6 @@ export function MessageCsvImport({ companyId, userId }: Props) {
       return !availableVars.has(v);
     });
   }, [templateVariables, parseResult, selectedTemplate]);
-
-  const hasValidationErrors = missingVariables.length > 0;
 
   const reset = () => {
     setStep('idle');
@@ -391,26 +394,46 @@ export function MessageCsvImport({ companyId, userId }: Props) {
 
       {step === 'uploading' && <div className='p-6 text-center text-sm text-neutral-500'>Sending messages…</div>}
 
-      {step === 'done' && (
+      {step === 'done' && importMutation.data?.data && (
         <div className='space-y-4'>
-          <div className='rounded border border-green-300 bg-green-50 p-4 dark:bg-green-900/20 dark:border-green-800'>
-            <div className='font-medium text-green-800 dark:text-green-300'>Import Complete!</div>
-            <div className='text-sm text-green-700 dark:text-green-400'>
-              Successfully sent {importMutation.data?.data?.createdCount || 0} messages.
-              {importMutation.data?.data?.errorCount > 0 && ` ${importMutation.data.data.errorCount} failed.`}
+          {importMutation.data.data.errorCount === 0 ? (
+            <div className='rounded border border-green-300 bg-green-50 p-4 dark:bg-green-900/20 dark:border-green-800'>
+              <div className='font-medium text-green-800 dark:text-green-300'>✓ Import Successful!</div>
+              <div className='text-sm text-green-700 dark:text-green-400'>
+                Successfully sent {importMutation.data.data.createdCount} message(s).
+              </div>
             </div>
-          </div>
-          {importMutation.data?.data?.errors && importMutation.data.data.errors.length > 0 && (
-            <div className='rounded border border-yellow-300 bg-yellow-50 p-3 dark:bg-yellow-900/20 dark:border-yellow-800'>
-              <div className='font-medium text-yellow-800 dark:text-yellow-300 mb-2'>Errors</div>
-              <ul className='max-h-60 overflow-y-auto text-sm text-yellow-700 dark:text-yellow-400 space-y-1'>
+          ) : importMutation.data.data.createdCount === 0 ? (
+            <div className='rounded border border-red-300 bg-red-50 p-4 dark:bg-red-900/20 dark:border-red-800'>
+              <div className='font-medium text-red-800 dark:text-red-300'>✗ Import Failed</div>
+              <div className='text-sm text-red-700 dark:text-red-400'>
+                All {importMutation.data.data.errorCount} message(s) failed to send.
+              </div>
+            </div>
+          ) : (
+            <div className='rounded border border-amber-300 bg-amber-50 p-4 dark:bg-amber-900/20 dark:border-amber-800'>
+              <div className='font-medium text-amber-800 dark:text-amber-300'>⚠ Partial Success</div>
+              <div className='text-sm text-amber-700 dark:text-amber-400'>
+                Sent {importMutation.data.data.createdCount} message(s). {importMutation.data.data.errorCount} failed.
+              </div>
+            </div>
+          )}
+          {importMutation.data.data.errors && importMutation.data.data.errors.length > 0 && (
+            <div className='rounded border border-red-300 bg-red-50 p-3 dark:bg-red-900/20 dark:border-red-800'>
+              <div className='font-medium text-red-800 dark:text-red-300 mb-2'>
+                {importMutation.data.data.errors.length} Error(s)
+              </div>
+              <ul className='max-h-60 overflow-y-auto text-sm text-red-700 dark:text-red-400 space-y-1'>
                 {importMutation.data.data.errors.slice(0, 50).map((e: any, i: number) => (
-                  <li key={i}>
-                    Row {e.index + 1}: {e.error}
+                  <li key={i} className='font-mono text-xs'>
+                    <span className='font-semibold'>Row {e.index + 1}</span>
+                    {e.row && <span className='text-red-600 dark:text-red-500'> ({e.row})</span>}: {e.error}
                   </li>
                 ))}
                 {importMutation.data.data.errors.length > 50 && (
-                  <li className='text-neutral-500'>+ {importMutation.data.data.errors.length - 50} more…</li>
+                  <li className='text-neutral-500 dark:text-neutral-400'>
+                    + {importMutation.data.data.errors.length - 50} more errors…
+                  </li>
                 )}
               </ul>
             </div>

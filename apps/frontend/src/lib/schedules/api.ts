@@ -20,8 +20,14 @@ export async function importSchedulesCsv(companyId: string, file: File) {
     return json.data!;
 }
 
-export async function getSchedules(companyId: string) {
-    return get<ScheduledMessageSummary[]>(`/companies/${companyId}/schedules`);
+export async function getSchedules(companyId: string, page = 1, limit = 20) {
+    return get<{
+        schedules: ScheduledMessageSummary[];
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+    }>(`/companies/${companyId}/schedules?page=${page}&limit=${limit}`);
 }
 
 export async function createSchedule(dto: CreateScheduleDto) {

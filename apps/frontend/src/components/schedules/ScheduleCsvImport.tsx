@@ -23,7 +23,6 @@ const REQUIRED_HEADERS = [
   'recipientContacts',
   'recipientGroups',
   'scheduledAt',
-  'reminderDaysBefore',
   'recurringDay',
   'recurringDayOfMonth',
   'recurringMonth',
@@ -58,6 +57,130 @@ function parseCsvLine(line: string): string[] {
   return result;
 }
 
+// Parse datetime and return formatted preview string
+// Mirrors backend normalizeToIsoDateTime logic
+function parseAndFormatDateTime(dateTimeStr: string): { formatted: string; isValid: boolean } {
+  if (!dateTimeStr || !dateTimeStr.trim()) {
+    return { formatted: '-', isValid: false };
+  }
+
+  const trimmed = dateTimeStr.trim();
+  let parsedDate: Date | null = null;
+
+  // Pattern 1: YYYY-MM-DD or YYYY/MM/DD with optional time
+  let m = trimmed.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})(?:[T\s]+(\d{1,2}):(\d{2})(?::(\d{2}))?(?:\s*([AP]M))?)?$/i);
+  if (m) {
+    const [, year, month, day, hour = '00', minute = '00', second = '00', ampm] = m;
+    let h = parseInt(hour, 10);
+    if (ampm) {
+      if (ampm.toUpperCase() === 'PM' && h < 12) h += 12;
+      if (ampm.toUpperCase() === 'AM' && h === 12) h = 0;
+    }
+    parsedDate = new Date(
+      `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${h.toString().padStart(2, '0')}:${minute}:${second.padStart(2, '0')}Z`
+    );
+  }
+
+  // Pattern 2: MM/DD/YYYY or MM-DD-YYYY with optional time (US format)
+  if (!parsedDate || isNaN(parsedDate.getTime())) {
+    m = trimmed.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})(?:[T\s]+(\d{1,2}):(\d{2})(?::(\d{2}))?(?:\s*([AP]M))?)?$/i);
+    if (m) {
+      const [, month, day, year, hour = '00', minute = '00', second = '00', ampm] = m;
+      let h = parseInt(hour, 10);
+      if (ampm) {
+        if (ampm.toUpperCase() === 'PM' && h < 12) h += 12;
+        if (ampm.toUpperCase() === 'AM' && h === 12) h = 0;
+      }
+      parsedDate = new Date(
+        `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${h.toString().padStart(2, '0')}:${minute}:${second.padStart(2, '0')}Z`
+      );
+    }
+  }
+
+  // Pattern 3: MM/DD/YY with time (short year, US format)
+  if (!parsedDate || isNaN(parsedDate.getTime())) {
+    m = trimmed.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{2})(?:[T\s]+(\d{1,2}):(\d{2})(?::(\d{2}))?(?:\s*([AP]M))?)?$/i);
+    if (m) {
+      const [, month, day, yy, hour = '00', minute = '00', second = '00', ampm] = m;
+      let year = parseInt(yy, 10);
+      year = year <= 30 ? 2000 + year : 1900 + year;
+      let h = parseInt(hour, 10);
+      if (ampm) {
+        if (ampm.toUpperCase() === 'PM' && h < 12) h += 12;
+        if (ampm.toUpperCase() === 'AM' && h === 12) h = 0;
+      }
+      parsedDate = new Date(
+        `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${h.toString().padStart(2, '0')}:${minute}:${second.padStart(2, '0')}Z`
+      );
+    }
+  }
+
+  // Pattern 4: DD.MM.YYYY or DD/MM/YYYY with time (EU format - day first when > 12)
+  if (!parsedDate || isNaN(parsedDate.getTime())) {
+    m = trimmed.match(/^(\d{1,2})[./](\d{1,2})[./](\d{4})(?:[T\s]+(\d{1,2}):(\d{2})(?::(\d{2}))?(?:\s*([AP]M))?)?$/i);
+    if (m) {
+      const [, first, second, year, hour = '00', minute = '00', sec = '00', ampm] = m;
+      const f = parseInt(first, 10);
+      const s = parseInt(second, 10);
+      let day: string, month: string;
+      if (f > 12) {
+        day = first;
+        month = second;
+      } else if (s > 12) {
+        day = second;
+        month = first;
+      } else {
+        // Ambiguous - default to DD/MM (EU format)
+        day = first;
+        month = second;
+      }
+      let h = parseInt(hour, 10);
+      if (ampm) {
+        if (ampm.toUpperCase() === 'PM' && h < 12) h += 12;
+        if (ampm.toUpperCase() === 'AM' && h === 12) h = 0;
+      }
+      parsedDate = new Date(
+        `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${h.toString().padStart(2, '0')}:${minute}:${sec.padStart(2, '0')}Z`
+      );
+    }
+  }
+
+  // Pattern 5: Compact format YYYYMMDD HHmm or YYYYMMDD HHmmss
+  if (!parsedDate || isNaN(parsedDate.getTime())) {
+    m = trimmed.match(/^(\d{4})(\d{2})(\d{2})[\s]?(\d{2})(\d{2})(\d{2})?$/);
+    if (m) {
+      const [, year, month, day, hour, minute, second = '00'] = m;
+      parsedDate = new Date(`${year}-${month}-${day}T${hour}:${minute}:${second}Z`);
+    }
+  }
+
+  // Fallback: Try native Date parser (handles ISO with timezone)
+  if (!parsedDate || isNaN(parsedDate.getTime())) {
+    try {
+      parsedDate = new Date(trimmed);
+    } catch (e) {
+      // Ignore
+    }
+  }
+
+  // Check if we got a valid date
+  if (parsedDate && !isNaN(parsedDate.getTime())) {
+    const formatted = parsedDate.toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+      timeZone: 'UTC',
+      timeZoneName: 'short',
+    });
+    return { formatted, isValid: true };
+  }
+
+  return { formatted: '⚠️ Invalid format', isValid: false };
+}
+
 function parseCsvClient(text: string) {
   const lines = text.split(/\r?\n/).filter((l) => l.trim().length > 0);
   if (!lines.length) return { header: [], rows: [] as ParsedRow[], headerErrors: ['Empty file'] };
@@ -69,6 +192,11 @@ function parseCsvClient(text: string) {
     const cols = parseCsvLine(lines[i]);
     const raw: Record<string, string> = {};
     header.forEach((h, idx) => (raw[h] = cols[idx] ?? ''));
+
+    // Skip rows where all fields are empty
+    const hasContent = Object.values(raw).some((val) => val.trim().length > 0);
+    if (!hasContent) continue;
+
     const errors: string[] = [];
     const warnings: string[] = [];
 
@@ -81,18 +209,29 @@ function parseCsvClient(text: string) {
       errors.push('scheduleType must be ONE_TIME, WEEKLY, MONTHLY, YEARLY, or BIRTHDAY');
     }
 
-    if (!raw.recipientContacts && !raw.recipientGroups) {
+    // Check recipient validation
+    const hasContacts = raw.recipientContacts?.trim().length > 0;
+    const hasGroups = raw.recipientGroups?.trim().length > 0;
+
+    if (!hasContacts && !hasGroups) {
       errors.push('At least one recipientContacts or recipientGroups required');
+    } else if (hasContacts && hasGroups) {
+      errors.push('Cannot specify both recipientContacts and recipientGroups - choose one per schedule');
     }
 
     // Type-specific validations
     if (scheduleType === 'ONE_TIME') {
       if (!raw.scheduledAt) errors.push('ONE_TIME requires scheduledAt');
-      else if (
-        !/^\d{4}[-/]\d{2}[-/]\d{2}[T\s]\d{1,2}:\d{2}/.test(raw.scheduledAt) &&
-        !/^\d{1,2}[-/]\d{1,2}[-/]\d{4}[T\s]\d{1,2}:\d{2}/.test(raw.scheduledAt)
-      ) {
-        warnings.push('scheduledAt format: "2025-12-01 10:00" or "12/01/2025 10:00"');
+      // Accept many datetime formats - backend will parse and validate
+      else if (raw.scheduledAt.trim().length > 0) {
+        // Basic sanity check - contains both date and time parts
+        const hasDatePart = /\d{1,4}[-/.\s]\d{1,2}[-/.\s]\d{1,4}/.test(raw.scheduledAt);
+        const hasTimePart = /\d{1,2}:\d{2}/.test(raw.scheduledAt);
+        if (!hasDatePart || !hasTimePart) {
+          warnings.push(
+            'scheduledAt should include both date and time (e.g., "2025-12-01 10:00" or "12/01/2025 2:30 PM")'
+          );
+        }
       }
 
       // Validate reminderDaysBefore if provided
@@ -173,6 +312,10 @@ export function ScheduleCsvImport({ companyId }: Props) {
 
   return (
     <Card title='Bulk Import Schedules' description='Workflow: Upload → Validate → Preview → Confirm.'>
+      <div className='mb-2 rounded border border-blue-200 bg-blue-50 p-2 text-xs text-blue-700 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-300'>
+        <strong>Important:</strong> Each schedule row must specify <em>either</em> recipientContacts <em>or</em>{' '}
+        recipientGroups, not both.
+      </div>
       <div className='mb-3 flex flex-wrap items-center gap-3 text-xs text-neutral-600 dark:text-neutral-400'>
         <a
           href='/sample-schedules.csv'
@@ -186,9 +329,12 @@ export function ScheduleCsvImport({ companyId }: Props) {
             { h: 'name', tip: 'Schedule name' },
             { h: 'scheduleType', tip: 'ONE_TIME, WEEKLY, MONTHLY, YEARLY, or BIRTHDAY' },
             { h: 'content', tip: 'Message with {{contact.firstName}} placeholders' },
-            { h: 'recipientContacts', tip: 'Comma-separated "FirstName LastName"' },
-            { h: 'recipientGroups', tip: 'Comma-separated group names' },
-            { h: 'scheduledAt', tip: 'For ONE_TIME: "2025-12-01 10:00" or "12/01/2025 10:00"' },
+            { h: 'recipientContacts', tip: 'Comma-separated "FirstName LastName" (use contacts OR groups, not both)' },
+            { h: 'recipientGroups', tip: 'Comma-separated group names (use contacts OR groups, not both)' },
+            {
+              h: 'scheduledAt',
+              tip: 'For ONE_TIME: many formats accepted - "2025-12-01 10:00", "12/01/2025 2:30 PM", "01.12.2025 14:00"',
+            },
             { h: 'recurringDay', tip: 'For WEEKLY: MO, TU, WE, TH, FR, SA, SU' },
             { h: 'recurringDayOfMonth', tip: 'For MONTHLY: 1-28' },
             { h: 'recurringMonth', tip: 'For YEARLY: 1-12' },
@@ -248,7 +394,8 @@ export function ScheduleCsvImport({ companyId }: Props) {
                 <tr>
                   <th className='px-2 py-1 text-left'>#</th>
                   <th className='px-2 py-1 text-left'>name</th>
-                  <th className='px-2 py-1 text-left'>scheduleType</th>
+                  <th className='px-2 py-1 text-left'>type</th>
+                  <th className='px-2 py-1 text-left'>scheduledAt (parsed)</th>
                   <th className='px-2 py-1 text-left'>content</th>
                   <th className='px-2 py-1 text-left'>recipients</th>
                   <th className='px-2 py-1 text-left'>Errors</th>
@@ -256,19 +403,49 @@ export function ScheduleCsvImport({ companyId }: Props) {
                 </tr>
               </thead>
               <tbody>
-                {rows.map((r) => (
-                  <tr key={r.index} className='border-t border-neutral-200 dark:border-neutral-800'>
-                    <td className='px-2 py-1'>{r.index + 1}</td>
-                    <td className='px-2 py-1'>{r.raw.name}</td>
-                    <td className='px-2 py-1'>{r.raw.scheduleType}</td>
-                    <td className='px-2 py-1 max-w-xs truncate'>{r.raw.content}</td>
-                    <td className='px-2 py-1 max-w-xs truncate'>
-                      {[r.raw.recipientContacts, r.raw.recipientGroups].filter(Boolean).join('; ')}
-                    </td>
-                    <td className='px-2 py-1 text-red-600'>{r.errors.join(', ') || '-'}</td>
-                    <td className='px-2 py-1 text-amber-600'>{r.warnings.join(', ') || '-'}</td>
-                  </tr>
-                ))}
+                {rows.map((r) => {
+                  const scheduleType = r.raw.scheduleType?.toUpperCase();
+                  const dateTimePreview =
+                    scheduleType === 'ONE_TIME' && r.raw.scheduledAt ? parseAndFormatDateTime(r.raw.scheduledAt) : null;
+
+                  return (
+                    <tr key={r.index} className='border-t border-neutral-200 dark:border-neutral-800'>
+                      <td className='px-2 py-1'>{r.index + 1}</td>
+                      <td className='px-2 py-1 max-w-[150px] truncate'>{r.raw.name}</td>
+                      <td className='px-2 py-1'>
+                        <span className='rounded bg-neutral-200 px-1 py-0.5 text-[10px] dark:bg-neutral-700'>
+                          {r.raw.scheduleType}
+                        </span>
+                      </td>
+                      <td className='px-2 py-1 max-w-[200px]'>
+                        {dateTimePreview ? (
+                          <div
+                            className={
+                              dateTimePreview.isValid
+                                ? 'text-neutral-700 dark:text-neutral-300'
+                                : 'text-red-600 dark:text-red-400'
+                            }
+                          >
+                            <div className='text-[10px] text-neutral-500 dark:text-neutral-500'>
+                              Input: {r.raw.scheduledAt}
+                            </div>
+                            <div className='font-medium mt-0.5'>{dateTimePreview.formatted}</div>
+                          </div>
+                        ) : scheduleType === 'ONE_TIME' ? (
+                          <span className='text-neutral-400 italic'>No date</span>
+                        ) : (
+                          <span className='text-neutral-400 italic'>-</span>
+                        )}
+                      </td>
+                      <td className='px-2 py-1 max-w-xs truncate'>{r.raw.content}</td>
+                      <td className='px-2 py-1 max-w-xs truncate'>
+                        {[r.raw.recipientContacts, r.raw.recipientGroups].filter(Boolean).join('; ')}
+                      </td>
+                      <td className='px-2 py-1 text-red-600 dark:text-red-400'>{r.errors.join(', ') || '-'}</td>
+                      <td className='px-2 py-1 text-amber-600 dark:text-amber-400'>{r.warnings.join(', ') || '-'}</td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -290,29 +467,41 @@ export function ScheduleCsvImport({ companyId }: Props) {
         </div>
       )}
 
-      {step === 'done' && (
+      {step === 'done' && importMutation.data && (
         <div className='space-y-4'>
-          <div className='rounded-md border border-green-300 bg-green-50 p-4 text-center text-sm text-green-700'>
-            ✓ Import completed successfully!
-          </div>
-          {importMutation.data && (
-            <div className='text-xs text-neutral-600'>
-              <p>Created: {importMutation.data.createdCount}</p>
-              <p>Errors: {importMutation.data.errorCount}</p>
-              {importMutation.data.errors.length > 0 && (
-                <details className='mt-2'>
-                  <summary className='cursor-pointer font-medium'>View Errors</summary>
-                  <ul className='mt-2 space-y-1 text-red-600'>
-                    {importMutation.data.errors.map((e, i) => (
-                      <li key={i}>
-                        Row {e.index + 1} {e.row && `(${e.row})`}: {e.error}
-                      </li>
-                    ))}
-                  </ul>
-                </details>
-              )}
+          {importMutation.data.errorCount === 0 ? (
+            <div className='rounded-md border border-green-300 bg-green-50 p-4 text-center text-sm text-green-700 dark:border-green-700 dark:bg-green-900/20 dark:text-green-400'>
+              ✓ Import completed successfully!
+            </div>
+          ) : importMutation.data.createdCount === 0 ? (
+            <div className='rounded-md border border-red-300 bg-red-50 p-4 text-center text-sm text-red-700 dark:border-red-700 dark:bg-red-900/20 dark:text-red-400'>
+              ✗ Import failed - All rows had errors
+            </div>
+          ) : (
+            <div className='rounded-md border border-amber-300 bg-amber-50 p-4 text-center text-sm text-amber-700 dark:border-amber-700 dark:bg-amber-900/20 dark:text-amber-400'>
+              ⚠ Import completed with errors
             </div>
           )}
+          <div className='text-xs text-neutral-600 dark:text-neutral-400'>
+            <p className='font-medium'>
+              Created: {importMutation.data.createdCount} | Failed: {importMutation.data.errorCount}
+            </p>
+            {importMutation.data.errors.length > 0 && (
+              <details className='mt-2' open={importMutation.data.createdCount === 0}>
+                <summary className='cursor-pointer font-medium text-red-600 dark:text-red-400'>
+                  View {importMutation.data.errors.length} Error(s)
+                </summary>
+                <ul className='mt-2 max-h-48 space-y-1 overflow-y-auto rounded border border-red-200 bg-red-50 p-2 text-red-700 dark:border-red-800 dark:bg-red-900/10 dark:text-red-400'>
+                  {importMutation.data.errors.map((e, i) => (
+                    <li key={i} className='text-xs'>
+                      <span className='font-medium'>Row {e.index + 1}</span>
+                      {e.row && <span className='text-red-600 dark:text-red-500'> ({e.row})</span>}: {e.error}
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            )}
+          </div>
           <div className='flex justify-end'>
             <Button onClick={reset}>Import Another</Button>
           </div>

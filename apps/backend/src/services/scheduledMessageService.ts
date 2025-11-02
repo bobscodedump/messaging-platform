@@ -153,11 +153,28 @@ class ScheduledMessageService {
         });
     }
 
-    async getSchedulesByCompany(companyId: string) {
-        return prisma.scheduledMessage.findMany({
-            where: { companyId },
-            orderBy: { createdAt: 'desc' },
-        });
+    async getSchedulesByCompany(companyId: string, page = 1, limit = 20) {
+        const skip = (page - 1) * limit;
+
+        const [schedules, total] = await Promise.all([
+            prisma.scheduledMessage.findMany({
+                where: { companyId },
+                orderBy: { createdAt: 'desc' },
+                skip,
+                take: limit,
+            }),
+            prisma.scheduledMessage.count({
+                where: { companyId },
+            }),
+        ]);
+
+        return {
+            schedules,
+            total,
+            page,
+            limit,
+            totalPages: Math.ceil(total / limit),
+        };
     }
 
     async getScheduleById(id: string) {

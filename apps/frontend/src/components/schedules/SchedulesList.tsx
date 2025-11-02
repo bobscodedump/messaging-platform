@@ -103,8 +103,25 @@ interface Props {
 export function SchedulesList({ onDelete }: Props) {
   const { user } = useAuth();
   const companyId = user?.companyId || '';
-  const { data: schedules, isLoading, error } = useSchedules(companyId);
   const [activeTab, setActiveTab] = useState<Tab>('active');
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(20);
+
+  const { data, isLoading, error } = useSchedules(companyId, page, limit);
+  const schedules = data?.schedules || [];
+  const totalPages = data?.totalPages || 0;
+  const total = data?.total || 0;
+
+  // Reset to page 1 when changing tabs or page size
+  const handleTabChange = (tab: Tab) => {
+    setActiveTab(tab);
+    setPage(1);
+  };
+
+  const handleLimitChange = (newLimit: number) => {
+    setLimit(newLimit);
+    setPage(1);
+  };
 
   if (isLoading) {
     return (
@@ -162,7 +179,7 @@ export function SchedulesList({ onDelete }: Props) {
       <div className='border-b border-neutral-200 dark:border-neutral-800 mb-4'>
         <nav className='-mb-px flex space-x-8'>
           <button
-            onClick={() => setActiveTab('active')}
+            onClick={() => handleTabChange('active')}
             className={`py-2 px-1 border-b-2 font-medium text-sm ${
               activeTab === 'active'
                 ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
@@ -172,7 +189,7 @@ export function SchedulesList({ onDelete }: Props) {
             Active ({activeSchedules.length})
           </button>
           <button
-            onClick={() => setActiveTab('past')}
+            onClick={() => handleTabChange('past')}
             className={`py-2 px-1 border-b-2 font-medium text-sm ${
               activeTab === 'past'
                 ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
@@ -224,6 +241,52 @@ export function SchedulesList({ onDelete }: Props) {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* Pagination */}
+      {total > 0 && (
+        <div className='mt-4 flex items-center justify-between border-t border-neutral-200 dark:border-neutral-800 pt-4'>
+          <div className='flex items-center space-x-4'>
+            <div className='text-sm text-neutral-600 dark:text-neutral-400'>
+              Showing {(page - 1) * limit + 1} to {Math.min(page * limit, total)} of {total} schedules
+            </div>
+            <div className='flex items-center space-x-2'>
+              <label htmlFor='page-size' className='text-sm text-neutral-600 dark:text-neutral-400'>
+                Per page:
+              </label>
+              <select
+                id='page-size'
+                value={limit}
+                onChange={(e) => handleLimitChange(Number(e.target.value))}
+                className='px-2 py-1 text-sm border border-neutral-300 rounded-md bg-white dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-300'
+              >
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+            </div>
+          </div>
+          <div className='flex items-center space-x-2'>
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className='px-3 py-1 text-sm font-medium text-neutral-700 bg-white border border-neutral-300 rounded-md hover:bg-neutral-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-neutral-800 dark:text-neutral-300 dark:border-neutral-700 dark:hover:bg-neutral-700'
+            >
+              Previous
+            </button>
+            <span className='text-sm text-neutral-600 dark:text-neutral-400'>
+              Page {page} of {totalPages}
+            </span>
+            <button
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+              className='px-3 py-1 text-sm font-medium text-neutral-700 bg-white border border-neutral-300 rounded-md hover:bg-neutral-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-neutral-800 dark:text-neutral-300 dark:border-neutral-700 dark:hover:bg-neutral-700'
+            >
+              Next
+            </button>
+          </div>
         </div>
       )}
 
