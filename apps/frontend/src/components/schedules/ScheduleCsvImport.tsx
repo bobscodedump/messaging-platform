@@ -81,27 +81,27 @@ function parseAndFormatDateTime(dateTimeStr: string): { formatted: string; isVal
     );
   }
 
-  // Pattern 2: MM/DD/YYYY or MM-DD-YYYY with optional time (US format)
+  // Pattern 2: DD/MM/YYYY or DD.MM.YYYY with optional time (EU format - always DD/MM)
   if (!parsedDate || isNaN(parsedDate.getTime())) {
-    m = trimmed.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})(?:[T\s]+(\d{1,2}):(\d{2})(?::(\d{2}))?(?:\s*([AP]M))?)?$/i);
+    m = trimmed.match(/^(\d{1,2})[./](\d{1,2})[./](\d{4})(?:[T\s]+(\d{1,2}):(\d{2})(?::(\d{2}))?(?:\s*([AP]M))?)?$/i);
     if (m) {
-      const [, month, day, year, hour = '00', minute = '00', second = '00', ampm] = m;
+      const [, day, month, year, hour = '00', minute = '00', sec = '00', ampm] = m;
       let h = parseInt(hour, 10);
       if (ampm) {
         if (ampm.toUpperCase() === 'PM' && h < 12) h += 12;
         if (ampm.toUpperCase() === 'AM' && h === 12) h = 0;
       }
       parsedDate = new Date(
-        `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${h.toString().padStart(2, '0')}:${minute}:${second.padStart(2, '0')}Z`
+        `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${h.toString().padStart(2, '0')}:${minute}:${sec.padStart(2, '0')}Z`
       );
     }
   }
 
-  // Pattern 3: MM/DD/YY with time (short year, US format)
+  // Pattern 3: DD/MM/YY with time (short year, EU format - always DD/MM)
   if (!parsedDate || isNaN(parsedDate.getTime())) {
-    m = trimmed.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{2})(?:[T\s]+(\d{1,2}):(\d{2})(?::(\d{2}))?(?:\s*([AP]M))?)?$/i);
+    m = trimmed.match(/^(\d{1,2})[./](\d{1,2})[./](\d{2})(?:[T\s]+(\d{1,2}):(\d{2})(?::(\d{2}))?(?:\s*([AP]M))?)?$/i);
     if (m) {
-      const [, month, day, yy, hour = '00', minute = '00', second = '00', ampm] = m;
+      const [, day, month, yy, hour = '00', minute = '00', second = '00', ampm] = m;
       let year = parseInt(yy, 10);
       year = year <= 30 ? 2000 + year : 1900 + year;
       let h = parseInt(hour, 10);
@@ -115,37 +115,7 @@ function parseAndFormatDateTime(dateTimeStr: string): { formatted: string; isVal
     }
   }
 
-  // Pattern 4: DD.MM.YYYY or DD/MM/YYYY with time (EU format - day first when > 12)
-  if (!parsedDate || isNaN(parsedDate.getTime())) {
-    m = trimmed.match(/^(\d{1,2})[./](\d{1,2})[./](\d{4})(?:[T\s]+(\d{1,2}):(\d{2})(?::(\d{2}))?(?:\s*([AP]M))?)?$/i);
-    if (m) {
-      const [, first, second, year, hour = '00', minute = '00', sec = '00', ampm] = m;
-      const f = parseInt(first, 10);
-      const s = parseInt(second, 10);
-      let day: string, month: string;
-      if (f > 12) {
-        day = first;
-        month = second;
-      } else if (s > 12) {
-        day = second;
-        month = first;
-      } else {
-        // Ambiguous - default to DD/MM (EU format)
-        day = first;
-        month = second;
-      }
-      let h = parseInt(hour, 10);
-      if (ampm) {
-        if (ampm.toUpperCase() === 'PM' && h < 12) h += 12;
-        if (ampm.toUpperCase() === 'AM' && h === 12) h = 0;
-      }
-      parsedDate = new Date(
-        `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${h.toString().padStart(2, '0')}:${minute}:${sec.padStart(2, '0')}Z`
-      );
-    }
-  }
-
-  // Pattern 5: Compact format YYYYMMDD HHmm or YYYYMMDD HHmmss
+  // Pattern 4: Compact format YYYYMMDD HHmm or YYYYMMDD HHmmss
   if (!parsedDate || isNaN(parsedDate.getTime())) {
     m = trimmed.match(/^(\d{4})(\d{2})(\d{2})[\s]?(\d{2})(\d{2})(\d{2})?$/);
     if (m) {
@@ -343,7 +313,7 @@ export function ScheduleCsvImport({ companyId }: Props) {
             { h: 'recipientGroups', tip: 'Comma-separated group names (use contacts OR groups, not both)' },
             {
               h: 'scheduledAt',
-              tip: 'For ONE_TIME: many formats accepted - "2025-12-01 10:00", "12/01/2025 2:30 PM", "01.12.2025 14:00"',
+              tip: 'For ONE_TIME: Use DD/MM/YYYY format - e.g., "15/12/2025 14:30" or "15.12.2025 2:00 PM" (must be future date)',
             },
             { h: 'recurringDay', tip: 'For WEEKLY: MO, TU, WE, TH, FR, SA, SU' },
             { h: 'recurringDayOfMonth', tip: 'For MONTHLY: 1-28' },

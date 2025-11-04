@@ -135,14 +135,12 @@ function normalizeToIsoDate(raw: string): string | undefined {
 // Normalize datetime formats to ISO 8601 (YYYY-MM-DDTHH:mm:ssZ)
 // Supported formats (all assume UTC unless timezone specified):
 //   - ISO: "2025-12-01T10:00:00Z", "2025-12-01T10:00:00-05:00"
-//   - ISO no timezone: "2025-12-01T10:00:00", "2025-12-01T10:00"
-//   - Space separator: "2025-12-01 10:00", "2025-12-01 10:00:00"
-//   - Slash separator: "2025/12/01 10:00", "2025/12/01 10:00:00"
-//   - US format: "12/01/2025 10:00", "12-01-2025 10:00:00"
-//   - US short year: "12/01/25 10:00", "12-01-25 14:30"
-//   - EU format: "01.12.2025 10:00", "01/12/2025 10:00" (DD/MM/YYYY when ambiguous)
-//   - Compact: "20251201 1000", "20251201100000"
+//   - ISO no timezone: "2025-12-01 10:00", "2025/12/01 10:00"
+//   - DD/MM/YYYY format: "15/12/2025 14:30", "15.12.2025 14:30" (EU format)
+//   - DD/MM/YY format: "15/12/25 14:30" (short year, EU format)
+//   - Compact: "20251201 1430", "20251201143000"
 //   - Various time formats: "10:00", "10:00:00", "10:00 AM", "2:30 PM"
+// Note: MM/DD/YYYY (US format) is NOT supported - use DD/MM/YYYY instead
 // Returns undefined if input cannot be parsed
 function normalizeToIsoDateTime(raw: string): string | undefined {
     const trimmed = raw.trim();
@@ -162,24 +160,24 @@ function normalizeToIsoDateTime(raw: string): string | undefined {
         if (!isNaN(dt.getTime())) return dt.toISOString();
     }
 
-    // Pattern 2: MM/DD/YYYY or MM-DD-YYYY with optional time (US format)
-    m = trimmed.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})(?:[T\s]+(\d{1,2}):(\d{2})(?::(\d{2}))?(?:\s*([AP]M))?)?$/i);
+    // Pattern 2: DD/MM/YYYY or DD.MM.YYYY with optional time (EU format - always DD/MM)
+    m = trimmed.match(/^(\d{1,2})[./](\d{1,2})[./](\d{4})(?:[T\s]+(\d{1,2}):(\d{2})(?::(\d{2}))?(?:\s*([AP]M))?)?$/i);
     if (m) {
-        const [, month, day, year, hour = '00', minute = '00', second = '00', ampm] = m;
+        const [, day, month, year, hour = '00', minute = '00', sec = '00', ampm] = m;
         let h = parseInt(hour, 10);
         if (ampm) {
             if (ampm.toUpperCase() === 'PM' && h < 12) h += 12;
             if (ampm.toUpperCase() === 'AM' && h === 12) h = 0;
         }
-        const isoStr = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${h.toString().padStart(2, '0')}:${minute}:${second.padStart(2, '0')}Z`;
+        const isoStr = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${h.toString().padStart(2, '0')}:${minute}:${sec.padStart(2, '0')}Z`;
         const dt = new Date(isoStr);
         if (!isNaN(dt.getTime())) return dt.toISOString();
     }
 
-    // Pattern 3: MM/DD/YY with time (short year, US format)
-    m = trimmed.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{2})(?:[T\s]+(\d{1,2}):(\d{2})(?::(\d{2}))?(?:\s*([AP]M))?)?$/i);
+    // Pattern 3: DD/MM/YY with time (short year, EU format - always DD/MM)
+    m = trimmed.match(/^(\d{1,2})[./](\d{1,2})[./](\d{2})(?:[T\s]+(\d{1,2}):(\d{2})(?::(\d{2}))?(?:\s*([AP]M))?)?$/i);
     if (m) {
-        const [, month, day, yy, hour = '00', minute = '00', second = '00', ampm] = m;
+        const [, day, month, yy, hour = '00', minute = '00', second = '00', ampm] = m;
         let year = parseInt(yy, 10);
         year = year <= 30 ? 2000 + year : 1900 + year;
         let h = parseInt(hour, 10);
@@ -188,36 +186,6 @@ function normalizeToIsoDateTime(raw: string): string | undefined {
             if (ampm.toUpperCase() === 'AM' && h === 12) h = 0;
         }
         const isoStr = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${h.toString().padStart(2, '0')}:${minute}:${second.padStart(2, '0')}Z`;
-        const dt = new Date(isoStr);
-        if (!isNaN(dt.getTime())) return dt.toISOString();
-    }
-
-    // Pattern 4: DD.MM.YYYY or DD/MM/YYYY with time (EU format - day first when > 12)
-    m = trimmed.match(/^(\d{1,2})[./](\d{1,2})[./](\d{4})(?:[T\s]+(\d{1,2}):(\d{2})(?::(\d{2}))?(?:\s*([AP]M))?)?$/i);
-    if (m) {
-        const [, first, second, year, hour = '00', minute = '00', sec = '00', ampm] = m;
-        const f = parseInt(first, 10);
-        const s = parseInt(second, 10);
-        // If first number > 12, it must be day (DD/MM format)
-        // Otherwise, check if second > 12 to determine format
-        let day: string, month: string;
-        if (f > 12) {
-            day = first;
-            month = second;
-        } else if (s > 12) {
-            day = second;
-            month = first;
-        } else {
-            // Ambiguous - default to DD/MM (EU format)
-            day = first;
-            month = second;
-        }
-        let h = parseInt(hour, 10);
-        if (ampm) {
-            if (ampm.toUpperCase() === 'PM' && h < 12) h += 12;
-            if (ampm.toUpperCase() === 'AM' && h === 12) h = 0;
-        }
-        const isoStr = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${h.toString().padStart(2, '0')}:${minute}:${sec.padStart(2, '0')}Z`;
         const dt = new Date(isoStr);
         if (!isNaN(dt.getTime())) return dt.toISOString();
     }
