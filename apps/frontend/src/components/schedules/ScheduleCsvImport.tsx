@@ -231,6 +231,16 @@ function parseCsvClient(text: string) {
           warnings.push(
             'scheduledAt should include both date and time (e.g., "2025-12-01 10:00" or "12/01/2025 2:30 PM")'
           );
+        } else {
+          // Check if the date is in the past
+          try {
+            const parsedDate = new Date(raw.scheduledAt.trim());
+            if (!isNaN(parsedDate.getTime()) && parsedDate.getTime() <= Date.now()) {
+              errors.push('scheduledAt must be in the future');
+            }
+          } catch (e) {
+            // Will be caught by backend validation
+          }
         }
       }
 

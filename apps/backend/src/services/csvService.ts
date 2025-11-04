@@ -562,6 +562,14 @@ export class ScheduleCsvImportService {
                         }
                         const originalDate = new Date(normalized);
 
+                        // Validate that the date is in the future
+                        const now = new Date();
+                        if (originalDate.getTime() <= now.getTime()) {
+                            throw new Error(
+                                `scheduledAt must be in the future. Provided: "${row.scheduledAt}" (parsed as ${originalDate.toISOString()})`
+                            );
+                        }
+
                         // Subtract reminder days if specified
                         if (reminderDaysBefore && reminderDaysBefore > 0) {
                             originalDate.setDate(originalDate.getDate() - reminderDaysBefore);
