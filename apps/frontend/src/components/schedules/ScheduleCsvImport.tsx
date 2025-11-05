@@ -30,7 +30,11 @@ const REQUIRED_HEADERS = [
 ];
 
 // Helper to populate variables in message content
-function populateVariables(content: string, contactName?: string): { populated: string; unknownVars: string[] } {
+function populateVariables(
+  content: string, 
+  contactName?: string, 
+  customVars?: Record<string, string>
+): { populated: string; unknownVars: string[] } {
   const unknownVars: string[] = [];
 
   // Extract all {{variable}} placeholders
@@ -53,6 +57,11 @@ function populateVariables(content: string, contactName?: string): { populated: 
     // Built-in company variables (use placeholders)
     if (trimmed === 'company.name') return '[Company Name]';
     if (trimmed === 'company.website') return '[Company Website]';
+
+    // Custom variables from CSV columns
+    if (customVars && trimmed in customVars) {
+      return customVars[trimmed] || match;
+    }
 
     // Unknown variable
     unknownVars.push(trimmed);
@@ -194,6 +203,11 @@ function parseCsvClient(text: string) {
   const header = parseCsvLine(lines[0]);
   const missing = REQUIRED_HEADERS.filter((h) => !header.includes(h));
   const headerErrors = missing.length ? [`Missing headers: ${missing.join(', ')}`] : [];
+  
+  // Identify custom variable columns (anything not in REQUIRED_HEADERS or reminderDaysBefore)
+  const builtInColumns = [...REQUIRED_HEADERS, 'reminderDaysBefore'];
+  const customVarColumns = header.filter((h) => !builtInColumns.includes(h));
+  
   const rows: ParsedRow[] = [];
   for (let i = 1; i < lines.length; i++) {
     const cols = parseCsvLine(lines[i]);
@@ -287,7 +301,7 @@ function parseCsvClient(text: string) {
 
     rows.push({ raw, errors, warnings, index: i - 1 });
   }
-  return { header, rows, headerErrors };
+  return { header, rows, headerErrors, customVarColumns };
 }
 
 export function ScheduleCsvImport({ companyId }: Props) {
@@ -340,6 +354,7 @@ export function ScheduleCsvImport({ companyId }: Props) {
 
   const headerErrors = parseResult?.headerErrors || [];
   const rows = parseResult?.rows || [];
+  const customVarColumns = parseResult?.customVarColumns || [];
   const totalErrors = rows.reduce((a, r) => a + r.errors.length, 0);
 
   return (
@@ -443,7 +458,16 @@ export function ScheduleCsvImport({ companyId }: Props) {
 
                   // Get first contact name for variable substitution
                   const firstContactName = r.raw.recipientContacts?.split(',')[0]?.trim();
-                  const { populated, unknownVars } = populateVariables(r.raw.content || '', firstContactName);
+                  
+                  // Build custom variables object from CSV columns
+                  const customVars: Record<string, string> = {};
+                  customVarColumns.forEach((col) => {
+                    if (r.raw[col]) {
+                      customVars[col] = r.raw[col];
+                    }
+                  });
+                  
+                  const { populated, unknownVars } = populateVariables(r.raw.content || '', firstContactName, customVars);
 
                   // Add warnings for unknown variables
                   const allWarnings = [...r.warnings];

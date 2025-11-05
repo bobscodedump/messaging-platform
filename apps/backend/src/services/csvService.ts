@@ -416,6 +416,7 @@ interface ParsedScheduleCsvResult {
     rows: ImportedScheduleRow[];
     errors: { index: number; error: string }[];
     header: string[];
+    variableColumns: string[]; // Custom variable column names (excluding built-ins)
 }
 
 function parseSchedulesCsv(
@@ -424,11 +425,11 @@ function parseSchedulesCsv(
 ): ParsedScheduleCsvResult {
     const errors: { index: number; error: string }[] = [];
     if (!text || !text.trim()) {
-        return { rows: [], errors: [{ index: -1, error: 'Empty file' }], header: [] };
+        return { rows: [], errors: [{ index: -1, error: 'Empty file' }], header: [], variableColumns: [] };
     }
     const lines = text.split(/\r?\n/).filter((l) => l.trim().length > 0);
     if (lines.length === 0) {
-        return { rows: [], errors: [{ index: -1, error: 'No data lines' }], header: [] };
+        return { rows: [], errors: [{ index: -1, error: 'No data lines' }], header: [], variableColumns: [] };
     }
     const header = parseCsvLine(lines[0]);
     const missing = SCHEDULE_REQUIRED_HEADERS.filter((h) => !header.includes(h));
@@ -438,6 +439,11 @@ function parseSchedulesCsv(
     if (lines.length - 1 > maxRows) {
         errors.push({ index: -1, error: `Row limit exceeded. Max ${maxRows} rows allowed.` });
     }
+    
+    // Identify custom variable columns (anything not in required headers or reminderDaysBefore)
+    const builtInColumns = [...SCHEDULE_REQUIRED_HEADERS, 'reminderDaysBefore'];
+    const variableColumns = header.filter((h) => !builtInColumns.includes(h));
+    
     const rows: ImportedScheduleRow[] = [];
     const limit = Math.min(lines.length - 1, maxRows);
     for (let i = 1; i <= limit; i++) {
@@ -455,12 +461,12 @@ function parseSchedulesCsv(
 
         rows.push(row as ImportedScheduleRow);
     }
-    return { rows, errors, header };
+    return { rows, errors, header, variableColumns };
 }
 
 export class ScheduleCsvImportService {
     async importSchedules(companyId: string, userId: string, csvContent: string) {
-        const { rows, errors: parseErrors } = parseSchedulesCsv(csvContent, { maxRows: 500 });
+        const { rows, errors: parseErrors, variableColumns } = parseSchedulesCsv(csvContent, { maxRows: 500 });
         const created: any[] = [];
         const errors: any[] = [...parseErrors];
 
@@ -627,12 +633,28 @@ export class ScheduleCsvImportService {
                     }
                 }
 
+                // Extract custom variables from row
+                const customVariables: Record<string, string> = {};
+                variableColumns.forEach((col) => {
+                    const value = (row as any)[col];
+                    if (value && String(value).trim()) {
+                        customVariables[col] = String(value).trim();
+                    }
+                });
+
+                // Replace {{varName}} placeholders in content with custom variable values
+                let processedContent = row.content.trim();
+                Object.entries(customVariables).forEach(([varName, varValue]) => {
+                    const regex = new RegExp(`\\{\\{\\s*${varName}\\s*\\}\\}`, 'g');
+                    processedContent = processedContent.replace(regex, varValue);
+                });
+
                 // Create schedule using scheduledMessageService pattern
                 const scheduleData: any = {
                     companyId,
                     userId,
                     name: row.name.trim(),
-                    content: row.content.trim(),
+                    content: processedContent,
                     scheduleType: scheduleType as any,
                     contactIds,
                     groupIds,
