@@ -132,74 +132,98 @@ function normalizeToIsoDate(raw: string): string | undefined {
     return undefined;
 }
 
-// Normalize datetime formats to ISO 8601 (YYYY-MM-DDTHH:mm:ssZ)
-// Supported formats (all assume UTC unless timezone specified):
-//   - ISO: "2025-12-01T10:00:00Z", "2025-12-01T10:00:00-05:00"
-//   - ISO no timezone: "2025-12-01 10:00", "2025/12/01 10:00"
-//   - DD/MM/YYYY format: "15/12/2025 14:30", "15.12.2025 14:30" (EU format)
-//   - DD/MM/YY format: "15/12/25 14:30" (short year, EU format)
+// Normalize datetime formats to ISO 8601 in Singapore timezone (UTC+8)
+// All input times are interpreted as Singapore time
+// Supported formats:
+//   - ISO: "2025-12-01 10:00", "2025/12/01 10:00"
+//   - DD/MM/YYYY format: "15/12/2025 14:30", "15.12.2025 14:30"
+//   - DD/MM/YY format: "15/12/25 14:30" (short year)
 //   - Compact: "20251201 1430", "20251201143000"
 //   - Various time formats: "10:00", "10:00:00", "10:00 AM", "2:30 PM"
 // Note: MM/DD/YYYY (US format) is NOT supported - use DD/MM/YYYY instead
-// Returns undefined if input cannot be parsed
+// Returns ISO string in UTC (converted from Singapore time)
 function normalizeToIsoDateTime(raw: string): string | undefined {
     const trimmed = raw.trim();
     if (!trimmed) return undefined;
 
-    // Pattern 1: YYYY-MM-DD or YYYY/MM/DD with optional time (HH:mm or HH:mm:ss)
+    let year = '', month = '', day = '', hour = '00', minute = '00', second = '00';
+    let matched = false;
+
+    // Pattern 1: YYYY-MM-DD or YYYY/MM/DD with optional time
     let m = trimmed.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})(?:[T\s]+(\d{1,2}):(\d{2})(?::(\d{2}))?(?:\s*([AP]M))?)?$/i);
     if (m) {
-        const [, year, month, day, hour = '00', minute = '00', second = '00', ampm] = m;
+        [, year, month, day, hour = '00', minute = '00', second = '00'] = m;
+        const ampm = m[7];
         let h = parseInt(hour, 10);
         if (ampm) {
             if (ampm.toUpperCase() === 'PM' && h < 12) h += 12;
             if (ampm.toUpperCase() === 'AM' && h === 12) h = 0;
         }
-        const isoStr = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${h.toString().padStart(2, '0')}:${minute}:${second.padStart(2, '0')}Z`;
-        const dt = new Date(isoStr);
-        if (!isNaN(dt.getTime())) return dt.toISOString();
+        hour = h.toString();
+        matched = true;
     }
 
-    // Pattern 2: DD/MM/YYYY or DD.MM.YYYY with optional time (EU format - always DD/MM)
-    m = trimmed.match(/^(\d{1,2})[./](\d{1,2})[./](\d{4})(?:[T\s]+(\d{1,2}):(\d{2})(?::(\d{2}))?(?:\s*([AP]M))?)?$/i);
-    if (m) {
-        const [, day, month, year, hour = '00', minute = '00', sec = '00', ampm] = m;
-        let h = parseInt(hour, 10);
-        if (ampm) {
-            if (ampm.toUpperCase() === 'PM' && h < 12) h += 12;
-            if (ampm.toUpperCase() === 'AM' && h === 12) h = 0;
+    // Pattern 2: DD/MM/YYYY or DD.MM.YYYY with optional time (EU format)
+    if (!matched) {
+        m = trimmed.match(/^(\d{1,2})[./](\d{1,2})[./](\d{4})(?:[T\s]+(\d{1,2}):(\d{2})(?::(\d{2}))?(?:\s*([AP]M))?)?$/i);
+        if (m) {
+            [, day, month, year, hour = '00', minute = '00', second = '00'] = m;
+            const ampm = m[7];
+            let h = parseInt(hour, 10);
+            if (ampm) {
+                if (ampm.toUpperCase() === 'PM' && h < 12) h += 12;
+                if (ampm.toUpperCase() === 'AM' && h === 12) h = 0;
+            }
+            hour = h.toString();
+            matched = true;
         }
-        const isoStr = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${h.toString().padStart(2, '0')}:${minute}:${sec.padStart(2, '0')}Z`;
-        const dt = new Date(isoStr);
-        if (!isNaN(dt.getTime())) return dt.toISOString();
     }
 
-    // Pattern 3: DD/MM/YY with time (short year, EU format - always DD/MM)
-    m = trimmed.match(/^(\d{1,2})[./](\d{1,2})[./](\d{2})(?:[T\s]+(\d{1,2}):(\d{2})(?::(\d{2}))?(?:\s*([AP]M))?)?$/i);
-    if (m) {
-        const [, day, month, yy, hour = '00', minute = '00', second = '00', ampm] = m;
-        let year = parseInt(yy, 10);
-        year = year <= 30 ? 2000 + year : 1900 + year;
-        let h = parseInt(hour, 10);
-        if (ampm) {
-            if (ampm.toUpperCase() === 'PM' && h < 12) h += 12;
-            if (ampm.toUpperCase() === 'AM' && h === 12) h = 0;
+    // Pattern 3: DD/MM/YY with time (short year)
+    if (!matched) {
+        m = trimmed.match(/^(\d{1,2})[./](\d{1,2})[./](\d{2})(?:[T\s]+(\d{1,2}):(\d{2})(?::(\d{2}))?(?:\s*([AP]M))?)?$/i);
+        if (m) {
+            [, day, month] = m;
+            const yy = m[3];
+            hour = m[4] || '00';
+            minute = m[5] || '00';
+            second = m[6] || '00';
+            const ampm = m[7];
+
+            let y = parseInt(yy, 10);
+            y = y <= 30 ? 2000 + y : 1900 + y;
+            year = y.toString();
+
+            let h = parseInt(hour, 10);
+            if (ampm) {
+                if (ampm.toUpperCase() === 'PM' && h < 12) h += 12;
+                if (ampm.toUpperCase() === 'AM' && h === 12) h = 0;
+            }
+            hour = h.toString();
+            matched = true;
         }
-        const isoStr = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${h.toString().padStart(2, '0')}:${minute}:${second.padStart(2, '0')}Z`;
-        const dt = new Date(isoStr);
-        if (!isNaN(dt.getTime())) return dt.toISOString();
     }
 
-    // Pattern 5: Compact format YYYYMMDD HHmm or YYYYMMDD HHmmss
-    m = trimmed.match(/^(\d{4})(\d{2})(\d{2})[\s]?(\d{2})(\d{2})(\d{2})?$/);
-    if (m) {
-        const [, year, month, day, hour, minute, second = '00'] = m;
-        const isoStr = `${year}-${month}-${day}T${hour}:${minute}:${second}Z`;
-        const dt = new Date(isoStr);
-        if (!isNaN(dt.getTime())) return dt.toISOString();
+    // Pattern 4: Compact format YYYYMMDD HHmm or YYYYMMDD HHmmss
+    if (!matched) {
+        m = trimmed.match(/^(\d{4})(\d{2})(\d{2})[\s]?(\d{2})(\d{2})(\d{2})?$/);
+        if (m) {
+            [, year, month, day, hour, minute, second = '00'] = m;
+            matched = true;
+        }
     }
 
-    // Try parsing as-is (handles full ISO with timezone like "2025-12-01T10:00:00Z" or "2025-12-01T10:00:00-05:00")
+    if (matched) {
+        // Create date in Singapore timezone (UTC+8)
+        // We build the date as if it's in Singapore, then convert to UTC
+        const dateStr = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${hour.padStart(2, '0')}:${minute.padStart(2, '0')}:${second.padStart(2, '0')}+08:00`;
+        const dt = new Date(dateStr);
+        if (!isNaN(dt.getTime())) {
+            return dt.toISOString();
+        }
+    }
+
+    // Try parsing as-is (handles full ISO with timezone)
     const dt = new Date(trimmed);
     if (!isNaN(dt.getTime())) {
         return dt.toISOString();
@@ -525,16 +549,18 @@ export class ScheduleCsvImportService {
                         const normalized = normalizeToIsoDateTime(row.scheduledAt.trim());
                         if (!normalized) {
                             throw new Error(
-                                `Invalid scheduledAt: "${row.scheduledAt}". Use format like "2025-12-01 10:00" or "12/01/2025 10:00"`
+                                `Invalid scheduledAt: "${row.scheduledAt}". Use format like "15/12/2025 14:30" (DD/MM/YYYY format, Singapore time)`
                             );
                         }
                         const originalDate = new Date(normalized);
 
-                        // Validate that the date is in the future
+                        // Validate that the date is in the future (Singapore time)
                         const now = new Date();
-                        if (originalDate.getTime() <= now.getTime()) {
+                        // Add some buffer (1 minute) to avoid rejecting dates that are technically in the future
+                        if (originalDate.getTime() <= (now.getTime() - 60000)) {
+                            const sgTime = new Date(originalDate.toLocaleString('en-US', { timeZone: 'Asia/Singapore' }));
                             throw new Error(
-                                `scheduledAt must be in the future. Provided: "${row.scheduledAt}" (parsed as ${originalDate.toISOString()})`
+                                `scheduledAt must be in the future. Provided: "${row.scheduledAt}" (parsed as ${sgTime.toLocaleString('en-SG', { timeZone: 'Asia/Singapore' })} Singapore time)`
                             );
                         }
 

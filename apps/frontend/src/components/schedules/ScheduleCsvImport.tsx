@@ -29,6 +29,39 @@ const REQUIRED_HEADERS = [
   'recurringDayOfYear',
 ];
 
+// Helper to populate variables in message content
+function populateVariables(content: string, contactName?: string): { populated: string; unknownVars: string[] } {
+  const unknownVars: string[] = [];
+
+  // Extract all {{variable}} placeholders
+  const varRegex = /\{\{([^}]+)\}\}/g;
+  const populated = content.replace(varRegex, (match, varName) => {
+    const trimmed = varName.trim();
+
+    // Built-in contact variables
+    if (trimmed === 'contact.firstName' && contactName) {
+      return contactName.split(' ')[0] || contactName;
+    }
+    if (trimmed === 'contact.lastName' && contactName) {
+      const parts = contactName.split(' ');
+      return parts.length > 1 ? parts[parts.length - 1] : '';
+    }
+    if (trimmed === 'contact.fullName' && contactName) {
+      return contactName;
+    }
+
+    // Built-in company variables (use placeholders)
+    if (trimmed === 'company.name') return '[Company Name]';
+    if (trimmed === 'company.website') return '[Company Website]';
+
+    // Unknown variable
+    unknownVars.push(trimmed);
+    return match; // Keep original placeholder
+  });
+
+  return { populated, unknownVars };
+}
+
 // Parse CSV line respecting quoted fields
 function parseCsvLine(line: string): string[] {
   const result: string[] = [];
@@ -67,7 +100,7 @@ function parseAndFormatDateTime(dateTimeStr: string): { formatted: string; isVal
   const trimmed = dateTimeStr.trim();
   let parsedDate: Date | null = null;
 
-  // Pattern 1: YYYY-MM-DD or YYYY/MM/DD with optional time
+  // Pattern 1: YYYY-MM-DD or YYYY/MM/DD with optional time (Singapore time)
   let m = trimmed.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})(?:[T\s]+(\d{1,2}):(\d{2})(?::(\d{2}))?(?:\s*([AP]M))?)?$/i);
   if (m) {
     const [, year, month, day, hour = '00', minute = '00', second = '00', ampm] = m;
@@ -76,12 +109,13 @@ function parseAndFormatDateTime(dateTimeStr: string): { formatted: string; isVal
       if (ampm.toUpperCase() === 'PM' && h < 12) h += 12;
       if (ampm.toUpperCase() === 'AM' && h === 12) h = 0;
     }
+    // Parse as Singapore time (UTC+8)
     parsedDate = new Date(
-      `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${h.toString().padStart(2, '0')}:${minute}:${second.padStart(2, '0')}Z`
+      `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${h.toString().padStart(2, '0')}:${minute}:${second.padStart(2, '0')}+08:00`
     );
   }
 
-  // Pattern 2: DD/MM/YYYY or DD.MM.YYYY with optional time (EU format - always DD/MM)
+  // Pattern 2: DD/MM/YYYY or DD.MM.YYYY with optional time (Singapore time)
   if (!parsedDate || isNaN(parsedDate.getTime())) {
     m = trimmed.match(/^(\d{1,2})[./](\d{1,2})[./](\d{4})(?:[T\s]+(\d{1,2}):(\d{2})(?::(\d{2}))?(?:\s*([AP]M))?)?$/i);
     if (m) {
@@ -91,13 +125,14 @@ function parseAndFormatDateTime(dateTimeStr: string): { formatted: string; isVal
         if (ampm.toUpperCase() === 'PM' && h < 12) h += 12;
         if (ampm.toUpperCase() === 'AM' && h === 12) h = 0;
       }
+      // Parse as Singapore time (UTC+8)
       parsedDate = new Date(
-        `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${h.toString().padStart(2, '0')}:${minute}:${sec.padStart(2, '0')}Z`
+        `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${h.toString().padStart(2, '0')}:${minute}:${sec.padStart(2, '0')}+08:00`
       );
     }
   }
 
-  // Pattern 3: DD/MM/YY with time (short year, EU format - always DD/MM)
+  // Pattern 3: DD/MM/YY with time (short year, Singapore time)
   if (!parsedDate || isNaN(parsedDate.getTime())) {
     m = trimmed.match(/^(\d{1,2})[./](\d{1,2})[./](\d{2})(?:[T\s]+(\d{1,2}):(\d{2})(?::(\d{2}))?(?:\s*([AP]M))?)?$/i);
     if (m) {
@@ -109,18 +144,19 @@ function parseAndFormatDateTime(dateTimeStr: string): { formatted: string; isVal
         if (ampm.toUpperCase() === 'PM' && h < 12) h += 12;
         if (ampm.toUpperCase() === 'AM' && h === 12) h = 0;
       }
+      // Parse as Singapore time (UTC+8)
       parsedDate = new Date(
-        `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${h.toString().padStart(2, '0')}:${minute}:${second.padStart(2, '0')}Z`
+        `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${h.toString().padStart(2, '0')}:${minute}:${second.padStart(2, '0')}+08:00`
       );
     }
   }
 
-  // Pattern 4: Compact format YYYYMMDD HHmm or YYYYMMDD HHmmss
+  // Pattern 4: Compact format YYYYMMDD HHmm or YYYYMMDD HHmmss (Singapore time)
   if (!parsedDate || isNaN(parsedDate.getTime())) {
     m = trimmed.match(/^(\d{4})(\d{2})(\d{2})[\s]?(\d{2})(\d{2})(\d{2})?$/);
     if (m) {
       const [, year, month, day, hour, minute, second = '00'] = m;
-      parsedDate = new Date(`${year}-${month}-${day}T${hour}:${minute}:${second}Z`);
+      parsedDate = new Date(`${year}-${month}-${day}T${hour}:${minute}:${second}+08:00`);
     }
   }
 
@@ -135,16 +171,17 @@ function parseAndFormatDateTime(dateTimeStr: string): { formatted: string; isVal
 
   // Check if we got a valid date
   if (parsedDate && !isNaN(parsedDate.getTime())) {
-    const formatted = parsedDate.toLocaleString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true,
-      timeZone: 'UTC',
-      timeZoneName: 'short',
-    });
+    // Format in Singapore timezone
+    const formatted =
+      parsedDate.toLocaleString('en-SG', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+        timeZone: 'Asia/Singapore',
+      }) + ' SGT';
     return { formatted, isValid: true };
   }
 
@@ -202,11 +239,26 @@ function parseCsvClient(text: string) {
             'scheduledAt should include both date and time (e.g., "2025-12-01 10:00" or "12/01/2025 2:30 PM")'
           );
         } else {
-          // Check if the date is in the past
+          // Check if the date is in the past (with 1 minute buffer)
           try {
-            const parsedDate = new Date(raw.scheduledAt.trim());
-            if (!isNaN(parsedDate.getTime()) && parsedDate.getTime() <= Date.now()) {
-              errors.push('scheduledAt must be in the future');
+            const parsed = parseAndFormatDateTime(raw.scheduledAt.trim());
+            if (parsed.isValid) {
+              // Re-parse to get actual Date object for comparison
+              const dateStr = raw.scheduledAt.trim();
+              let testDate: Date | null = null;
+
+              // Try DD/MM/YYYY format first
+              const ddmmMatch = dateStr.match(/^(\d{1,2})[./](\d{1,2})[./](\d{4})\s+(\d{1,2}):(\d{2})/);
+              if (ddmmMatch) {
+                const [, day, month, year, hour, minute] = ddmmMatch;
+                testDate = new Date(
+                  `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${hour.padStart(2, '0')}:${minute}:00+08:00`
+                );
+              }
+
+              if (testDate && !isNaN(testDate.getTime()) && testDate.getTime() < Date.now() - 60000) {
+                errors.push('scheduledAt must be in the future (Singapore time)');
+              }
             }
           } catch (e) {
             // Will be caught by backend validation
@@ -368,15 +420,16 @@ export function ScheduleCsvImport({ companyId }: Props) {
           <div className='text-xs text-neutral-600'>
             Rows: {rows.length} | Total field errors: {totalErrors}
           </div>
-          <div className='max-h-72 overflow-auto rounded-md border border-neutral-200 dark:border-neutral-800'>
+          <div className='max-h-96 overflow-auto rounded-md border border-neutral-200 dark:border-neutral-800'>
             <table className='min-w-full text-xs'>
-              <thead className='bg-neutral-100 dark:bg-neutral-800 sticky top-0'>
+              <thead className='bg-neutral-100 dark:bg-neutral-800 sticky top-0 z-10'>
                 <tr>
                   <th className='px-2 py-1 text-left'>#</th>
                   <th className='px-2 py-1 text-left'>name</th>
                   <th className='px-2 py-1 text-left'>type</th>
                   <th className='px-2 py-1 text-left'>scheduledAt (parsed)</th>
                   <th className='px-2 py-1 text-left'>content</th>
+                  <th className='px-2 py-1 text-left'>preview</th>
                   <th className='px-2 py-1 text-left'>recipients</th>
                   <th className='px-2 py-1 text-left'>Errors</th>
                   <th className='px-2 py-1 text-left'>Warnings</th>
@@ -387,6 +440,16 @@ export function ScheduleCsvImport({ companyId }: Props) {
                   const scheduleType = r.raw.scheduleType?.toUpperCase();
                   const dateTimePreview =
                     scheduleType === 'ONE_TIME' && r.raw.scheduledAt ? parseAndFormatDateTime(r.raw.scheduledAt) : null;
+
+                  // Get first contact name for variable substitution
+                  const firstContactName = r.raw.recipientContacts?.split(',')[0]?.trim();
+                  const { populated, unknownVars } = populateVariables(r.raw.content || '', firstContactName);
+
+                  // Add warnings for unknown variables
+                  const allWarnings = [...r.warnings];
+                  if (unknownVars.length > 0) {
+                    allWarnings.push(`Unknown variables: ${unknownVars.join(', ')}`);
+                  }
 
                   return (
                     <tr key={r.index} className='border-t border-neutral-200 dark:border-neutral-800'>
@@ -417,12 +480,24 @@ export function ScheduleCsvImport({ companyId }: Props) {
                           <span className='text-neutral-400 italic'>-</span>
                         )}
                       </td>
-                      <td className='px-2 py-1 max-w-xs truncate'>{r.raw.content}</td>
+                      <td className='px-2 py-1 max-w-xs truncate' title={r.raw.content}>
+                        {r.raw.content}
+                      </td>
+                      <td className='px-2 py-1 max-w-xs'>
+                        <div className='max-w-xs truncate text-neutral-600 dark:text-neutral-400' title={populated}>
+                          {populated}
+                        </div>
+                        {unknownVars.length > 0 && (
+                          <div className='text-[10px] text-amber-600 dark:text-amber-400 mt-0.5'>
+                            ⚠ Unknown: {unknownVars.join(', ')}
+                          </div>
+                        )}
+                      </td>
                       <td className='px-2 py-1 max-w-xs truncate'>
                         {[r.raw.recipientContacts, r.raw.recipientGroups].filter(Boolean).join('; ')}
                       </td>
                       <td className='px-2 py-1 text-red-600 dark:text-red-400'>{r.errors.join(', ') || '-'}</td>
-                      <td className='px-2 py-1 text-amber-600 dark:text-amber-400'>{r.warnings.join(', ') || '-'}</td>
+                      <td className='px-2 py-1 text-amber-600 dark:text-amber-400'>{allWarnings.join(', ') || '-'}</td>
                     </tr>
                   );
                 })}
