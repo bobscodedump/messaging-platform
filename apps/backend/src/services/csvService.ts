@@ -439,11 +439,11 @@ function parseSchedulesCsv(
     if (lines.length - 1 > maxRows) {
         errors.push({ index: -1, error: `Row limit exceeded. Max ${maxRows} rows allowed.` });
     }
-    
+
     // Identify custom variable columns (anything not in required headers or reminderDaysBefore)
     const builtInColumns = [...SCHEDULE_REQUIRED_HEADERS, 'reminderDaysBefore'];
     const variableColumns = header.filter((h) => !builtInColumns.includes(h));
-    
+
     const rows: ImportedScheduleRow[] = [];
     const limit = Math.min(lines.length - 1, maxRows);
     for (let i = 1; i <= limit; i++) {

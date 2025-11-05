@@ -31,8 +31,8 @@ const REQUIRED_HEADERS = [
 
 // Helper to populate variables in message content
 function populateVariables(
-  content: string, 
-  contactName?: string, 
+  content: string,
+  contactName?: string,
   customVars?: Record<string, string>
 ): { populated: string; unknownVars: string[] } {
   const unknownVars: string[] = [];
@@ -203,11 +203,11 @@ function parseCsvClient(text: string) {
   const header = parseCsvLine(lines[0]);
   const missing = REQUIRED_HEADERS.filter((h) => !header.includes(h));
   const headerErrors = missing.length ? [`Missing headers: ${missing.join(', ')}`] : [];
-  
+
   // Identify custom variable columns (anything not in REQUIRED_HEADERS or reminderDaysBefore)
   const builtInColumns = [...REQUIRED_HEADERS, 'reminderDaysBefore'];
   const customVarColumns = header.filter((h) => !builtInColumns.includes(h));
-  
+
   const rows: ParsedRow[] = [];
   for (let i = 1; i < lines.length; i++) {
     const cols = parseCsvLine(lines[i]);
@@ -458,7 +458,7 @@ export function ScheduleCsvImport({ companyId }: Props) {
 
                   // Get first contact name for variable substitution
                   const firstContactName = r.raw.recipientContacts?.split(',')[0]?.trim();
-                  
+
                   // Build custom variables object from CSV columns
                   const customVars: Record<string, string> = {};
                   customVarColumns.forEach((col) => {
@@ -466,8 +466,12 @@ export function ScheduleCsvImport({ companyId }: Props) {
                       customVars[col] = r.raw[col];
                     }
                   });
-                  
-                  const { populated, unknownVars } = populateVariables(r.raw.content || '', firstContactName, customVars);
+
+                  const { populated, unknownVars } = populateVariables(
+                    r.raw.content || '',
+                    firstContactName,
+                    customVars
+                  );
 
                   // Add warnings for unknown variables
                   const allWarnings = [...r.warnings];
