@@ -23,7 +23,9 @@ echo "📦 Installing dependencies..."
 # Check if pnpm is installed
 if ! command -v pnpm &> /dev/null; then
     echo "⚠️  pnpm not found. Installing pnpm..."
-    npm install -g pnpm
+    curl -fsSL https://get.pnpm.io/install.sh | sh -
+    export PNPM_HOME="$HOME/.local/share/pnpm"
+    export PATH="$PNPM_HOME:$PATH"
 fi
 
 # Install dependencies using pnpm (for monorepo)
@@ -69,7 +71,7 @@ cd apps/backend
 # Check if PM2 is installed
 if ! command -v pm2 &> /dev/null; then
     echo "⚠️  PM2 not found. Installing PM2..."
-    sudo npm install -g pm2
+    pnpm add -g pm2
 fi
 
 # Start or restart backend (tsup builds to dist/index.cjs)
@@ -91,7 +93,7 @@ cd apps/frontend
 # Install serve if not present (to serve the built frontend)
 if ! command -v serve &> /dev/null; then
     echo "⚠️  serve not found. Installing serve..."
-    sudo npm install -g serve
+    pnpm add -g serve
 fi
 
 # Stop existing frontend
