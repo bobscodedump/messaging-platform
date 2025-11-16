@@ -15,20 +15,9 @@ services:
     networks:
       - messaging-network
     restart: unless-stopped
-
-  pgadmin:
-    image: dpage/pgadmin4:latest
-    container_name: messaging-pgadmin
-    environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@example.com}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-password}
-    ports:
-      - '5050:80'
-    networks:
-      - messaging-network
-    restart: unless-stopped
-    depends_on:
-      - postgres
+    mem_limit: 512m
+    mem_reservation: 256m
+    cpus: 0.5
 
   n8n:
     image: n8nio/n8n:latest
@@ -61,6 +50,9 @@ services:
     restart: unless-stopped
     depends_on:
       - postgres
+    mem_limit: 512m
+    mem_reservation: 256m
+    cpus: 0.5
 
 networks:
   messaging-network:

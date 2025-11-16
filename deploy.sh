@@ -125,7 +125,7 @@ fi
 
 # Start or restart backend (tsup builds to dist/index.cjs)
 pm2 delete messaging-backend 2>/dev/null || true
-pm2 start dist/index.cjs --name messaging-backend --node-args="--max-old-space-size=2048"
+pm2 start dist/index.cjs --name messaging-backend --node-args="--max-old-space-size=512"
 pm2 save
 
 echo "✅ Backend started with PM2"
@@ -175,7 +175,6 @@ echo "📍 Service URLs:"
 echo "   Backend API:    http://${EC2_PUBLIC_IP}:5001"
 echo "   Frontend:       http://${EC2_PUBLIC_IP}:3000"
 echo "   n8n:            http://${EC2_PUBLIC_IP}:5678"
-echo "   pgAdmin:        http://${EC2_PUBLIC_IP}:5050"
 echo ""
 echo "🔐 Service Status:"
 pm2 list
