@@ -12,6 +12,7 @@ import SchedulesPage from './pages/SchedulesPage';
 import LoginPage from './pages/LoginPage';
 import ProfilePage from './pages/ProfilePage';
 import UsersPage from './pages/UsersPage';
+import CalendarPage from './pages/CalendarPage';
 import { AuthProvider, useAuth } from './lib/auth/auth-context';
 
 function Protected({ children }: { children: React.ReactNode }) {
@@ -54,6 +55,10 @@ function NavBar() {
           <span className='text-neutral-400'>|</span>
           <Link to='/schedules/new' className='text-neutral-900 dark:text-white hover:underline'>
             New Schedule
+          </Link>
+          <span className='text-neutral-400'>|</span>
+          <Link to='/calendar' className='text-neutral-900 dark:text-white hover:underline'>
+            Calendar
           </Link>
           {isAdmin && (
             <>
@@ -136,6 +141,14 @@ if (el) {
                 element={
                   <Protected>
                     <SchedulesPage />
+                  </Protected>
+                }
+              />
+              <Route
+                path='/calendar'
+                element={
+                  <Protected>
+                    <CalendarPage />
                   </Protected>
                 }
               />

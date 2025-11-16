@@ -11,6 +11,7 @@ import groupsRouter from "./routes/v1/groups";
 import companiesRouter from "./routes/v1/companies";
 import schedulerRouter from "./routes/v1/scheduler";
 import adminRouter from "./routes/v1/admin";
+import calendarRouter from "./routes/v1/calendar";
 import { notFoundHandler, errorHandler } from "./middleware/errorHandler";
 import { schedulerService } from "./services/schedulerService";
 import authRouter from "./routes/v1/auth";
@@ -32,6 +33,7 @@ export const createServer = (): Express => {
     apiV1.use(requireAuth, templatesRouter);
     apiV1.use(requireAuth, groupsRouter);
     apiV1.use(requireAuth, schedulerRouter);
+    apiV1.use('/calendar', calendarRouter);
 
     // Start the scheduler service (skip during tests)
     if (process.env.NODE_ENV !== 'test') {
