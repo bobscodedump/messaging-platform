@@ -139,10 +139,10 @@ cd ../..
 echo "🐳 Starting Docker services (PostgreSQL, pgAdmin, n8n)..."
 
 # Stop existing containers
-docker-compose -f docker-compose.prod.yml down
+docker compose -f docker-compose.prod.yml down
 
 # Start new containers
-docker-compose -f docker-compose.prod.yml --env-file .env.production up -d
+docker compose -f docker-compose.prod.yml --env-file .env.production up -d
 
 echo "✅ Docker services started"
 
@@ -182,5 +182,5 @@ echo "   - View backend logs: pm2 logs messaging-backend"
 echo "   - View frontend logs: pm2 logs messaging-frontend"
 echo "   - View n8n logs: docker logs messaging-n8n"
 echo "   - Restart services: pm2 restart all"
-echo "   - Stop services: pm2 stop all && docker-compose -f docker-compose.prod.yml down"
+echo "   - Stop services: pm2 stop all && docker compose -f docker-compose.prod.yml down"
 echo ""
