@@ -8,6 +8,15 @@ set -e  # Exit on any error
 
 echo "🚀 Starting deployment of Messaging Platform..."
 
+# Setup pnpm global bin directory if not configured
+if [ -z "$PNPM_HOME" ]; then
+    echo "📦 Setting up pnpm global bin directory..."
+    pnpm setup
+    export PNPM_HOME="$HOME/.local/share/pnpm"
+    export PATH="$PNPM_HOME:$PATH"
+    echo "✅ pnpm global bin configured at $PNPM_HOME"
+fi
+
 # Check if .env.production exists
 if [ ! -f .env.production ]; then
     echo "❌ Error: .env.production file not found!"
@@ -71,6 +80,16 @@ cd apps/backend
 # Check if PM2 is installed
 if ! command -v pm2 &> /dev/null; then
     echo "⚠️  PM2 not found. Installing PM2..."
+    
+    # Setup pnpm global bin if not configured
+    if [ -z "$PNPM_HOME" ]; then
+        pnpm setup
+        # Source the shell configuration to get PNPM_HOME
+        export PNPM_HOME="$HOME/.local/share/pnpm"
+        export PATH="$PNPM_HOME:$PATH"
+    fi
+    
+    # Install PM2 globally with pnpm
     pnpm add -g pm2
 fi
 
@@ -93,6 +112,13 @@ cd apps/frontend
 # Install serve if not present (to serve the built frontend)
 if ! command -v serve &> /dev/null; then
     echo "⚠️  serve not found. Installing serve..."
+    
+    # Ensure PNPM_HOME is set
+    if [ -z "$PNPM_HOME" ]; then
+        export PNPM_HOME="$HOME/.local/share/pnpm"
+        export PATH="$PNPM_HOME:$PATH"
+    fi
+    
     pnpm add -g serve
 fi
 
