@@ -1,0 +1,310 @@
+{
+  "name": "Appointment Reminder from Google Calendar",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "b5c4e3d2-1a2b-3c4d-5e6f-7a8b9c0d1e2f",
+      "name": "When a Calendar Event is Created",
+      "type": "n8n-nodes-base.googleCalendarTrigger",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "1",
+          "name": "Google Calendar account"
+        }
+      },
+      "webhookId": "auto-generated"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.attendees }}",
+              "operation": "isNotEmpty"
+            },
+            {
+              "value1": "={{ $json.start.dateTime }}",
+              "operation": "isNotEmpty"
+            }
+          ]
+        }
+      },
+      "id": "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d",
+      "name": "Check Event Has Attendees & DateTime",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://192.168.68.105:3001/api/v1/auth/login",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "email",
+              "value": "={{ $env.MESSAGING_PLATFORM_EMAIL }}"
+            },
+            {
+              "name": "password",
+              "value": "={{ $env.MESSAGING_PLATFORM_PASSWORD }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c1d2e3f4-a5b6-7c8d-9e0f-1a2b3c4d5e6f",
+      "name": "Login to Messaging Platform",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the calendar event from the first node\nconst calendarEvent = $('Check Event Has Attendees & DateTime').first().json;\n\n// Extract customer email from Google Calendar attendees\nconst attendees = calendarEvent.attendees || [];\nconst customerEmail = attendees.length > 0 ? attendees[0].email : null;\n\n// Extract event details\nconst eventStart = calendarEvent.start.dateTime;\nconst eventTitle = calendarEvent.summary || 'Appointment';\nconst eventDescription = calendarEvent.description || '';\nconst eventLocation = calendarEvent.location || '';\n\n// Get auth token from login node\nconst token = $('Login to Messaging Platform').first().json.data.token;\nconst companyId = $env.MESSAGING_PLATFORM_COMPANY_ID;\n\n// Calculate reminder time (exactly 24 hours before event)\nconst eventDate = new Date(eventStart);\nconst reminderDate = new Date(eventDate.getTime() - (24 * 60 * 60 * 1000));\n\nreturn {\n  customerEmail,\n  eventTitle,\n  eventDescription,\n  eventLocation,\n  eventStart,\n  reminderDate: reminderDate.toISOString(),\n  token,\n  companyId\n};"
+      },
+      "id": "d2e3f4a5-b6c7-8d9e-0f1a-2b3c4d5e6f7a",
+      "name": "Extract Event & Customer Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=http://192.168.68.105:3001/api/v1/companies/{{ $json.companyId }}/contacts/email/{{ $json.customerEmail }}",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $json.token }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "e3f4a5b6-c7d8-9e0f-1a2b-3c4d5e6f7a8b",
+      "name": "Get Customer Contact Details",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1050, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.data.phoneNumber }}",
+              "operation": "isNotEmpty"
+            }
+          ]
+        }
+      },
+      "id": "f4a5b6c7-d8e9-0f1a-2b3c-4d5e6f7a8b9c",
+      "name": "Check Contact Has Phone Number",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1250, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get data from previous nodes\nconst eventData = $('Extract Event & Customer Data').first().json;\nconst contactData = $input.first().json.data;\n\n// Format the event date/time nicely\nconst eventDate = new Date(eventData.eventStart);\nconst dateStr = eventDate.toLocaleDateString('en-US', { \n  weekday: 'long', \n  year: 'numeric', \n  month: 'long', \n  day: 'numeric' \n});\nconst timeStr = eventDate.toLocaleTimeString('en-US', { \n  hour: 'numeric', \n  minute: '2-digit',\n  hour12: true \n});\n\n// Create the reminder message\nlet message = `Hi ${contactData.firstName},\\n\\n`;\nmessage += `This is a reminder about your appointment tomorrow:\\n\\n`;\nmessage += `📅 ${eventData.eventTitle}\\n`;\nmessage += `🕒 ${dateStr} at ${timeStr}\\n`;\n\nif (eventData.eventLocation) {\n  message += `📍 ${eventData.eventLocation}\\n`;\n}\n\nif (eventData.eventDescription) {\n  message += `\\nDetails: ${eventData.eventDescription}\\n`;\n}\n\nmessage += `\\nSee you there!`;\n\nreturn {\n  companyId: eventData.companyId,\n  token: eventData.token,\n  contactId: contactData.id,\n  phoneNumber: contactData.phoneNumber,\n  message: message,\n  reminderDate: eventData.reminderDate,\n  customerName: `${contactData.firstName} ${contactData.lastName}`,\n  eventTitle: eventData.eventTitle\n};"
+      },
+      "id": "a5b6c7d8-e9f0-1a2b-3c4d-5e6f7a8b9c0d",
+      "name": "Build Reminder Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1450, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://192.168.68.105:3001/api/v1/schedules",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $json.token }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "bodyParameters": {
+          "parameters": []
+        },
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"companyId\": \"{{ $json.companyId }}\",\n  \"name\": \"Appointment Reminder - {{ $json.eventTitle }}\",\n  \"content\": {{ JSON.stringify($json.message) }},\n  \"scheduleType\": \"ONE_TIME\",\n  \"scheduledAt\": \"{{ $json.reminderDate }}\",\n  \"contactIds\": [\"{{ $json.contactId }}\"]\n}",
+        "options": {}
+      },
+      "id": "b6c7d8e9-f0a1-2b3c-4d5e-6f7a8b9c0d1e",
+      "name": "Create Scheduled Reminder",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1650, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const result = $input.first().json;\nconst scheduleData = $('Build Reminder Message').first().json;\n\nreturn {\n  success: true,\n  message: `✅ Reminder scheduled successfully!`,\n  customer: scheduleData.customerName,\n  phone: scheduleData.phoneNumber,\n  reminderTime: scheduleData.reminderDate,\n  event: scheduleData.eventTitle,\n  scheduleId: result.data?.id || 'created'\n};"
+      },
+      "id": "c7d8e9f0-a1b2-3c4d-5e6f-7a8b9c0d1e2f",
+      "name": "Format Success Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1850, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "return {\n  error: true,\n  message: '❌ Contact not found or missing phone number',\n  customerEmail: $('Extract Event & Customer Data').first().json.customerEmail,\n  eventTitle: $('Extract Event & Customer Data').first().json.eventTitle\n};"
+      },
+      "id": "d8e9f0a1-b2c3-4d5e-6f7a-8b9c0d1e2f3a",
+      "name": "No Phone Number Found",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1450, 500]
+    },
+    {
+      "parameters": {
+        "jsCode": "return {\n  error: true,\n  message: '⚠️ Event missing attendees or date/time',\n  eventData: $('When a Calendar Event is Created').first().json\n};"
+      },
+      "id": "e9f0a1b2-c3d4-5e6f-7a8b-9c0d1e2f3a4b",
+      "name": "Invalid Event Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [650, 500]
+    }
+  ],
+  "connections": {
+    "When a Calendar Event is Created": {
+      "main": [
+        [
+          {
+            "node": "Check Event Has Attendees & DateTime",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Event Has Attendees & DateTime": {
+      "main": [
+        [
+          {
+            "node": "Login to Messaging Platform",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Invalid Event Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Login to Messaging Platform": {
+      "main": [
+        [
+          {
+            "node": "Extract Event & Customer Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Event & Customer Data": {
+      "main": [
+        [
+          {
+            "node": "Get Customer Contact Details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Customer Contact Details": {
+      "main": [
+        [
+          {
+            "node": "Check Contact Has Phone Number",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Contact Has Phone Number": {
+      "main": [
+        [
+          {
+            "node": "Build Reminder Message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Phone Number Found",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Reminder Message": {
+      "main": [
+        [
+          {
+            "node": "Create Scheduled Reminder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Scheduled Reminder": {
+      "main": [
+        [
+          {
+            "node": "Format Success Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "updatedAt": "2025-11-16T00:00:00.000Z",
+  "versionId": "1"
+}

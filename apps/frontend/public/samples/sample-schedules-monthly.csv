@@ -1,0 +1,3 @@
+name,scheduleType,content,recipientContacts,recipientGroups,scheduledAt,reminderDaysBefore,recurringDay,recurringDayOfMonth,recurringMonth,recurringDayOfYear
+"Monthly Invoice Notice","MONTHLY","Hello {{contact.firstName}}, your monthly invoice for {{invoiceMonth}} is available.","","Accounting",,,"","15",
+"Monthly Newsletter","MONTHLY","{{company.name}} monthly newsletter: highlights, events, and more.","","Subscribers",,,"","1",

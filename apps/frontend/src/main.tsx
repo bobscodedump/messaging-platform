@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client';
 import './index.css';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from './lib/api/query-client';
-import { BrowserRouter, Routes, Route, Navigate, Link } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
 import ContactsPage from './pages/ContactsPage';
 import GroupsPage from './pages/GroupsPage';
 import TemplatesPage from './pages/TemplatesPage';
@@ -11,6 +11,7 @@ import SendMessagePage from './pages/SendMessagePage';
 import SchedulesPage from './pages/SchedulesPage';
 import LoginPage from './pages/LoginPage';
 import ProfilePage from './pages/ProfilePage';
+import UsersPage from './pages/UsersPage';
 import { AuthProvider, useAuth } from './lib/auth/auth-context';
 
 function Protected({ children }: { children: React.ReactNode }) {
@@ -22,7 +23,15 @@ function Protected({ children }: { children: React.ReactNode }) {
 
 function NavBar() {
   const { user, logout } = useAuth();
+  const location = useLocation();
   const displayName = [user?.firstName, user?.lastName].filter(Boolean).join(' ');
+  const isAdmin = user?.role === 'PLATFORM_ADMIN' || user?.role === 'COMPANY_ADMIN';
+
+  // Hide navbar on login page
+  if (location.pathname === '/login') {
+    return null;
+  }
+
   return (
     <div className='bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800'>
       <div className='mx-auto max-w-7xl px-4 sm:px-6 py-4 flex items-center justify-between text-sm'>
@@ -46,6 +55,14 @@ function NavBar() {
           <Link to='/schedules/new' className='text-neutral-900 dark:text-white hover:underline'>
             New Schedule
           </Link>
+          {isAdmin && (
+            <>
+              <span className='text-neutral-400'>|</span>
+              <Link to='/users' className='text-neutral-900 dark:text-white hover:underline'>
+                Users
+              </Link>
+            </>
+          )}
           <span className='text-neutral-400'>|</span>
           <Link to='/profile' className='text-neutral-900 dark:text-white hover:underline'>
             Profile
@@ -127,6 +144,14 @@ if (el) {
                 element={
                   <Protected>
                     <ProfilePage />
+                  </Protected>
+                }
+              />
+              <Route
+                path='/users'
+                element={
+                  <Protected>
+                    <UsersPage />
                   </Protected>
                 }
               />

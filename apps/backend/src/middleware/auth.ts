@@ -43,4 +43,27 @@ export const attachCompanyToBody = (req: Request, _res: Response, next: NextFunc
     next();
 };
 
+// Admin role middleware - only PLATFORM_ADMIN or COMPANY_ADMIN
+export const requireAdmin = (req: Request, res: Response, next: NextFunction) => {
+    if (!req.user) {
+        return res.status(401).json({ success: false, message: 'Unauthorized' });
+    }
+    const adminRoles = ['PLATFORM_ADMIN', 'COMPANY_ADMIN'];
+    if (!req.user.role || !adminRoles.includes(req.user.role)) {
+        return res.status(403).json({ success: false, message: 'Forbidden: Admin access required' });
+    }
+    next();
+};
+
+// Platform admin only - super admin privileges
+export const requirePlatformAdmin = (req: Request, res: Response, next: NextFunction) => {
+    if (!req.user) {
+        return res.status(401).json({ success: false, message: 'Unauthorized' });
+    }
+    if (req.user.role !== 'PLATFORM_ADMIN') {
+        return res.status(403).json({ success: false, message: 'Forbidden: Platform admin access required' });
+    }
+    next();
+};
+
 export default passport;

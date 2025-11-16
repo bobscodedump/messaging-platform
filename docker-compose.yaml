@@ -11,6 +11,8 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: always
+    networks:
+      - messaging-network
 
   pgadmin:
     container_name: pgadmin
@@ -23,7 +25,53 @@ services:
     volumes:
       - pgadmin_data:/var/lib/pgadmin
     restart: always
+    networks:
+      - messaging-network
+
+  n8n:
+    container_name: n8n
+    image: n8nio/n8n:latest
+    environment:
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=admin
+      - N8N_BASIC_AUTH_PASSWORD=admin
+
+      # Force everything to be localhost:5678, http
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - N8N_SECURE_COOKIE=false
+      - WEBHOOK_URL=http://localhost:5678/
+
+      # Timezone is fine
+      - GENERIC_TIMEZONE=America/New_York
+
+      # Allow external requests
+      - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
+      - NODE_FUNCTION_ALLOW_EXTERNAL=*
+
+      # Messaging Platform credentials for workflows
+      - MESSAGING_PLATFORM_EMAIL=${MESSAGING_PLATFORM_EMAIL}
+      - MESSAGING_PLATFORM_PASSWORD=${MESSAGING_PLATFORM_PASSWORD}
+      - MESSAGING_PLATFORM_COMPANY_ID=${MESSAGING_PLATFORM_COMPANY_ID:-your-company-id-here}
+
+    ports:
+      - '5678:5678'
+    volumes:
+      - n8n_data:/home/node/.n8n
+    restart: always
+    depends_on:
+      - postgres
+    networks:
+      - messaging-network
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+
+networks:
+  messaging-network:
+    driver: bridge
 
 volumes:
   postgres_data:
   pgadmin_data:
+  n8n_data:

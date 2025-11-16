@@ -19,6 +19,11 @@ router.get(
     requireCompanyParam,
     asyncHandler(contactController.searchContacts.bind(contactController))
 );
+router.get(
+    '/companies/:companyId/contacts/email/:email',
+    requireCompanyParam,
+    asyncHandler(contactController.getContactByEmail.bind(contactController))
+);
 router.get('/contacts/:id', asyncHandler(contactController.getContactById.bind(contactController)));
 router.post('/contacts', asyncHandler(contactController.createContact.bind(contactController)));
 router.post(

@@ -1,0 +1,3 @@
+name,scheduleType,content,recipientContacts,recipientGroups,scheduledAt,reminderDaysBefore,recurringDay,recurringDayOfMonth,recurringMonth,recurringDayOfYear
+"Birthday Wishes - Contact","BIRTHDAY","Happy Birthday {{contact.firstName}}! Enjoy a special offer: {{birthdayOffer}}","John Doe;Jane Roe","",,,,,
+"Birthday List - Customers","BIRTHDAY","Happy Birthday {{contact.firstName}} from all of us at {{company.name}}!","","Birthday Club",,,,,,

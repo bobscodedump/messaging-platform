@@ -1,0 +1,3 @@
+name,scheduleType,content,recipientContacts,recipientGroups,scheduledAt,reminderDaysBefore,recurringDay,recurringDayOfMonth,recurringMonth,recurringDayOfYear
+"Weekly Tips - Customers","WEEKLY","Hello {{contact.firstName}}, here's your weekly tip: {{weeklyTip}}","","Customers",,,"MO",,
+"Monday Sales Summary","WEEKLY","Sales summary for {{company.name}}: total sales {{totalSales}}","","Sales Team",,,"MO",

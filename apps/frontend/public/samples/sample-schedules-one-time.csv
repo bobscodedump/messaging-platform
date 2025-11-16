@@ -1,0 +1,3 @@
+name,scheduleType,content,recipientContacts,recipientGroups,scheduledAt,reminderDaysBefore,recurringDay,recurringDayOfMonth,recurringMonth,recurringDayOfYear
+"Appointment Reminder - John","ONE_TIME","Hello {{contact.firstName}}, this is a reminder for your appointment on {{appointmentDate}} at {{appointmentTime}}. Please reply if you need to reschedule.","John Doe","","2025-12-15 14:00","3",,,,
+"Group Meeting Reminder","ONE_TIME","Reminder: Team meeting tomorrow at 09:00 in Conference Room A.","","Engineering Team","2025-11-10 09:00","1",,,

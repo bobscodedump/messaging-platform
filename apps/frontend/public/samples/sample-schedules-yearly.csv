@@ -1,0 +1,3 @@
+name,scheduleType,content,recipientContacts,recipientGroups,scheduledAt,reminderDaysBefore,recurringDay,recurringDayOfMonth,recurringMonth,recurringDayOfYear
+"Yearly Contract Renewal","YEARLY","Hi {{contact.firstName}}, your contract renews on {{renewalDate}}. Contact us if you wish to discuss options.","","Contracts",,,,"12","01"
+"Holiday Greeting","YEARLY","Season's greetings from {{company.name}}! Wishing you a happy holiday season.","","All Customers",,,,"12","25"

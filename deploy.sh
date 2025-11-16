@@ -1,0 +1,158 @@
+#!/bin/bash
+
+# ========================================
+# Messaging Platform EC2 Deployment Script
+# ========================================
+
+set -e  # Exit on any error
+
+echo "🚀 Starting deployment of Messaging Platform..."
+
+# Check if .env.production exists
+if [ ! -f .env.production ]; then
+    echo "❌ Error: .env.production file not found!"
+    echo "Please create .env.production with your configuration."
+    exit 1
+fi
+
+# Load environment variables
+export $(grep -v '^#' .env.production | xargs)
+
+echo "📦 Installing dependencies..."
+
+# Backend dependencies
+cd apps/backend
+npm install --production=false
+echo "✅ Backend dependencies installed"
+
+# Frontend dependencies
+cd ../frontend
+npm install --production=false
+echo "✅ Frontend dependencies installed"
+
+cd ../..
+
+# ========================================
+# Database Setup
+# ========================================
+echo "🗄️  Setting up database..."
+
+cd apps/backend
+
+# Generate Prisma Client
+npx prisma generate
+
+# Run database migrations
+echo "Running database migrations..."
+npx prisma migrate deploy
+
+echo "✅ Database migrations completed"
+
+cd ../..
+
+# ========================================
+# Build Applications
+# ========================================
+echo "🏗️  Building applications..."
+
+# Build backend
+cd apps/backend
+npm run build
+echo "✅ Backend built successfully"
+
+# Build frontend
+cd ../frontend
+npm run build
+echo "✅ Frontend built successfully"
+
+cd ../..
+
+# ========================================
+# Start/Restart Backend with PM2
+# ========================================
+echo "🚀 Starting backend with PM2..."
+
+cd apps/backend
+
+# Check if PM2 is installed
+if ! command -v pm2 &> /dev/null; then
+    echo "⚠️  PM2 not found. Installing PM2..."
+    sudo npm install -g pm2
+fi
+
+# Start or restart backend
+pm2 delete messaging-backend 2>/dev/null || true
+pm2 start dist/server.js --name messaging-backend --node-args="--max-old-space-size=2048"
+pm2 save
+
+echo "✅ Backend started with PM2"
+
+cd ../..
+
+# ========================================
+# Start/Restart Frontend with PM2
+# ========================================
+echo "🎨 Starting frontend with PM2..."
+
+cd apps/frontend
+
+# For Vite preview mode (or use a proper web server like nginx)
+pm2 delete messaging-frontend 2>/dev/null || true
+pm2 start npm --name messaging-frontend -- run preview -- --host 0.0.0.0 --port 3000
+pm2 save
+
+echo "✅ Frontend started with PM2"
+
+cd ../..
+
+# ========================================
+# Start Docker Services
+# ========================================
+echo "🐳 Starting Docker services (PostgreSQL, pgAdmin, n8n)..."
+
+# Stop existing containers
+docker-compose -f docker-compose.prod.yml down
+
+# Start new containers
+docker-compose -f docker-compose.prod.yml --env-file .env.production up -d
+
+echo "✅ Docker services started"
+
+# Wait for services to be ready
+echo "⏳ Waiting for services to start..."
+sleep 5
+
+# ========================================
+# Deployment Summary
+# ========================================
+echo ""
+echo "=========================================="
+echo "✅ Deployment Complete!"
+echo "=========================================="
+echo ""
+echo "📍 Service URLs:"
+echo "   Backend API:    http://${EC2_PUBLIC_IP}:5001"
+echo "   Frontend:       http://${EC2_PUBLIC_IP}:3000"
+echo "   n8n:            http://${EC2_PUBLIC_IP}:5678"
+echo "   pgAdmin:        http://${EC2_PUBLIC_IP}:5050"
+echo ""
+echo "🔐 Service Status:"
+pm2 list
+echo ""
+echo "🐳 Docker Status:"
+docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+echo ""
+echo "📝 Next Steps:"
+echo "   1. Test backend: curl http://${EC2_PUBLIC_IP}:5001/health"
+echo "   2. Open frontend: http://${EC2_PUBLIC_IP}:3000"
+echo "   3. Login to n8n: http://${EC2_PUBLIC_IP}:5678"
+echo "   4. Import n8n workflow from: ./n8n-templates/appointment-reminder-workflow.json"
+echo "   5. Configure Google Calendar OAuth in n8n"
+echo ""
+echo "💡 Tips:"
+echo "   - View backend logs: pm2 logs messaging-backend"
+echo "   - View frontend logs: pm2 logs messaging-frontend"
+echo "   - View n8n logs: docker logs messaging-n8n"
+echo "   - Restart services: pm2 restart all"
+echo "   - Stop services: pm2 stop all && docker-compose -f docker-compose.prod.yml down"
+echo ""

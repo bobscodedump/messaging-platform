@@ -67,6 +67,31 @@ export class ContactController {
         });
     }
 
+    async getContactByEmail(req: Request, res: Response) {
+        const companyId = req.params.companyId;
+        const email = req.params.email;
+
+        const contact = await prisma.contact.findFirst({
+            where: {
+                companyId,
+                email
+            }
+        });
+
+        if (!contact) {
+            return res.status(404).json({
+                success: false,
+                message: 'Contact not found'
+            });
+        }
+
+        res.json({
+            success: true,
+            data: contact,
+            message: 'Contact retrieved successfully'
+        });
+    }
+
     async createContact(req: Request, res: Response) {
         const { companyId, firstName, lastName, phoneNumber, email, address, birthDate, note }: CreateContactDto = req.body;
 

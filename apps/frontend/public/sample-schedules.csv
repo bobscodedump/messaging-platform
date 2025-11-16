@@ -1,7 +1,10 @@
 name,scheduleType,content,recipientContacts,recipientGroups,scheduledAt,reminderDaysBefore,recurringDay,recurringDayOfMonth,recurringMonth,recurringDayOfYear
-Weekly Newsletter,WEEKLY,"Hi {{contact.firstName}}! Check out this week's updates.",,"VIP,All",,0,FR,,
-Monthly Reminder,MONTHLY,"Don't forget your monthly check-in, {{contact.firstName}}!",,"Staff",,0,,,15,
-Birthday Greeting,BIRTHDAY,"Happy Birthday {{contact.firstName}}! 🎉 Have an amazing day!","Ada Lovelace,Grace Hopper",,,0,,,,
-Yearly Anniversary,YEARLY,"Happy anniversary! Thanks for being with us, {{contact.firstName}}.","Alan Turing",,,0,,,1,15
-One-Time Launch,ONE_TIME,"Exciting news coming soon!",,"All",2025-12-01 10:00,0,,,
-Appointment Reminder,ONE_TIME,"Reminder: Your appointment is in 3 days on December 15th at 2 PM.",,"All",2025-12-15 14:00,3,,,
+"Weekly Newsletter","WEEKLY","Hi {{contact.firstName}}! Check out this week's updates and special offers.",,"VIP Customers",,,"MO",,
+"Monthly Invoice Reminder","MONTHLY","Hi {{contact.firstName}}, your invoice is ready. Total: {{invoiceAmount}}",,"Accounting",,,,"15",
+"Monthly Newsletter","MONTHLY","{{company.name}} monthly newsletter with industry insights!",,"All Subscribers",,,,"1",
+"Birthday Wishes","BIRTHDAY","Happy Birthday {{contact.firstName}}! 🎉 Enjoy your special day!","John Doe; Jane Smith",,,,,,
+"Birthday VIP","BIRTHDAY","Happy Birthday from {{company.name}}, {{contact.firstName}}!",,"Birthday Club",,,,,,
+"Yearly Contract Renewal","YEARLY","Hi {{contact.firstName}}, your annual contract renews on January 15th.",,"Enterprise Clients",,,,"1","15"
+"Holiday Greeting","YEARLY","Season's greetings from {{company.name}}! Wishing you joy.",,"All Customers",,,,"12","25"
+"Product Launch","ONE_TIME","Exciting news! Our new product launches today: {{productLink}}",,"All Subscribers","15/12/2025 14:30",,,,
+"Webinar Invitation","ONE_TIME","Join our webinar on {{webinarTopic}} - register now!",,"Marketing List","20/12/2025 14:00",,,

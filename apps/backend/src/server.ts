@@ -10,6 +10,7 @@ import templatesRouter from "./routes/v1/templates";
 import groupsRouter from "./routes/v1/groups";
 import companiesRouter from "./routes/v1/companies";
 import schedulerRouter from "./routes/v1/scheduler";
+import adminRouter from "./routes/v1/admin";
 import { notFoundHandler, errorHandler } from "./middleware/errorHandler";
 import { schedulerService } from "./services/schedulerService";
 import authRouter from "./routes/v1/auth";
@@ -21,6 +22,8 @@ export const createServer = (): Express => {
     const apiV1 = express.Router();
     // Public auth endpoints
     apiV1.use(authRouter);
+    // Admin endpoints (protected by admin role middleware)
+    apiV1.use('/admin', adminRouter);
     // Protected application endpoints
     apiV1.use(requireAuth, companiesRouter);
     apiV1.use(requireAuth, contactsRouter);
