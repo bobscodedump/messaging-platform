@@ -43,6 +43,36 @@ pnpm install --frozen-lockfile
 echo "✅ Dependencies installed"
 
 # ========================================
+# Start Docker Services FIRST
+# ========================================
+echo "🐳 Starting Docker services (PostgreSQL, pgAdmin, n8n)..."
+
+# Stop existing containers
+docker compose -f docker-compose.prod.yml down
+
+# Start new containers
+docker compose -f docker-compose.prod.yml --env-file .env.production up -d
+
+echo "✅ Docker services starting..."
+
+# Wait for PostgreSQL to be ready
+echo "⏳ Waiting for PostgreSQL to be ready..."
+max_attempts=30
+attempt=0
+until docker exec messaging-postgres pg_isready -U postgres > /dev/null 2>&1 || [ $attempt -eq $max_attempts ]; do
+    attempt=$((attempt + 1))
+    echo "Waiting for PostgreSQL... (attempt $attempt/$max_attempts)"
+    sleep 2
+done
+
+if [ $attempt -eq $max_attempts ]; then
+    echo "❌ PostgreSQL failed to start. Check logs with: docker logs messaging-postgres"
+    exit 1
+fi
+
+echo "✅ PostgreSQL is ready!"
+
+# ========================================
 # Database Setup
 # ========================================
 echo "🗄️  Setting up database..."
@@ -132,23 +162,6 @@ pm2 save
 echo "✅ Frontend started with PM2"
 
 cd ../..
-
-# ========================================
-# Start Docker Services
-# ========================================
-echo "🐳 Starting Docker services (PostgreSQL, pgAdmin, n8n)..."
-
-# Stop existing containers
-docker compose -f docker-compose.prod.yml down
-
-# Start new containers
-docker compose -f docker-compose.prod.yml --env-file .env.production up -d
-
-echo "✅ Docker services started"
-
-# Wait for services to be ready
-echo "⏳ Waiting for services to start..."
-sleep 5
 
 # ========================================
 # Deployment Summary
