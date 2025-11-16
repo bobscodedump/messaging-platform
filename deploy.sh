@@ -20,17 +20,16 @@ export $(grep -v '^#' .env.production | xargs)
 
 echo "📦 Installing dependencies..."
 
-# Backend dependencies
-cd apps/backend
-npm install --production=false
-echo "✅ Backend dependencies installed"
+# Check if pnpm is installed
+if ! command -v pnpm &> /dev/null; then
+    echo "⚠️  pnpm not found. Installing pnpm..."
+    npm install -g pnpm
+fi
 
-# Frontend dependencies
-cd ../frontend
-npm install --production=false
-echo "✅ Frontend dependencies installed"
+# Install dependencies using pnpm (for monorepo)
+pnpm install --frozen-lockfile
 
-cd ../..
+echo "✅ Dependencies installed"
 
 # ========================================
 # Database Setup
@@ -55,17 +54,10 @@ cd ../..
 # ========================================
 echo "🏗️  Building applications..."
 
-# Build backend
-cd apps/backend
-npm run build
-echo "✅ Backend built successfully"
+# Build all apps using Turbo
+pnpm turbo run build
 
-# Build frontend
-cd ../frontend
-npm run build
-echo "✅ Frontend built successfully"
-
-cd ../..
+echo "✅ Applications built successfully"
 
 # ========================================
 # Start/Restart Backend with PM2
@@ -80,9 +72,9 @@ if ! command -v pm2 &> /dev/null; then
     sudo npm install -g pm2
 fi
 
-# Start or restart backend
+# Start or restart backend (tsup builds to dist/index.cjs)
 pm2 delete messaging-backend 2>/dev/null || true
-pm2 start dist/server.js --name messaging-backend --node-args="--max-old-space-size=2048"
+pm2 start dist/index.cjs --name messaging-backend --node-args="--max-old-space-size=2048"
 pm2 save
 
 echo "✅ Backend started with PM2"
@@ -96,9 +88,17 @@ echo "🎨 Starting frontend with PM2..."
 
 cd apps/frontend
 
-# For Vite preview mode (or use a proper web server like nginx)
+# Install serve if not present (to serve the built frontend)
+if ! command -v serve &> /dev/null; then
+    echo "⚠️  serve not found. Installing serve..."
+    sudo npm install -g serve
+fi
+
+# Stop existing frontend
 pm2 delete messaging-frontend 2>/dev/null || true
-pm2 start npm --name messaging-frontend -- run preview -- --host 0.0.0.0 --port 3000
+
+# Serve the built dist folder
+pm2 start serve --name messaging-frontend -- dist -l 3000 --single
 pm2 save
 
 echo "✅ Frontend started with PM2"
@@ -143,7 +143,7 @@ echo "🐳 Docker Status:"
 docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 echo ""
 echo "📝 Next Steps:"
-echo "   1. Test backend: curl http://${EC2_PUBLIC_IP}:5001/health"
+echo "   1. Test backend: curl http://${EC2_PUBLIC_IP}:5001/api/v1/auth/health || echo 'Add health endpoint'"
 echo "   2. Open frontend: http://${EC2_PUBLIC_IP}:3000"
 echo "   3. Login to n8n: http://${EC2_PUBLIC_IP}:5678"
 echo "   4. Import n8n workflow from: ./n8n-templates/appointment-reminder-workflow.json"
