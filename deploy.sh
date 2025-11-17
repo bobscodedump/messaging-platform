@@ -155,8 +155,8 @@ fi
 # Stop existing frontend
 pm2 delete messaging-frontend 2>/dev/null || true
 
-# Serve the built dist folder
-pm2 start serve --name messaging-frontend -- dist -l 3000 --single
+# Serve the built dist folder using pnpm dlx (downloads and runs without shell wrapper issues)
+pm2 start "pnpm" --name messaging-frontend --interpreter none -- dlx serve dist -l 3000 --single
 pm2 save
 
 echo "✅ Frontend started with PM2"
