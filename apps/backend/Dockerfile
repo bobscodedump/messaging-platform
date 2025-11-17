@@ -112,7 +112,7 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
 RUN echo '#!/bin/sh' > /app/start.sh && \
     echo 'set -e' >> /app/start.sh && \
     echo 'echo "Running database migrations..."' >> /app/start.sh && \
-    echo 'cd /app/apps/backend && npx prisma migrate deploy' >> /app/start.sh && \
+    echo 'cd /app/apps/backend && pnpm exec prisma migrate deploy' >> /app/start.sh && \
     echo 'echo "Migrations complete. Starting application..."' >> /app/start.sh && \
     echo 'exec node dist/index.cjs' >> /app/start.sh && \
     chmod +x /app/start.sh
