@@ -7,6 +7,8 @@ const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret_change_me';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '2h';
 const REFRESH_SECRET = process.env.REFRESH_SECRET || JWT_SECRET + '_refresh';
 const REFRESH_EXPIRES_IN = process.env.REFRESH_EXPIRES_IN || '7d';
+const REGISTRATION_CODE = process.env.REGISTRATION_CODE || 'CHANGE_ME_IN_PRODUCTION';
+const SALT_ROUNDS = 10;
 
 function setRefreshCookie(res: Response, token: string) {
     const isProd = process.env.NODE_ENV === 'production';
@@ -20,6 +22,106 @@ function setRefreshCookie(res: Response, token: string) {
 }
 
 export class AuthController {
+    async register(req: Request, res: Response) {
+        const { email, password, firstName, lastName, companyName, registrationCode } = req.body as {
+            email: string;
+            password: string;
+            firstName: string;
+            lastName: string;
+            companyName: string;
+            registrationCode: string;
+        };
+
+        // Validate required fields
+        if (!email || !password || !firstName || !lastName || !companyName || !registrationCode) {
+            return res.status(400).json({
+                success: false,
+                message: 'All fields are required: email, password, firstName, lastName, companyName, registrationCode',
+            });
+        }
+
+        // Validate registration code
+        if (registrationCode !== REGISTRATION_CODE) {
+            return res.status(403).json({
+                success: false,
+                message: 'Invalid registration code',
+            });
+        }
+
+        try {
+            // Check if user already exists
+            const existingUser = await prisma.user.findUnique({ where: { email } });
+            if (existingUser) {
+                return res.status(409).json({
+                    success: false,
+                    message: 'User with this email already exists',
+                });
+            }
+
+            // Check if company already exists
+            const existingCompany = await prisma.company.findFirst({ where: { name: companyName } });
+            if (existingCompany) {
+                return res.status(409).json({
+                    success: false,
+                    message: 'Company with this name already exists',
+                });
+            }
+
+            // Hash password
+            const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
+
+            // Create company and user in a transaction
+            const result = await prisma.$transaction(async (tx) => {
+                // Create company
+                const company = await tx.company.create({
+                    data: {
+                        name: companyName,
+                    },
+                });
+
+                // Create user as COMPANY_ADMIN
+                const user = await tx.user.create({
+                    data: {
+                        email,
+                        passwordHash,
+                        firstName,
+                        lastName,
+                        companyId: company.id,
+                        role: 'COMPANY_ADMIN',
+                        isActive: true,
+                    },
+                });
+
+                return { company, user };
+            });
+
+            // Generate tokens
+            const token = jwt.sign(
+                { sub: result.user.id, companyId: result.user.companyId, role: result.user.role },
+                JWT_SECRET,
+                { expiresIn: JWT_EXPIRES_IN as any }
+            );
+            const refresh = jwt.sign({ sub: result.user.id }, REFRESH_SECRET, { expiresIn: REFRESH_EXPIRES_IN as any });
+            setRefreshCookie(res, refresh);
+
+            return res.status(201).json({
+                success: true,
+                data: {
+                    token,
+                    companyId: result.company.id,
+                    companyName: result.company.name,
+                },
+                message: 'Registration successful',
+            });
+        } catch (error: any) {
+            console.error('Registration error:', error);
+            return res.status(500).json({
+                success: false,
+                message: 'Failed to register user',
+            });
+        }
+    }
+
     async login(req: Request, res: Response) {
         const { email, password } = req.body as { email: string; password: string };
         if (!email || !password) {

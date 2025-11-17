@@ -10,6 +10,7 @@ import TemplatesPage from './pages/TemplatesPage';
 import SendMessagePage from './pages/SendMessagePage';
 import SchedulesPage from './pages/SchedulesPage';
 import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
 import ProfilePage from './pages/ProfilePage';
 import UsersPage from './pages/UsersPage';
 import CalendarPage from './pages/CalendarPage';
@@ -29,7 +30,7 @@ function NavBar() {
   const isAdmin = user?.role === 'PLATFORM_ADMIN' || user?.role === 'COMPANY_ADMIN';
 
   // Hide navbar on login page
-  if (location.pathname === '/login') {
+  if (location.pathname === '/login' || location.pathname === '/register') {
     return null;
   }
 
@@ -104,6 +105,7 @@ if (el) {
             <Routes>
               <Route path='/' element={<Navigate to='/contacts' replace />} />
               <Route path='/login' element={<LoginPage />} />
+              <Route path='/register' element={<RegisterPage />} />
               <Route
                 path='/contacts'
                 element={
