@@ -108,5 +108,14 @@ ENV HOST=0.0.0.0
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
   CMD node -e "require('http').get('http://localhost:5001/api/v1/auth/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
 
-# Start the application
-CMD ["node", "dist/index.cjs"]
+# Create startup script that runs migrations before starting the app
+RUN echo '#!/bin/sh' > /app/start.sh && \
+    echo 'set -e' >> /app/start.sh && \
+    echo 'echo "Running database migrations..."' >> /app/start.sh && \
+    echo 'cd /app/apps/backend && npx prisma migrate deploy' >> /app/start.sh && \
+    echo 'echo "Migrations complete. Starting application..."' >> /app/start.sh && \
+    echo 'exec node dist/index.cjs' >> /app/start.sh && \
+    chmod +x /app/start.sh
+
+# Start the application with migrations
+CMD ["/app/start.sh"]
