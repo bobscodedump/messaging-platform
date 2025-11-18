@@ -13,7 +13,6 @@ server/dist
 public/dist
 
 # Backup files
-*.sql
 backup_*.sql
 
 # SSL certificates

@@ -38,8 +38,12 @@ services:
       - NODE_ENV=production
       - DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD:-password}@postgres:5432/messaging_platform?schema=public
       - JWT_SECRET=${JWT_SECRET}
+      - REGISTRATION_CODE=${REGISTRATION_CODE}
       - PORT=5001
       - HOST=0.0.0.0
+      - WASENDER_API_KEY=${WASENDER_API_KEY}
+      - WHATSAPP_SEND_DELAY_MS=${WHATSAPP_SEND_DELAY_MS:-5000}
+      - GOOGLE_CALENDAR_ID=${GOOGLE_CALENDAR_ID}
     ports:
       - '5001:5001'
     networks:
@@ -66,7 +70,7 @@ services:
       context: .
       dockerfile: apps/frontend/Dockerfile
       args:
-        - VITE_API_URL=http://${EC2_PUBLIC_IP:-localhost}:5001
+        - VITE_API_BASE_URL=http://${EC2_PUBLIC_IP:-localhost}:5001/api/v1
     container_name: messaging-frontend
     ports:
       - '3000:3000'

@@ -42,8 +42,8 @@ COPY packages/config-typescript packages/config-typescript/
 COPY packages/config-eslint packages/config-eslint/
 
 # Build argument for API URL
-ARG VITE_API_URL=http://localhost:5001
-ENV VITE_API_URL=$VITE_API_URL
+ARG VITE_API_BASE_URL=http://localhost:5001/api/v1
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
 
 # Build the application using turbo (builds shared-types and ui first, then frontend)
 RUN pnpm turbo run build --filter=frontend
