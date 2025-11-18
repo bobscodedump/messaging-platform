@@ -2,6 +2,7 @@ import type { Request, Response } from 'express';
 import prisma from '../../prisma/db';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
+import { Prisma } from '@prisma/client';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret_change_me';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '2h';
@@ -32,39 +33,39 @@ export class AuthController {
             registrationCode: string;
         };
 
-        // Validate required fields
-        if (!email || !password || !firstName || !lastName || !companyName || !registrationCode) {
-            return res.status(400).json({
-                success: false,
-                message: 'All fields are required: email, password, firstName, lastName, companyName, registrationCode',
-            });
+        // Basic validation
+        const fieldErrors: Record<string, string> = {};
+        if (!email) fieldErrors.email = 'Email is required';
+        else if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) fieldErrors.email = 'Email is not valid';
+
+        if (!password) fieldErrors.password = 'Password is required';
+        else if (password.length < 8) fieldErrors.password = 'Password must be at least 8 characters long';
+
+        if (!firstName) fieldErrors.firstName = 'First name is required';
+        if (!lastName) fieldErrors.lastName = 'Last name is required';
+        if (!companyName) fieldErrors.companyName = 'Company name is required';
+        if (!registrationCode) fieldErrors.registrationCode = 'Registration code is required';
+
+        if (Object.keys(fieldErrors).length > 0) {
+            return res.status(400).json({ success: false, error: 'validation_error', details: fieldErrors, message: 'Invalid input' });
         }
 
         // Validate registration code
         if (registrationCode !== REGISTRATION_CODE) {
-            return res.status(403).json({
-                success: false,
-                message: 'Invalid registration code',
-            });
+            return res.status(403).json({ success: false, error: 'invalid_registration_code', message: 'Invalid registration code' });
         }
 
         try {
             // Check if user already exists
             const existingUser = await prisma.user.findUnique({ where: { email } });
             if (existingUser) {
-                return res.status(409).json({
-                    success: false,
-                    message: 'User with this email already exists',
-                });
+                return res.status(409).json({ success: false, error: 'conflict', details: { email: 'User with this email already exists' }, message: 'User already exists' });
             }
 
             // Check if company already exists
             const existingCompany = await prisma.company.findFirst({ where: { name: companyName } });
             if (existingCompany) {
-                return res.status(409).json({
-                    success: false,
-                    message: 'Company with this name already exists',
-                });
+                return res.status(409).json({ success: false, error: 'conflict', details: { companyName: 'Company with this name already exists' }, message: 'Company already exists' });
             }
 
             // Hash password
@@ -115,10 +116,20 @@ export class AuthController {
             });
         } catch (error: any) {
             console.error('Registration error:', error);
-            return res.status(500).json({
-                success: false,
-                message: 'Failed to register user',
-            });
+            // Handle Prisma unique constraint (race condition)
+            if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+                // extract target field if available
+                const target = (error.meta as any)?.target as string[] | undefined;
+                const details: Record<string, string> = {};
+                if (target && target.length) {
+                    target.forEach((t) => (details[t] = `${t} already exists`));
+                } else {
+                    details.email = 'A record already exists with this value';
+                }
+                return res.status(409).json({ success: false, error: 'conflict', details, message: 'Conflict while creating records' });
+            }
+
+            return res.status(500).json({ success: false, error: 'server_error', message: 'Failed to register user' });
         }
     }
 

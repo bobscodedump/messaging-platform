@@ -15,6 +15,7 @@ export default function RegisterPage() {
     registrationCode: '',
   });
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState<{ companyId: string; companyName: string } | null>(null);
 
@@ -25,6 +26,7 @@ export default function RegisterPage() {
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setFieldErrors({});
 
     // Validate password match
     if (formData.password !== formData.confirmPassword) {
@@ -41,8 +43,8 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001';
-      const response = await fetch(`${API_URL}/api/v1/auth/register`, {
+      const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001/api/v1';
+      const response = await fetch(`${API_URL}/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -58,9 +60,17 @@ export default function RegisterPage() {
         }),
       });
 
-      const data = await response.json();
+      const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
+        if (data && data.error === 'validation_error' && data.details) {
+          setFieldErrors(data.details);
+          setError(data.message || 'Validation failed');
+          return;
+        }
+        if (data && data.details) {
+          setFieldErrors(data.details);
+        }
         throw new Error(data.message || 'Registration failed');
       }
 
@@ -83,11 +93,9 @@ export default function RegisterPage() {
 
       let errorMessage = 'Registration failed';
 
-      if (e.name === 'TypeError' && e.message.includes('fetch')) {
-        errorMessage = `Network Error: Unable to connect to the server.\n\nPossible causes:\n• Backend server is not running\n• Security groups blocking port 5001\n• Firewall blocking the connection\n• Wrong API URL configured\n\nTrying to reach: ${fullUrl}`;
-      } else if (e.message.includes('Failed to fetch')) {
-        errorMessage = `Connection Failed: Cannot reach the backend server.\n\nURL: ${fullUrl}\n\nThis could be:\n• CORS issue\n• Network connectivity problem\n• Server is down or unreachable`;
-      } else if (e.message) {
+      if (e instanceof TypeError) {
+        errorMessage = `Network Error: Unable to connect to the server.\n\nPossible causes:\n• Backend server is not running\n• Security groups blocking port 5001\n• Firewall blocking the connection\n• Wrong API URL configured\n\nAPI URL: ${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001/api/v1'}`;
+      } else if (e && e.message) {
         errorMessage = e.message;
       }
 
@@ -163,6 +171,9 @@ export default function RegisterPage() {
               onChange={handleChange}
               required
             />
+            {fieldErrors.firstName && (
+              <div className='text-xs text-red-600 mt-1'>{fieldErrors.firstName}</div>
+            )}
           </div>
           <div>
             <label className='block text-sm mb-1 text-neutral-700 dark:text-neutral-300'>Last Name</label>
@@ -174,6 +185,9 @@ export default function RegisterPage() {
               onChange={handleChange}
               required
             />
+            {fieldErrors.lastName && (
+              <div className='text-xs text-red-600 mt-1'>{fieldErrors.lastName}</div>
+            )}
           </div>
         </div>
         <div>
@@ -186,6 +200,7 @@ export default function RegisterPage() {
             onChange={handleChange}
             required
           />
+          {fieldErrors.email && <div className='text-xs text-red-600 mt-1'>{fieldErrors.email}</div>}
         </div>
         <div>
           <label className='block text-sm mb-1 text-neutral-700 dark:text-neutral-300'>Company Name</label>
@@ -197,6 +212,7 @@ export default function RegisterPage() {
             onChange={handleChange}
             required
           />
+          {fieldErrors.companyName && <div className='text-xs text-red-600 mt-1'>{fieldErrors.companyName}</div>}
         </div>
         <div>
           <label className='block text-sm mb-1 text-neutral-700 dark:text-neutral-300'>Password</label>
@@ -209,6 +225,7 @@ export default function RegisterPage() {
             required
             minLength={8}
           />
+          {fieldErrors.password && <div className='text-xs text-red-600 mt-1'>{fieldErrors.password}</div>}
           <p className='text-xs text-neutral-500 dark:text-neutral-400 mt-1'>Minimum 8 characters</p>
         </div>
         <div>
@@ -234,6 +251,7 @@ export default function RegisterPage() {
             required
             placeholder='Enter your registration code'
           />
+          {fieldErrors.registrationCode && <div className='text-xs text-red-600 mt-1'>{fieldErrors.registrationCode}</div>}
           <p className='text-xs text-neutral-500 dark:text-neutral-400 mt-1'>
             Contact your administrator for a registration code
           </p>
