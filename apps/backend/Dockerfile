@@ -70,9 +70,8 @@ COPY packages/config-typescript/package.json packages/config-typescript/
 COPY packages/config-eslint/package.json packages/config-eslint/
 COPY packages/jest-presets/package.json packages/jest-presets/
 
-# Install production dependencies + Prisma CLI (needed for migrations)
+# Install production dependencies
 RUN pnpm install --frozen-lockfile --prod
-RUN pnpm add -g prisma@6.13.0
 
 # Copy Prisma schema (needed at runtime for migrations)
 COPY apps/backend/prisma apps/backend/prisma/
@@ -113,7 +112,8 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
 RUN echo '#!/bin/sh' > /app/start.sh && \
     echo 'set -e' >> /app/start.sh && \
     echo 'echo "Running database migrations..."' >> /app/start.sh && \
-    echo 'cd /app/apps/backend && prisma migrate deploy' >> /app/start.sh && \
+    echo 'cd /app/apps/backend' >> /app/start.sh && \
+    echo 'pnpm exec prisma migrate deploy' >> /app/start.sh && \
     echo 'echo "Migrations complete. Starting application..."' >> /app/start.sh && \
     echo 'exec node dist/index.cjs' >> /app/start.sh && \
     chmod +x /app/start.sh
