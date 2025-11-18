@@ -80,11 +80,8 @@ export default function RegisterPage() {
         companyName: data.data.companyName,
       });
 
-      // Auto-login after 3 seconds
-      setTimeout(async () => {
-        await login(formData.email, formData.password);
-        navigate('/contacts');
-      }, 3000);
+      // Do not auto-redirect: show success and let user copy company ID or continue
+      // Keep credentials in memory so user can click Continue to dashboard which will log them in
     } catch (e: any) {
       console.error('=== REGISTER REQUEST ERROR ===');
       console.error('Error:', e);
@@ -126,7 +123,40 @@ export default function RegisterPage() {
             <p className='mt-3 text-neutral-600 dark:text-neutral-300'>
               ℹ️ Save your Company ID - you'll need it for n8n configuration.
             </p>
-            <p className='text-neutral-500 dark:text-neutral-400'>Redirecting to dashboard...</p>
+            <div className='flex gap-2 mt-2'>
+              <button
+                type='button'
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(success.companyId);
+                    // small visual feedback: replace error with success message briefly
+                    setError(null);
+                  } catch (err) {
+                    // ignore clipboard errors
+                  }
+                }}
+                className='inline-flex items-center gap-2 rounded border border-neutral-300 bg-white px-3 py-1 text-sm text-neutral-700 hover:bg-neutral-50'
+              >
+                Copy Company ID
+              </button>
+              <button
+                type='button'
+                onClick={async () => {
+                  try {
+                    setLoading(true);
+                    await login(formData.email, formData.password);
+                    navigate('/contacts');
+                  } catch (err) {
+                    setError('Unable to sign you in automatically. Please try logging in from the Sign in page.');
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
+                className='inline-flex items-center gap-2 rounded bg-blue-600 px-3 py-1 text-sm font-medium text-white hover:bg-blue-700'
+              >
+                Continue to dashboard
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -142,17 +172,22 @@ export default function RegisterPage() {
             <div className='flex-shrink-0 text-red-600 dark:text-red-400 text-lg'>⚠️</div>
             <div className='flex-1'>
               <h3 className='font-semibold text-red-800 dark:text-red-300 mb-2'>Registration Error</h3>
-              <div className='text-sm text-red-700 dark:text-red-400 whitespace-pre-line'>
-                {error}
-              </div>
+              <div className='text-sm text-red-700 dark:text-red-400 whitespace-pre-line'>{error}</div>
               <details className='mt-3'>
                 <summary className='cursor-pointer text-xs text-red-600 dark:text-red-500 hover:underline'>
                   Show technical details
                 </summary>
                 <div className='mt-2 p-2 bg-red-100 dark:bg-red-950/30 rounded text-xs font-mono text-red-800 dark:text-red-300 overflow-x-auto'>
-                  <div><strong>API URL:</strong> {import.meta.env.VITE_API_BASE_URL || 'Not set (using default)'}</div>
-                  <div><strong>Target:</strong> {`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001'}/auth/register`}</div>
-                  <div><strong>Timestamp:</strong> {new Date().toISOString()}</div>
+                  <div>
+                    <strong>API URL:</strong> {import.meta.env.VITE_API_BASE_URL || 'Not set (using default)'}
+                  </div>
+                  <div>
+                    <strong>Target:</strong>{' '}
+                    {`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001'}/auth/register`}
+                  </div>
+                  <div>
+                    <strong>Timestamp:</strong> {new Date().toISOString()}
+                  </div>
                 </div>
               </details>
             </div>
@@ -171,9 +206,7 @@ export default function RegisterPage() {
               onChange={handleChange}
               required
             />
-            {fieldErrors.firstName && (
-              <div className='text-xs text-red-600 mt-1'>{fieldErrors.firstName}</div>
-            )}
+            {fieldErrors.firstName && <div className='text-xs text-red-600 mt-1'>{fieldErrors.firstName}</div>}
           </div>
           <div>
             <label className='block text-sm mb-1 text-neutral-700 dark:text-neutral-300'>Last Name</label>
@@ -185,9 +218,7 @@ export default function RegisterPage() {
               onChange={handleChange}
               required
             />
-            {fieldErrors.lastName && (
-              <div className='text-xs text-red-600 mt-1'>{fieldErrors.lastName}</div>
-            )}
+            {fieldErrors.lastName && <div className='text-xs text-red-600 mt-1'>{fieldErrors.lastName}</div>}
           </div>
         </div>
         <div>
@@ -251,7 +282,9 @@ export default function RegisterPage() {
             required
             placeholder='Enter your registration code'
           />
-          {fieldErrors.registrationCode && <div className='text-xs text-red-600 mt-1'>{fieldErrors.registrationCode}</div>}
+          {fieldErrors.registrationCode && (
+            <div className='text-xs text-red-600 mt-1'>{fieldErrors.registrationCode}</div>
+          )}
           <p className='text-xs text-neutral-500 dark:text-neutral-400 mt-1'>
             Contact your administrator for a registration code
           </p>
