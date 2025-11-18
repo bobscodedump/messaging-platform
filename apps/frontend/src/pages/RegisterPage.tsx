@@ -76,7 +76,22 @@ export default function RegisterPage() {
         navigate('/contacts');
       }, 3000);
     } catch (e: any) {
-      setError(e.message || 'Registration failed');
+      console.error('=== REGISTER REQUEST ERROR ===');
+      console.error('Error:', e);
+      console.error('Error message:', e.message);
+      console.error('Error stack:', e.stack);
+
+      let errorMessage = 'Registration failed';
+
+      if (e.name === 'TypeError' && e.message.includes('fetch')) {
+        errorMessage = `Network Error: Unable to connect to the server.\n\nPossible causes:\n• Backend server is not running\n• Security groups blocking port 5001\n• Firewall blocking the connection\n• Wrong API URL configured\n\nTrying to reach: ${fullUrl}`;
+      } else if (e.message.includes('Failed to fetch')) {
+        errorMessage = `Connection Failed: Cannot reach the backend server.\n\nURL: ${fullUrl}\n\nThis could be:\n• CORS issue\n• Network connectivity problem\n• Server is down or unreachable`;
+      } else if (e.message) {
+        errorMessage = e.message;
+      }
+
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -114,8 +129,26 @@ export default function RegisterPage() {
     <div className='mx-auto max-w-md p-6'>
       <h1 className='mb-4 text-xl font-semibold text-neutral-900 dark:text-neutral-100'>Create Account</h1>
       {error && (
-        <div className='mb-3 rounded border border-red-300 bg-red-50 p-2 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400'>
-          {error}
+        <div className='mb-4 rounded-lg border border-red-300 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20'>
+          <div className='flex items-start gap-3'>
+            <div className='flex-shrink-0 text-red-600 dark:text-red-400 text-lg'>⚠️</div>
+            <div className='flex-1'>
+              <h3 className='font-semibold text-red-800 dark:text-red-300 mb-2'>Registration Error</h3>
+              <div className='text-sm text-red-700 dark:text-red-400 whitespace-pre-line'>
+                {error}
+              </div>
+              <details className='mt-3'>
+                <summary className='cursor-pointer text-xs text-red-600 dark:text-red-500 hover:underline'>
+                  Show technical details
+                </summary>
+                <div className='mt-2 p-2 bg-red-100 dark:bg-red-950/30 rounded text-xs font-mono text-red-800 dark:text-red-300 overflow-x-auto'>
+                  <div><strong>API URL:</strong> {import.meta.env.VITE_API_BASE_URL || 'Not set (using default)'}</div>
+                  <div><strong>Target:</strong> {`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001'}/auth/register`}</div>
+                  <div><strong>Timestamp:</strong> {new Date().toISOString()}</div>
+                </div>
+              </details>
+            </div>
+          </div>
         </div>
       )}
       <form onSubmit={onSubmit} className='space-y-3'>
