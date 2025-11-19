@@ -103,12 +103,12 @@ services:
       - N8N_BASIC_AUTH_PASSWORD=${N8N_PASSWORD:-admin}
 
       # External URL config (behind reverse proxy at /n8n)
-      - N8N_HOST=hunexus.co
+      - N8N_HOST=portal.hunexus.co
       - N8N_PORT=5678
       - N8N_PROTOCOL=https
       - N8N_PATH=/n8n/
-      - N8N_EDITOR_BASE_URL=https://hunexus.co/n8n/
-      - WEBHOOK_URL=https://hunexus.co/n8n/
+      - N8N_EDITOR_BASE_URL=https://portal.hunexus.co/n8n/
+      - WEBHOOK_URL=https://portal.hunexus.co/n8n/
 
       # Cookies + timezone
       - GENERIC_TIMEZONE=Asia/Singapore
