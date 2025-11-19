@@ -40,7 +40,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "http://192.168.68.105:3001/api/v1/auth/login",
+        "url": "https://hunexus.co/api/v1/auth/login",
         "authentication": "none",
         "sendHeaders": true,
         "headerParameters": {
@@ -85,7 +85,7 @@
     {
       "parameters": {
         "method": "GET",
-        "url": "=http://192.168.68.105:3001/api/v1/companies/{{ $json.companyId }}/contacts/email/{{ $json.customerEmail }}",
+        "url": "=https://hunexus.co/api/v1/companies/{{ $json.companyId }}/contacts/email/{{ $json.customerEmail }}",
         "authentication": "none",
         "sendHeaders": true,
         "headerParameters": {
@@ -134,7 +134,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "http://192.168.68.105:3001/api/v1/schedules",
+        "url": "https://hunexus.co/api/v1/schedules",
         "authentication": "none",
         "sendHeaders": true,
         "headerParameters": {
