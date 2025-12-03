@@ -19,7 +19,7 @@ export default function SchedulesPage() {
       await deleteScheduleMutation.mutateAsync(id);
     } catch (error) {
       console.error('Failed to delete schedule:', error);
-      // Error handling is now done in the list component via toast/alert if needed, 
+      // Error handling is now done in the list component via toast/alert if needed,
       // but here we just catch the mutation error.
     }
   };
@@ -31,7 +31,7 @@ export default function SchedulesPage() {
           <h1 className='text-2xl font-bold text-neutral-900 dark:text-white'>Schedules</h1>
           <p className='mt-1 text-sm text-neutral-600 dark:text-neutral-400'>Create and manage scheduled messages</p>
         </div>
-        <div className="flex gap-2 bg-neutral-100 dark:bg-neutral-800 p-1 rounded-lg">
+        <div className='flex gap-2 bg-neutral-100 dark:bg-neutral-800 p-1 rounded-lg'>
           <button
             onClick={() => setActiveTab('list')}
             className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
@@ -66,14 +66,12 @@ export default function SchedulesPage() {
       </div>
 
       <div className='space-y-8'>
-        {activeTab === 'list' && (
-          <SchedulesList onDelete={handleDelete} />
-        )}
+        {activeTab === 'list' && <SchedulesList onDelete={handleDelete} />}
 
         {activeTab === 'create' && (
-          <div className="max-w-3xl mx-auto">
-            <div className="mb-4">
-              <Button variant="ghost" onClick={() => setActiveTab('list')} leftIcon={<span>←</span>}>
+          <div className='max-w-3xl mx-auto'>
+            <div className='mb-4'>
+              <Button variant='ghost' onClick={() => setActiveTab('list')} leftIcon={<span>←</span>}>
                 Back to list
               </Button>
             </div>
@@ -82,9 +80,9 @@ export default function SchedulesPage() {
         )}
 
         {activeTab === 'import' && (
-          <div className="max-w-3xl mx-auto">
-            <div className="mb-4">
-              <Button variant="ghost" onClick={() => setActiveTab('list')} leftIcon={<span>←</span>}>
+          <div className='max-w-3xl mx-auto'>
+            <div className='mb-4'>
+              <Button variant='ghost' onClick={() => setActiveTab('list')} leftIcon={<span>←</span>}>
                 Back to list
               </Button>
             </div>

@@ -227,7 +227,8 @@ export default function ProfilePage() {
                     />
                   </label>
                   <div className='sm:col-span-2 text-xs text-neutral-500'>
-                    Company ID: <code className='bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 rounded'>{company?.id ?? '—'}</code>
+                    Company ID:{' '}
+                    <code className='bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 rounded'>{company?.id ?? '—'}</code>
                   </div>
                 </div>
               </section>
@@ -236,7 +237,9 @@ export default function ProfilePage() {
               <section className='rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900/60 p-6 shadow-sm'>
                 <header className='mb-4'>
                   <h2 className='text-lg font-medium text-neutral-900 dark:text-white'>WhatsApp Configuration</h2>
-                  <p className='text-xs text-neutral-500'>Configure your WaSender API integration for sending WhatsApp messages</p>
+                  <p className='text-xs text-neutral-500'>
+                    Configure your WaSender API integration for sending WhatsApp messages
+                  </p>
                 </header>
                 <div className='grid gap-4 sm:grid-cols-2'>
                   <label className='flex flex-col gap-1'>
@@ -251,7 +254,9 @@ export default function ProfilePage() {
                       placeholder='+65 1234 5678'
                       disabled={updateCompanyMutation.isPending}
                     />
-                    <span className='text-xs text-neutral-400'>The phone number connected to your WhatsApp Business</span>
+                    <span className='text-xs text-neutral-400'>
+                      The phone number connected to your WhatsApp Business
+                    </span>
                   </label>
                   <label className='flex flex-col gap-1'>
                     <span className='text-xs uppercase tracking-wide text-neutral-500 dark:text-neutral-400'>
@@ -307,7 +312,9 @@ export default function ProfilePage() {
                     <input
                       type='number'
                       value={companyForm.messageSendDelayMs}
-                      onChange={(e) => setCompanyForm((prev) => ({ ...prev, messageSendDelayMs: parseInt(e.target.value) || 0 }))}
+                      onChange={(e) =>
+                        setCompanyForm((prev) => ({ ...prev, messageSendDelayMs: parseInt(e.target.value) || 0 }))
+                      }
                       className='rounded border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-950 px-3 py-2 text-sm text-neutral-900 dark:text-white focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40'
                       min='0'
                       max='60000'
@@ -397,7 +404,9 @@ export default function ProfilePage() {
             <p className='text-xs text-neutral-500'>Contact an administrator to change company settings.</p>
           </header>
           <div className='text-sm text-neutral-600 dark:text-neutral-300'>
-            <p><strong>Company:</strong> {company.name}</p>
+            <p>
+              <strong>Company:</strong> {company.name}
+            </p>
             <p className='text-xs text-neutral-500 mt-1'>Company ID: {company.id}</p>
           </div>
         </section>

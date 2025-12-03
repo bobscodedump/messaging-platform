@@ -68,7 +68,7 @@ export default function UserManagement() {
     } catch (error: any) {
       // Ideally use a toast here, but for now we'll rely on the mutation error state if we were displaying it,
       // or just alert as a fallback since we haven't implemented a global toast yet.
-      // But wait, ConfirmationModal doesn't show error. 
+      // But wait, ConfirmationModal doesn't show error.
       // Let's just log it for now as the mutation hook usually handles error states if we use them.
       console.error('Failed to deactivate users', error);
       alert(error.message || 'Failed to deactivate users'); // Keep alert for error for now
@@ -253,9 +253,9 @@ export default function UserManagement() {
         isOpen={showDeactivateConfirm}
         onClose={() => setShowDeactivateConfirm(false)}
         onConfirm={handleConfirmDeactivate}
-        title="Deactivate Users"
+        title='Deactivate Users'
         message={`Are you sure you want to deactivate ${selectedUserIds.length} user(s)? They will no longer be able to log in.`}
-        confirmLabel="Deactivate"
+        confirmLabel='Deactivate'
         isDestructive
         isLoading={bulkDeactivateMutation.isPending}
       />

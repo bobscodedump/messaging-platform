@@ -11,7 +11,7 @@ const CalendarPage: React.FC = () => {
   const [viewMode, setViewMode] = useState<'WEEK' | 'MONTH' | 'AGENDA'>('MONTH');
 
   if (isLoading) {
-    return <div className="p-6">Loading calendar configuration...</div>;
+    return <div className='p-6'>Loading calendar configuration...</div>;
   }
 
   const calendarId = company?.googleCalendarId;
@@ -19,16 +19,13 @@ const CalendarPage: React.FC = () => {
 
   if (!calendarId) {
     return (
-      <div className="p-6 flex flex-col items-center justify-center h-96 text-center">
-        <h2 className="text-xl font-semibold text-gray-900 mb-2">Calendar Not Configured</h2>
-        <p className="text-gray-600 mb-4 max-w-md">
-          You haven't set up a Google Calendar ID for your company yet. 
-          Please configure it in your settings to view the calendar here.
+      <div className='p-6 flex flex-col items-center justify-center h-96 text-center'>
+        <h2 className='text-xl font-semibold text-gray-900 mb-2'>Calendar Not Configured</h2>
+        <p className='text-gray-600 mb-4 max-w-md'>
+          You haven't set up a Google Calendar ID for your company yet. Please configure it in your settings to view the
+          calendar here.
         </p>
-        <Link 
-          to="/profile" 
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 font-medium"
-        >
+        <Link to='/profile' className='px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 font-medium'>
           Go to Settings
         </Link>
       </div>

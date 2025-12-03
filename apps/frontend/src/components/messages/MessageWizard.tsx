@@ -47,7 +47,7 @@ export default function MessageWizard() {
 
   const handleSend = async () => {
     if (!selectedTemplate || recipientContacts.length === 0 || !user) return;
-    
+
     setSendError(null);
     setSendSuccess(null);
 
@@ -56,13 +56,13 @@ export default function MessageWizard() {
         companyId,
         senderId: user.id,
         templateId: selectedTemplate.id,
-        recipientContactIds: recipientContacts.map(c => c.id),
-        variableFallbacks
+        recipientContactIds: recipientContacts.map((c) => c.id),
+        variableFallbacks,
       });
 
       setSendSuccess(`Successfully queued ${recipientContacts.length} messages.`);
-      
-      // Reset state after short delay or immediately? 
+
+      // Reset state after short delay or immediately?
       // Let's keep the success message visible and reset the wizard
       setTimeout(() => {
         setStep('recipients');
@@ -70,7 +70,6 @@ export default function MessageWizard() {
         setVariableFallbacks({});
         setSendSuccess(null);
       }, 3000);
-
     } catch (err: any) {
       setSendError(err.message || 'Failed to send messages');
     }
@@ -79,14 +78,10 @@ export default function MessageWizard() {
   return (
     <div className='mx-auto max-w-6xl p-6 space-y-6'>
       {sendSuccess && (
-        <div className="rounded-md bg-green-50 p-4 text-sm text-green-700 border border-green-200">
-          {sendSuccess}
-        </div>
+        <div className='rounded-md bg-green-50 p-4 text-sm text-green-700 border border-green-200'>{sendSuccess}</div>
       )}
       {sendError && (
-        <div className="rounded-md bg-red-50 p-4 text-sm text-red-700 border border-red-200">
-          {sendError}
-        </div>
+        <div className='rounded-md bg-red-50 p-4 text-sm text-red-700 border border-red-200'>{sendError}</div>
       )}
       <div className='flex items-center justify-between'>
         <h1 className='text-xl font-semibold text-neutral-900 dark:text-neutral-100'>Send Message</h1>
@@ -186,10 +181,7 @@ export default function MessageWizard() {
               Next
             </Button>
           ) : (
-            <Button 
-              onClick={handleSend} 
-              disabled={!selectedTemplate || sendMessageMutation.isPending}
-            >
+            <Button onClick={handleSend} disabled={!selectedTemplate || sendMessageMutation.isPending}>
               {sendMessageMutation.isPending ? 'Sending...' : 'Send Message'}
             </Button>
           )}

@@ -63,9 +63,9 @@ export function ContactDashboard() {
           isOpen={!!contactToDelete}
           onClose={() => setContactToDelete(null)}
           onConfirm={handleConfirmDelete}
-          title="Delete Contact"
+          title='Delete Contact'
           message={`Are you sure you want to delete "${[contactToDelete?.firstName, contactToDelete?.lastName].filter(Boolean).join(' ') || contactToDelete?.id}"? This action cannot be undone.`}
-          confirmLabel="Delete"
+          confirmLabel='Delete'
           isDestructive
           isLoading={deleteContactMutation.isPending}
         />
@@ -107,9 +107,9 @@ export function ContactDashboard() {
         isOpen={!!contactToDelete}
         onClose={() => setContactToDelete(null)}
         onConfirm={handleConfirmDelete}
-        title="Delete Contact"
+        title='Delete Contact'
         message={`Are you sure you want to delete "${[contactToDelete?.firstName, contactToDelete?.lastName].filter(Boolean).join(' ') || contactToDelete?.id}"? This action cannot be undone.`}
-        confirmLabel="Delete"
+        confirmLabel='Delete'
         isDestructive
         isLoading={deleteContactMutation.isPending}
       />

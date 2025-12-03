@@ -20,7 +20,7 @@ export default function SendMessagePage() {
             Send individual messages or bulk import from CSV
           </p>
         </div>
-        <div className="flex gap-2 bg-neutral-100 dark:bg-neutral-800 p-1 rounded-lg">
+        <div className='flex gap-2 bg-neutral-100 dark:bg-neutral-800 p-1 rounded-lg'>
           <button
             onClick={() => setActiveTab('single')}
             className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
@@ -45,11 +45,11 @@ export default function SendMessagePage() {
       </div>
 
       {/* Content */}
-      <div className="mt-6">
+      <div className='mt-6'>
         {activeTab === 'single' ? (
           <MessageWizard />
         ) : (
-          <div className="max-w-3xl mx-auto">
+          <div className='max-w-3xl mx-auto'>
             <MessageCsvImport companyId={user.companyId} userId={user.id} />
           </div>
         )}

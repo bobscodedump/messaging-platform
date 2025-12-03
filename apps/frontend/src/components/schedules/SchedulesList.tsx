@@ -122,7 +122,7 @@ export function SchedulesList({ onDelete }: Props) {
   };
 
   const handleDeleteClick = (id: string) => {
-    const schedule = schedules.find(s => s.id === id);
+    const schedule = schedules.find((s) => s.id === id);
     if (schedule) {
       setScheduleToDelete({ id: schedule.id, name: schedule.name });
     }
@@ -318,9 +318,9 @@ export function SchedulesList({ onDelete }: Props) {
         isOpen={!!scheduleToDelete}
         onClose={() => setScheduleToDelete(null)}
         onConfirm={handleConfirmDelete}
-        title="Delete Schedule"
+        title='Delete Schedule'
         message={`Are you sure you want to delete "${scheduleToDelete?.name}"?`}
-        confirmLabel="Delete"
+        confirmLabel='Delete'
         isDestructive
       />
     </Card>

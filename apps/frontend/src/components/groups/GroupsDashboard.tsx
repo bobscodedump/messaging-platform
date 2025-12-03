@@ -101,11 +101,7 @@ export function GroupsDashboard() {
             footer={
               activeGroup ? (
                 <div className='flex justify-end'>
-                  <Button
-                    variant='ghost'
-                    size='sm'
-                    onClick={() => handleDeleteClick(activeGroup.id, activeGroup.name)}
-                  >
+                  <Button variant='ghost' size='sm' onClick={() => handleDeleteClick(activeGroup.id, activeGroup.name)}>
                     Delete group
                   </Button>
                 </div>

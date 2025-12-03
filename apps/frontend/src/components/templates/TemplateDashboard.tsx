@@ -42,11 +42,7 @@ export default function TemplateDashboard({ companyId }: { companyId: string }) 
                     <div className='truncate font-medium text-neutral-900 dark:text-neutral-100'>{t.name}</div>
                     <div className='truncate text-xs text-neutral-500'>Vars: {t.variables.join(', ') || 'none'}</div>
                   </button>
-                  <Button
-                    variant='ghost'
-                    size='sm'
-                    onClick={() => handleDeleteClick(t.id, t.name)}
-                  >
+                  <Button variant='ghost' size='sm' onClick={() => handleDeleteClick(t.id, t.name)}>
                     Delete
                   </Button>
                 </li>
@@ -56,14 +52,14 @@ export default function TemplateDashboard({ companyId }: { companyId: string }) 
         </Card>
       </Section>
       {openId ? <TemplateModal templateId={openId} onClose={() => setOpenId(null)} /> : null}
-      
+
       <ConfirmationModal
         isOpen={!!templateToDelete}
         onClose={() => setTemplateToDelete(null)}
         onConfirm={handleConfirmDelete}
-        title="Delete Template"
+        title='Delete Template'
         message={`Are you sure you want to delete "${templateToDelete?.name}"?`}
-        confirmLabel="Delete"
+        confirmLabel='Delete'
         isDestructive
         isLoading={deleteMutation.isPending}
       />

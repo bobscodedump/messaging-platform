@@ -25,18 +25,14 @@ export default function ConfirmationModal({
   isLoading = false,
 }: ConfirmationModalProps) {
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={title} size="sm">
-      <div className="space-y-4">
-        <p className="text-sm text-neutral-600 dark:text-neutral-300">{message}</p>
-        <div className="flex justify-end gap-3">
-          <Button variant="ghost" onClick={onClose} disabled={isLoading}>
+    <Modal isOpen={isOpen} onClose={onClose} title={title} size='sm'>
+      <div className='space-y-4'>
+        <p className='text-sm text-neutral-600 dark:text-neutral-300'>{message}</p>
+        <div className='flex justify-end gap-3'>
+          <Button variant='ghost' onClick={onClose} disabled={isLoading}>
             {cancelLabel}
           </Button>
-          <Button
-            variant={isDestructive ? 'danger' : 'primary'}
-            onClick={onConfirm}
-            disabled={isLoading}
-          >
+          <Button variant={isDestructive ? 'danger' : 'primary'} onClick={onConfirm} disabled={isLoading}>
             {isLoading ? 'Processing...' : confirmLabel}
           </Button>
         </div>

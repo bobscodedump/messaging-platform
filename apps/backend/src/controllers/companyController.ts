@@ -35,10 +35,10 @@ export class CompanyController {
         }
 
         const company = await prisma.company.create({
-            data: { 
-                name: name.trim(), 
-                whatsappPhone, 
-                whatsappApiKey, 
+            data: {
+                name: name.trim(),
+                whatsappPhone,
+                whatsappApiKey,
                 whatsappApiUrl,
                 messageSendDelayMs: messageSendDelayMs ?? 5000,
                 timezone: timezone ?? 'Asia/Singapore',

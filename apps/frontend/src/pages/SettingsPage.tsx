@@ -107,9 +107,7 @@ export default function SettingsPage() {
         </p>
       </div>
 
-      {companyLoading && (
-        <div className='text-sm text-neutral-500 dark:text-neutral-400'>Loading settings…</div>
-      )}
+      {companyLoading && <div className='text-sm text-neutral-500 dark:text-neutral-400'>Loading settings…</div>}
 
       {companyError && (
         <div className='rounded-lg border border-red-500/40 bg-red-500/10 p-4 text-red-200'>
@@ -140,7 +138,8 @@ export default function SettingsPage() {
                 />
               </label>
               <div className='sm:col-span-2 text-xs text-neutral-500'>
-                Company ID: <code className='bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 rounded'>{company?.id ?? '—'}</code>
+                Company ID:{' '}
+                <code className='bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 rounded'>{company?.id ?? '—'}</code>
               </div>
             </div>
           </section>
@@ -149,7 +148,9 @@ export default function SettingsPage() {
           <section className='rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900/60 p-6 shadow-sm'>
             <header className='mb-4'>
               <h2 className='text-lg font-medium text-neutral-900 dark:text-white'>WhatsApp Configuration</h2>
-              <p className='text-xs text-neutral-500'>Configure your WaSender API integration for sending WhatsApp messages</p>
+              <p className='text-xs text-neutral-500'>
+                Configure your WaSender API integration for sending WhatsApp messages
+              </p>
             </header>
             <div className='grid gap-4 sm:grid-cols-2'>
               <label className='flex flex-col gap-1'>
@@ -220,7 +221,9 @@ export default function SettingsPage() {
                 <input
                   type='number'
                   value={formData.messageSendDelayMs}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, messageSendDelayMs: parseInt(e.target.value) || 0 }))}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, messageSendDelayMs: parseInt(e.target.value) || 0 }))
+                  }
                   className='rounded border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-950 px-3 py-2 text-sm text-neutral-900 dark:text-white focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40'
                   min='0'
                   max='60000'
@@ -232,9 +235,7 @@ export default function SettingsPage() {
                 </span>
               </label>
               <label className='flex flex-col gap-1'>
-                <span className='text-xs uppercase tracking-wide text-neutral-500 dark:text-neutral-400'>
-                  Timezone
-                </span>
+                <span className='text-xs uppercase tracking-wide text-neutral-500 dark:text-neutral-400'>Timezone</span>
                 <select
                   value={formData.timezone}
                   onChange={(e) => setFormData((prev) => ({ ...prev, timezone: e.target.value }))}
