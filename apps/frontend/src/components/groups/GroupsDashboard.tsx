@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import Section from '../common/layout/Section';
 import Card from '../common/layout/Card';
 import Button from '../common/ui/Button';
+import ConfirmationModal from '../common/ui/ConfirmationModal';
 import { GroupCreateForm } from './GroupCreateForm';
 import { GroupList } from './GroupList';
 import { GroupMembersManager } from './GroupMembersManager';
@@ -23,6 +24,7 @@ export function GroupsDashboard() {
 
   const { data: groups = [], isLoading: loadingGroups } = useGroups(companyId);
   const [activeGroupId, setActiveGroupId] = useState<string | null>(null);
+  const [groupToDelete, setGroupToDelete] = useState<{ id: string; name: string } | null>(null);
 
   const { data: contacts = [] } = useContacts(companyId);
 
@@ -40,9 +42,15 @@ export function GroupsDashboard() {
     await createGroupMutation.mutateAsync(payload);
   };
 
-  const handleDelete = async (groupId: string) => {
-    await deleteGroupMutation.mutateAsync(groupId);
-    if (activeGroupId === groupId) setActiveGroupId(null);
+  const handleDeleteClick = (id: string, name: string) => {
+    setGroupToDelete({ id, name });
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!groupToDelete) return;
+    await deleteGroupMutation.mutateAsync(groupToDelete.id);
+    if (activeGroupId === groupToDelete.id) setActiveGroupId(null);
+    setGroupToDelete(null);
   };
 
   const addMembers = async (ids: string[]) => {
@@ -96,12 +104,7 @@ export function GroupsDashboard() {
                   <Button
                     variant='ghost'
                     size='sm'
-                    onClick={() => {
-                      const ok = window.confirm(
-                        `Are you sure you want to delete "${activeGroup.name}"? This cannot be undone.`
-                      );
-                      if (ok) handleDelete(activeGroup.id);
-                    }}
+                    onClick={() => handleDeleteClick(activeGroup.id, activeGroup.name)}
                   >
                     Delete group
                   </Button>
@@ -119,7 +122,15 @@ export function GroupsDashboard() {
 
         {/* Right column: list + manager */}
         <div className='md:col-span-2 space-y-6'>
-          <GroupList groups={groups} onSelect={setActiveGroupId} onDelete={handleDelete} loading={loadingGroups} />
+          <GroupList
+            groups={groups}
+            onSelect={setActiveGroupId}
+            onDelete={(id) => {
+              const group = groups.find((g) => g.id === id);
+              if (group) handleDeleteClick(id, group.name);
+            }}
+            loading={loadingGroups}
+          />
 
           {activeGroup ? (
             <Section title='Manage Members'>
@@ -134,6 +145,17 @@ export function GroupsDashboard() {
           ) : null}
         </div>
       </div>
+
+      <ConfirmationModal
+        isOpen={!!groupToDelete}
+        onClose={() => setGroupToDelete(null)}
+        onConfirm={handleConfirmDelete}
+        title='Delete Group'
+        message={`Are you sure you want to delete "${groupToDelete?.name}"? This cannot be undone.`}
+        confirmLabel='Delete'
+        isDestructive
+        isLoading={deleteGroupMutation.isPending}
+      />
     </div>
   );
 }

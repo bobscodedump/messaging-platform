@@ -3,7 +3,6 @@ import prisma from '../../prisma/db';
 import type { Contact, Company } from '@prisma/client';
 import { renderBuiltIns } from './templateRender';
 
-const SEND_DELAY_MS = Number.parseInt(process.env.WHATSAPP_SEND_DELAY_MS || '5000', 10);
 const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
 function resolveTemplate(
@@ -30,9 +29,18 @@ class MessageService {
         content: string,
         recipientContactIds: string[]
     ) {
-        const contacts = await prisma.contact.findMany({
-            where: { id: { in: recipientContactIds }, companyId },
-        });
+        const [company, contacts] = await Promise.all([
+            prisma.company.findUnique({ where: { id: companyId } }),
+            prisma.contact.findMany({
+                where: { id: { in: recipientContactIds }, companyId },
+            }),
+        ]);
+
+        const sendDelayMs = company?.messageSendDelayMs ?? 5000;
+        const companyConfig = {
+            whatsappApiKey: company?.whatsappApiKey,
+            whatsappApiUrl: company?.whatsappApiUrl,
+        };
 
         const results: Array<{ success: boolean; contactId: string; messageId: string; status: string; error?: any }> = [];
         for (let i = 0; i < contacts.length; i++) {
@@ -47,7 +55,7 @@ class MessageService {
                 },
             });
 
-            const sendResult = await whatsappService.sendMessage(contact.phoneNumber, content);
+            const sendResult = await whatsappService.sendMessage(contact.phoneNumber, content, companyConfig);
 
             const finalStatus = sendResult.success ? 'SENT' : 'FAILED';
 
@@ -65,8 +73,8 @@ class MessageService {
             });
 
             // Apply delay between sends, except after the last one
-            if (i < contacts.length - 1 && SEND_DELAY_MS > 0) {
-                await sleep(SEND_DELAY_MS);
+            if (i < contacts.length - 1 && sendDelayMs > 0) {
+                await sleep(sendDelayMs);
             }
         }
 
@@ -83,6 +91,13 @@ class MessageService {
             prisma.company.findUnique({ where: { id: companyId } }),
             prisma.contact.findMany({ where: { id: { in: recipientContactIds }, companyId } }),
         ]);
+
+        const sendDelayMs = company?.messageSendDelayMs ?? 5000;
+        const companyConfig = {
+            whatsappApiKey: company?.whatsappApiKey,
+            whatsappApiUrl: company?.whatsappApiUrl,
+        };
+
         const results: Array<{ success: boolean; contactId: string; messageId: string; status: string; error?: any }> = [];
         for (let i = 0; i < contacts.length; i++) {
             const contact = contacts[i];
@@ -101,7 +116,7 @@ class MessageService {
             const messageRecord = await prisma.message.create({
                 data: { companyId, userId: senderId, contactId: contact.id, content, status: 'PENDING' },
             });
-            const sendResult = await whatsappService.sendMessage(contact.phoneNumber, content);
+            const sendResult = await whatsappService.sendMessage(contact.phoneNumber, content, companyConfig);
             const finalStatus = sendResult.success ? 'SENT' : 'FAILED';
             const updatedMessage = await prisma.message.update({
                 where: { id: messageRecord.id },
@@ -114,7 +129,7 @@ class MessageService {
                 status: finalStatus,
                 error: sendResult.error,
             });
-            if (i < contacts.length - 1 && SEND_DELAY_MS > 0) await sleep(SEND_DELAY_MS);
+            if (i < contacts.length - 1 && sendDelayMs > 0) await sleep(sendDelayMs);
         }
         return results;
     }
@@ -132,6 +147,12 @@ class MessageService {
         if (!template) {
             throw new Error('Template not found');
         }
+
+        const sendDelayMs = company?.messageSendDelayMs ?? 5000;
+        const companyConfig = {
+            whatsappApiKey: company?.whatsappApiKey,
+            whatsappApiUrl: company?.whatsappApiUrl,
+        };
 
         const contacts = await prisma.contact.findMany({
             where: { id: { in: recipientContactIds }, companyId },
@@ -152,7 +173,7 @@ class MessageService {
                 },
             });
 
-            const sendResult = await whatsappService.sendMessage(contact.phoneNumber, content);
+            const sendResult = await whatsappService.sendMessage(contact.phoneNumber, content, companyConfig);
 
             const finalStatus = sendResult.success ? 'SENT' : 'FAILED';
 
@@ -169,8 +190,8 @@ class MessageService {
                 error: sendResult.error,
             });
 
-            if (i < contacts.length - 1 && SEND_DELAY_MS > 0) {
-                await sleep(SEND_DELAY_MS);
+            if (i < contacts.length - 1 && sendDelayMs > 0) {
+                await sleep(sendDelayMs);
             }
         }
 

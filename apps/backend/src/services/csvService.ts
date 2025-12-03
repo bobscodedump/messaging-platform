@@ -830,7 +830,11 @@ export class MessageCsvImportService {
 
                 // Send via WhatsApp
                 const { whatsappService } = await import('./whatsappService');
-                const sendResult = await whatsappService.sendMessage(contact.phoneNumber, content);
+                const companyConfig = {
+                    whatsappApiKey: company?.whatsappApiKey,
+                    whatsappApiUrl: company?.whatsappApiUrl,
+                };
+                const sendResult = await whatsappService.sendMessage(contact.phoneNumber, content, companyConfig);
 
                 const finalStatus = sendResult.success ? 'SENT' : 'FAILED';
 
@@ -848,9 +852,9 @@ export class MessageCsvImportService {
                 });
 
                 // Add delay between sends (except last one)
-                const SEND_DELAY_MS = Number.parseInt(process.env.WHATSAPP_SEND_DELAY_MS || '5000', 10);
-                if (index < rows.length - 1 && SEND_DELAY_MS > 0) {
-                    await new Promise((res) => setTimeout(res, SEND_DELAY_MS));
+                const sendDelayMs = company?.messageSendDelayMs ?? 5000;
+                if (index < rows.length - 1 && sendDelayMs > 0) {
+                    await new Promise((res) => setTimeout(res, sendDelayMs));
                 }
             } catch (e: any) {
                 errors.push({

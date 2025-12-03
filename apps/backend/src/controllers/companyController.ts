@@ -28,14 +28,22 @@ export class CompanyController {
     }
 
     async createCompany(req: Request, res: Response) {
-        const { name, whatsappPhone, whatsappApiKey, whatsappApiUrl }: CreateCompanyDto = req.body;
+        const { name, whatsappPhone, whatsappApiKey, whatsappApiUrl, messageSendDelayMs, timezone, googleCalendarId }: CreateCompanyDto = req.body;
 
         if (!name || name.trim().length === 0) {
             return res.status(400).json({ success: false, message: 'Name is required' });
         }
 
         const company = await prisma.company.create({
-            data: { name: name.trim(), whatsappPhone, whatsappApiKey, whatsappApiUrl },
+            data: { 
+                name: name.trim(), 
+                whatsappPhone, 
+                whatsappApiKey, 
+                whatsappApiUrl,
+                messageSendDelayMs: messageSendDelayMs ?? 5000,
+                timezone: timezone ?? 'Asia/Singapore',
+                googleCalendarId,
+            },
         });
 
         res.status(201).json({ success: true, data: company, message: 'Company created successfully' });
@@ -52,7 +60,7 @@ export class CompanyController {
         }
 
         const payload: UpdateCompanyDto = req.body;
-        const data: Record<string, string | null | undefined> = {};
+        const data: Record<string, string | number | null | undefined> = {};
         if (payload.name !== undefined) {
             const trimmedName = payload.name.trim();
             if (!trimmedName) {
@@ -63,6 +71,9 @@ export class CompanyController {
         if (payload.whatsappPhone !== undefined) data.whatsappPhone = payload.whatsappPhone ?? null;
         if (payload.whatsappApiKey !== undefined) data.whatsappApiKey = payload.whatsappApiKey ?? null;
         if (payload.whatsappApiUrl !== undefined) data.whatsappApiUrl = payload.whatsappApiUrl ?? null;
+        if (payload.messageSendDelayMs !== undefined) data.messageSendDelayMs = payload.messageSendDelayMs;
+        if (payload.timezone !== undefined) data.timezone = payload.timezone;
+        if (payload.googleCalendarId !== undefined) data.googleCalendarId = payload.googleCalendarId ?? null;
 
         if (Object.keys(data).length === 0) {
             return res.status(400).json({ success: false, message: 'No fields provided for update' });

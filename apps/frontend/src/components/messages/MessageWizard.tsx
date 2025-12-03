@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '../../lib/auth/auth-context';
 import Card from '../common/layout/Card';
 import Button from '../common/ui/Button';
-import { useMessageRecipients } from '../../lib/messages/hooks';
+import { useMessageRecipients, useSendMessage } from '../../lib/messages/hooks';
 import { useTemplates } from '../../lib/templates/hooks';
 import type { Contact, Group } from 'shared-types';
 import FormField from '../common/ui/FormField';
@@ -38,26 +38,56 @@ export default function MessageWizard() {
   const { data: templates = [] } = useTemplates(companyId);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
   const [variableFallbacks, setVariableFallbacks] = useState<Record<string, string>>({});
+  const [sendError, setSendError] = useState<string | null>(null);
+  const [sendSuccess, setSendSuccess] = useState<string | null>(null);
+
+  const sendMessageMutation = useSendMessage();
 
   const selectedTemplate = templates.find((t) => t.id === selectedTemplateId);
 
-  const handleSend = () => {
-    if (!selectedTemplate || recipientContacts.length === 0) return;
-    console.group('Sending messages...');
-    recipientContacts.forEach((contact) => {
-      const message = resolveTemplate(selectedTemplate.content, contact, variableFallbacks);
-      console.log(`To: ${contact.firstName} ${contact.lastName} (${contact.phoneNumber}, ${contact.email})`);
-      console.log('Message:', message);
-    });
-    console.groupEnd();
-    // Reset state
-    setStep('recipients');
-    setSelectedTemplateId(null);
-    setVariableFallbacks({});
+  const handleSend = async () => {
+    if (!selectedTemplate || recipientContacts.length === 0 || !user) return;
+    
+    setSendError(null);
+    setSendSuccess(null);
+
+    try {
+      await sendMessageMutation.mutateAsync({
+        companyId,
+        senderId: user.id,
+        templateId: selectedTemplate.id,
+        recipientContactIds: recipientContacts.map(c => c.id),
+        variableFallbacks
+      });
+
+      setSendSuccess(`Successfully queued ${recipientContacts.length} messages.`);
+      
+      // Reset state after short delay or immediately? 
+      // Let's keep the success message visible and reset the wizard
+      setTimeout(() => {
+        setStep('recipients');
+        setSelectedTemplateId(null);
+        setVariableFallbacks({});
+        setSendSuccess(null);
+      }, 3000);
+
+    } catch (err: any) {
+      setSendError(err.message || 'Failed to send messages');
+    }
   };
 
   return (
     <div className='mx-auto max-w-6xl p-6 space-y-6'>
+      {sendSuccess && (
+        <div className="rounded-md bg-green-50 p-4 text-sm text-green-700 border border-green-200">
+          {sendSuccess}
+        </div>
+      )}
+      {sendError && (
+        <div className="rounded-md bg-red-50 p-4 text-sm text-red-700 border border-red-200">
+          {sendError}
+        </div>
+      )}
       <div className='flex items-center justify-between'>
         <h1 className='text-xl font-semibold text-neutral-900 dark:text-neutral-100'>Send Message</h1>
         <div className='flex items-center gap-2 text-sm'>
@@ -156,8 +186,11 @@ export default function MessageWizard() {
               Next
             </Button>
           ) : (
-            <Button onClick={handleSend} disabled={!selectedTemplate}>
-              Send Message
+            <Button 
+              onClick={handleSend} 
+              disabled={!selectedTemplate || sendMessageMutation.isPending}
+            >
+              {sendMessageMutation.isPending ? 'Sending...' : 'Send Message'}
             </Button>
           )}
         </div>

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '../../lib/auth/auth-context';
 import { useSchedules } from '../../lib/schedules/hooks';
 import Card from '../common/layout/Card';
+import ConfirmationModal from '../common/ui/ConfirmationModal';
 import type { ScheduledMessageSummary } from 'shared-types';
 
 type Tab = 'active' | 'past';
@@ -81,11 +82,7 @@ function ScheduleRow({ schedule, onDelete }: ScheduleRowProps) {
       <td className='px-4 py-3'>
         {onDelete && (
           <button
-            onClick={() => {
-              if (confirm(`Delete schedule "${schedule.name}"?`)) {
-                onDelete(schedule.id);
-              }
-            }}
+            onClick={() => onDelete(schedule.id)}
             className='text-sm text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300'
           >
             Delete
@@ -106,6 +103,7 @@ export function SchedulesList({ onDelete }: Props) {
   const [activeTab, setActiveTab] = useState<Tab>('active');
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(20);
+  const [scheduleToDelete, setScheduleToDelete] = useState<{ id: string; name: string } | null>(null);
 
   const { data, isLoading, error } = useSchedules(companyId, page, limit);
   const schedules = data?.schedules || [];
@@ -121,6 +119,20 @@ export function SchedulesList({ onDelete }: Props) {
   const handleLimitChange = (newLimit: number) => {
     setLimit(newLimit);
     setPage(1);
+  };
+
+  const handleDeleteClick = (id: string) => {
+    const schedule = schedules.find(s => s.id === id);
+    if (schedule) {
+      setScheduleToDelete({ id: schedule.id, name: schedule.name });
+    }
+  };
+
+  const handleConfirmDelete = () => {
+    if (scheduleToDelete && onDelete) {
+      onDelete(scheduleToDelete.id);
+      setScheduleToDelete(null);
+    }
   };
 
   if (isLoading) {
@@ -237,7 +249,7 @@ export function SchedulesList({ onDelete }: Props) {
             </thead>
             <tbody>
               {displaySchedules.map((schedule) => (
-                <ScheduleRow key={schedule.id} schedule={schedule} onDelete={onDelete} />
+                <ScheduleRow key={schedule.id} schedule={schedule} onDelete={handleDeleteClick} />
               ))}
             </tbody>
           </table>
@@ -301,6 +313,16 @@ export function SchedulesList({ onDelete }: Props) {
             </p>
           </div>
         )}
+
+      <ConfirmationModal
+        isOpen={!!scheduleToDelete}
+        onClose={() => setScheduleToDelete(null)}
+        onConfirm={handleConfirmDelete}
+        title="Delete Schedule"
+        message={`Are you sure you want to delete "${scheduleToDelete?.name}"?`}
+        confirmLabel="Delete"
+        isDestructive
+      />
     </Card>
   );
 }

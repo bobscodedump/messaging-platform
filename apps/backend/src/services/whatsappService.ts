@@ -1,28 +1,28 @@
-import axios from 'axios';
+import axios, { AxiosInstance } from 'axios';
 
-const WASENDER_API_URL = 'https://wasenderapi.com/api';
-// IMPORTANT: Make sure to set WASENDER_API_KEY in your .env file
-const WASENDER_API_KEY = process.env.WASENDER_API_KEY;
-
-if (!WASENDER_API_KEY) {
-    console.warn(
-        'WASENDER_API_KEY is not set in environment variables. WhatsApp messages will be simulated.'
-    );
-}
-
-const apiClient = axios.create({
-    baseURL: WASENDER_API_URL,
-    headers: {
-        Authorization: `Bearer ${WASENDER_API_KEY}`,
-        'Content-Type': 'application/json',
-    },
-});
+const DEFAULT_WASENDER_API_URL = 'https://wasenderapi.com/api';
 
 class WhatsappService {
-    async sendMessage(to: string, message: string): Promise<{ success: boolean; data?: any; error?: any }> {
+    private createApiClient(apiKey: string, apiUrl?: string | null): AxiosInstance {
+        return axios.create({
+            baseURL: apiUrl || DEFAULT_WASENDER_API_URL,
+            headers: {
+                Authorization: `Bearer ${apiKey}`,
+                'Content-Type': 'application/json',
+            },
+        });
+    }
+
+    async sendMessage(
+        to: string,
+        message: string,
+        companyConfig?: { whatsappApiKey?: string | null; whatsappApiUrl?: string | null }
+    ): Promise<{ success: boolean; data?: any; error?: any }> {
         console.log(`Attempting to send message to: ${to}`);
 
-        if (!WASENDER_API_KEY) {
+        const apiKey = companyConfig?.whatsappApiKey;
+
+        if (!apiKey) {
             console.log(`[Simulation] Sending message to ${to}: "${message}"`);
             return { success: true, data: { status: 'simulated', to, message } };
         }
@@ -34,6 +34,7 @@ class WhatsappService {
         }
 
         try {
+            const apiClient = this.createApiClient(apiKey, companyConfig?.whatsappApiUrl);
             const response = await apiClient.post('/send-message', {
                 to: to,
                 text: message,

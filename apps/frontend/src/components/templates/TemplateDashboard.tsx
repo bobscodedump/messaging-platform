@@ -2,6 +2,7 @@ import { useState } from 'react';
 import Section from '../common/layout/Section';
 import Card from '../common/layout/Card';
 import Button from '../common/ui/Button';
+import ConfirmationModal from '../common/ui/ConfirmationModal';
 import { useDeleteTemplate, useTemplates } from '../../lib/templates/hooks';
 import TemplateModal from './TemplateModal';
 
@@ -9,6 +10,17 @@ export default function TemplateDashboard({ companyId }: { companyId: string }) 
   const { data: templates = [], isLoading, error } = useTemplates(companyId);
   const deleteMutation = useDeleteTemplate(companyId);
   const [openId, setOpenId] = useState<string | null>(null);
+  const [templateToDelete, setTemplateToDelete] = useState<{ id: string; name: string } | null>(null);
+
+  const handleDeleteClick = (id: string, name: string) => {
+    setTemplateToDelete({ id, name });
+  };
+
+  const handleConfirmDelete = () => {
+    if (!templateToDelete) return;
+    deleteMutation.mutate(templateToDelete.id);
+    setTemplateToDelete(null);
+  };
 
   return (
     <div className='space-y-6'>
@@ -33,10 +45,7 @@ export default function TemplateDashboard({ companyId }: { companyId: string }) 
                   <Button
                     variant='ghost'
                     size='sm'
-                    onClick={() => {
-                      const ok = window.confirm(`Delete template "${t.name}"?`);
-                      if (ok) deleteMutation.mutate(t.id);
-                    }}
+                    onClick={() => handleDeleteClick(t.id, t.name)}
                   >
                     Delete
                   </Button>
@@ -47,6 +56,17 @@ export default function TemplateDashboard({ companyId }: { companyId: string }) 
         </Card>
       </Section>
       {openId ? <TemplateModal templateId={openId} onClose={() => setOpenId(null)} /> : null}
+      
+      <ConfirmationModal
+        isOpen={!!templateToDelete}
+        onClose={() => setTemplateToDelete(null)}
+        onConfirm={handleConfirmDelete}
+        title="Delete Template"
+        message={`Are you sure you want to delete "${templateToDelete?.name}"?`}
+        confirmLabel="Delete"
+        isDestructive
+        isLoading={deleteMutation.isPending}
+      />
     </div>
   );
 }

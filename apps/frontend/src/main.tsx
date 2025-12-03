@@ -14,6 +14,7 @@ import RegisterPage from './pages/RegisterPage';
 import ProfilePage from './pages/ProfilePage';
 import UsersPage from './pages/UsersPage';
 import CalendarPage from './pages/CalendarPage';
+import SettingsPage from './pages/SettingsPage';
 import { AuthProvider, useAuth } from './lib/auth/auth-context';
 
 function Protected({ children }: { children: React.ReactNode }) {
@@ -167,6 +168,14 @@ if (el) {
                 element={
                   <Protected>
                     <UsersPage />
+                  </Protected>
+                }
+              />
+              <Route
+                path='/settings'
+                element={
+                  <Protected>
+                    <SettingsPage />
                   </Protected>
                 }
               />

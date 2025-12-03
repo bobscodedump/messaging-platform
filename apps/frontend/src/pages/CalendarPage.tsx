@@ -1,18 +1,46 @@
 import React, { useState } from 'react';
+import { useAuth } from '../lib/auth/auth-context';
+import { useCompany } from '../lib/companies/hooks';
+import { Link } from 'react-router-dom';
 
 const CalendarPage: React.FC = () => {
-  // Replace this with your actual Google Calendar ID
-  const CALENDAR_ID = '9f1e61a91f6778646dbd970dd8b857b2dc2c14b786fa6dc3c5d70ff1dc6eb97d@group.calendar.google.com';
-  const TIMEZONE = 'Asia/Singapore'; // Change to your timezone
+  const { user } = useAuth();
+  const companyId = user?.companyId;
+  const { data: company, isLoading } = useCompany(companyId);
 
   const [viewMode, setViewMode] = useState<'WEEK' | 'MONTH' | 'AGENDA'>('MONTH');
 
+  if (isLoading) {
+    return <div className="p-6">Loading calendar configuration...</div>;
+  }
+
+  const calendarId = company?.googleCalendarId;
+  const timezone = company?.timezone || 'UTC';
+
+  if (!calendarId) {
+    return (
+      <div className="p-6 flex flex-col items-center justify-center h-96 text-center">
+        <h2 className="text-xl font-semibold text-gray-900 mb-2">Calendar Not Configured</h2>
+        <p className="text-gray-600 mb-4 max-w-md">
+          You haven't set up a Google Calendar ID for your company yet. 
+          Please configure it in your settings to view the calendar here.
+        </p>
+        <Link 
+          to="/profile" 
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 font-medium"
+        >
+          Go to Settings
+        </Link>
+      </div>
+    );
+  }
+
   // Build the calendar embed URL
-  const calendarEmbedUrl = `https://calendar.google.com/calendar/embed?src=${encodeURIComponent(CALENDAR_ID)}&ctz=${TIMEZONE}&mode=${viewMode}&showTitle=0&showNav=1&showPrint=0&showTabs=0&showCalendars=0`;
+  const calendarEmbedUrl = `https://calendar.google.com/calendar/embed?src=${encodeURIComponent(calendarId)}&ctz=${timezone}&mode=${viewMode}&showTitle=0&showNav=1&showPrint=0&showTabs=0&showCalendars=0`;
 
   // Function to open Google Calendar event creation
   const handleCreateEvent = () => {
-    const createEventUrl = `https://calendar.google.com/calendar/u/0/r/eventedit?src=${encodeURIComponent(CALENDAR_ID)}`;
+    const createEventUrl = `https://calendar.google.com/calendar/u/0/r/eventedit?src=${encodeURIComponent(calendarId)}`;
     window.open(createEventUrl, '_blank');
   };
 

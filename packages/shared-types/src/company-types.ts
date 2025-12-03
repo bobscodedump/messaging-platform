@@ -5,6 +5,9 @@ const companyEditableFields = {
     whatsappPhone: z.string().trim().min(1).optional().nullable(),
     whatsappApiKey: z.string().trim().min(1).optional().nullable(),
     whatsappApiUrl: z.string().trim().min(1).optional().nullable(),
+    messageSendDelayMs: z.number().int().min(0).default(5000),
+    timezone: z.string().trim().min(1).default('Asia/Singapore'),
+    googleCalendarId: z.string().trim().min(1).optional().nullable(),
 };
 
 export const companySchema = z.object({
@@ -13,6 +16,9 @@ export const companySchema = z.object({
     whatsappPhone: companyEditableFields.whatsappPhone,
     whatsappApiKey: companyEditableFields.whatsappApiKey,
     whatsappApiUrl: companyEditableFields.whatsappApiUrl,
+    messageSendDelayMs: companyEditableFields.messageSendDelayMs,
+    timezone: companyEditableFields.timezone,
+    googleCalendarId: companyEditableFields.googleCalendarId,
     createdAt: z.string(),
     updatedAt: z.string(),
 });

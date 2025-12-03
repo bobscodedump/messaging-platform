@@ -3,6 +3,7 @@ import { useAuth } from '../../lib/auth/auth-context';
 import { useAdminUsers, useBulkDeactivate } from '../../lib/admin/hooks';
 import Button from '../common/ui/Button';
 import Card from '../common/layout/Card';
+import ConfirmationModal from '../common/ui/ConfirmationModal';
 import UserTable from './UserTable';
 import UserCreateModal from './UserCreateModal';
 import UserDetailsModal from './UserDetailsModal';
@@ -21,6 +22,7 @@ export default function UserManagement() {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
+  const [showDeactivateConfirm, setShowDeactivateConfirm] = useState(false);
 
   const filters = {
     page,
@@ -53,15 +55,23 @@ export default function UserManagement() {
     setShowEditModal(true);
   };
 
-  const handleBulkDeactivate = async () => {
+  const handleBulkDeactivateClick = () => {
     if (selectedUserIds.length === 0) return;
-    if (!window.confirm(`Are you sure you want to deactivate ${selectedUserIds.length} user(s)?`)) return;
+    setShowDeactivateConfirm(true);
+  };
 
+  const handleConfirmDeactivate = async () => {
     try {
       await bulkDeactivateMutation.mutateAsync(selectedUserIds);
       setSelectedUserIds([]);
+      setShowDeactivateConfirm(false);
     } catch (error: any) {
-      alert(error.message || 'Failed to deactivate users');
+      // Ideally use a toast here, but for now we'll rely on the mutation error state if we were displaying it,
+      // or just alert as a fallback since we haven't implemented a global toast yet.
+      // But wait, ConfirmationModal doesn't show error. 
+      // Let's just log it for now as the mutation hook usually handles error states if we use them.
+      console.error('Failed to deactivate users', error);
+      alert(error.message || 'Failed to deactivate users'); // Keep alert for error for now
     }
   };
 
@@ -131,7 +141,7 @@ export default function UserManagement() {
                 {selectedUserIds.length} user(s) selected
               </span>
               <Button
-                onClick={handleBulkDeactivate}
+                onClick={handleBulkDeactivateClick}
                 size='sm'
                 variant='secondary'
                 disabled={bulkDeactivateMutation.isPending}
@@ -238,6 +248,17 @@ export default function UserManagement() {
           }}
         />
       )}
+
+      <ConfirmationModal
+        isOpen={showDeactivateConfirm}
+        onClose={() => setShowDeactivateConfirm(false)}
+        onConfirm={handleConfirmDeactivate}
+        title="Deactivate Users"
+        message={`Are you sure you want to deactivate ${selectedUserIds.length} user(s)? They will no longer be able to log in.`}
+        confirmLabel="Deactivate"
+        isDestructive
+        isLoading={bulkDeactivateMutation.isPending}
+      />
     </div>
   );
 }

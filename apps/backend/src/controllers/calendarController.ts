@@ -1,7 +1,31 @@
 import type { Request, Response } from 'express';
 import { createCalendarService } from '../services/calendarService.js';
+import prisma from '../../prisma/db';
 
 export class CalendarController {
+    /**
+     * Helper to get calendar ID from header or company config
+     */
+    private async getCalendarId(req: Request): Promise<string | null> {
+        // First check header
+        const headerCalendarId = req.headers['x-calendar-id'] as string;
+        if (headerCalendarId) {
+            return headerCalendarId;
+        }
+
+        // Fallback to company config
+        const companyId = (req.user as any)?.companyId;
+        if (companyId) {
+            const company = await prisma.company.findUnique({
+                where: { id: companyId },
+                select: { googleCalendarId: true },
+            });
+            return company?.googleCalendarId || null;
+        }
+
+        return null;
+    }
+
     /**
      * GET /api/v1/calendar/events
      * List calendar events
@@ -10,7 +34,7 @@ export class CalendarController {
         try {
             const { timeMin, timeMax, maxResults } = req.query;
             const accessToken = req.headers['x-google-access-token'] as string;
-            const calendarId = req.headers['x-calendar-id'] as string;
+            const calendarId = await this.getCalendarId(req);
 
             if (!accessToken || !calendarId) {
                 return res.status(400).json({
@@ -47,7 +71,7 @@ export class CalendarController {
         try {
             const { eventId } = req.params;
             const accessToken = req.headers['x-google-access-token'] as string;
-            const calendarId = req.headers['x-calendar-id'] as string;
+            const calendarId = await this.getCalendarId(req);
 
             if (!accessToken || !calendarId) {
                 return res.status(400).json({
@@ -79,7 +103,7 @@ export class CalendarController {
     async createEvent(req: Request, res: Response) {
         try {
             const accessToken = req.headers['x-google-access-token'] as string;
-            const calendarId = req.headers['x-calendar-id'] as string;
+            const calendarId = await this.getCalendarId(req);
 
             if (!accessToken || !calendarId) {
                 return res.status(400).json({
@@ -140,7 +164,7 @@ export class CalendarController {
         try {
             const { eventId } = req.params;
             const accessToken = req.headers['x-google-access-token'] as string;
-            const calendarId = req.headers['x-calendar-id'] as string;
+            const calendarId = await this.getCalendarId(req);
 
             if (!accessToken || !calendarId) {
                 return res.status(400).json({
@@ -194,7 +218,7 @@ export class CalendarController {
         try {
             const { eventId } = req.params;
             const accessToken = req.headers['x-google-access-token'] as string;
-            const calendarId = req.headers['x-calendar-id'] as string;
+            const calendarId = await this.getCalendarId(req);
             const sendNotifications = req.query.sendNotifications === 'true';
 
             if (!accessToken || !calendarId) {
@@ -227,7 +251,7 @@ export class CalendarController {
     async quickAddEvent(req: Request, res: Response) {
         try {
             const accessToken = req.headers['x-google-access-token'] as string;
-            const calendarId = req.headers['x-calendar-id'] as string;
+            const calendarId = await this.getCalendarId(req);
             const { text } = req.body;
 
             if (!accessToken || !calendarId) {

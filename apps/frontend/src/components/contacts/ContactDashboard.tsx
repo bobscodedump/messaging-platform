@@ -6,6 +6,7 @@ import { useContacts, useCreateContact, useDeleteContact } from '../../lib/conta
 import ContactsCsvImport from './ContactsCsvImport';
 import { ContactCreateForm } from './ContactCreateForm';
 import { Button } from '../common/ui/Button';
+import ConfirmationModal from '../common/ui/ConfirmationModal';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useAuth } from '../../lib/auth/auth-context';
 
@@ -20,17 +21,24 @@ export function ContactDashboard() {
   const deleteContactMutation = useDeleteContact(companyId);
 
   const [selected, setSelected] = useState<ContactListItem | null>(null);
+  const [contactToDelete, setContactToDelete] = useState<ContactListItem | null>(null);
 
   const handleCreateContact = async (data: CreateContactDto) => {
     await createContactMutation.mutateAsync(data);
   };
 
-  const handleDelete = async (c: ContactListItem) => {
-    if (!c.id) return;
-    const ok = window.confirm(`Delete contact "${[c.firstName, c.lastName].filter(Boolean).join(' ') || c.id}"?`);
-    if (!ok) return;
+  const handleDeleteClick = (c: ContactListItem) => {
+    setContactToDelete(c);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!contactToDelete?.id) return;
     try {
-      await deleteContactMutation.mutateAsync(c.id);
+      await deleteContactMutation.mutateAsync(contactToDelete.id);
+      setContactToDelete(null);
+      if (selected?.id === contactToDelete.id) {
+        setSelected(null);
+      }
     } catch (e: any) {
       alert(e.message || 'Failed to delete contact');
     }
@@ -48,17 +56,18 @@ export function ContactDashboard() {
           onSave={async () => {}}
           onDelete={async () => {
             if (!selected?.id) return;
-            const ok = window.confirm(
-              `Delete contact "${[selected.firstName, selected.lastName].filter(Boolean).join(' ') || selected.id}"?`
-            );
-            if (!ok) return;
-            try {
-              await deleteContactMutation.mutateAsync(selected.id);
-              setSelected(null);
-            } catch (e: any) {
-              alert(e.message || 'Failed to delete contact');
-            }
+            setContactToDelete(selected);
           }}
+        />
+        <ConfirmationModal
+          isOpen={!!contactToDelete}
+          onClose={() => setContactToDelete(null)}
+          onConfirm={handleConfirmDelete}
+          title="Delete Contact"
+          message={`Are you sure you want to delete "${[contactToDelete?.firstName, contactToDelete?.lastName].filter(Boolean).join(' ') || contactToDelete?.id}"? This action cannot be undone.`}
+          confirmLabel="Delete"
+          isDestructive
+          isLoading={deleteContactMutation.isPending}
         />
       </div>
     );
@@ -92,7 +101,17 @@ export function ContactDashboard() {
         loading={isLoading}
         onPageChange={setPage}
         onSelect={(c) => setSelected(c)}
-        onDelete={handleDelete}
+        onDelete={handleDeleteClick}
+      />
+      <ConfirmationModal
+        isOpen={!!contactToDelete}
+        onClose={() => setContactToDelete(null)}
+        onConfirm={handleConfirmDelete}
+        title="Delete Contact"
+        message={`Are you sure you want to delete "${[contactToDelete?.firstName, contactToDelete?.lastName].filter(Boolean).join(' ') || contactToDelete?.id}"? This action cannot be undone.`}
+        confirmLabel="Delete"
+        isDestructive
+        isLoading={deleteContactMutation.isPending}
       />
     </div>
   );
