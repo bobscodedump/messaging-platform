@@ -1,6 +1,12 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth/auth-context';
+import Button from '../components/common/ui/Button';
+import Input from '../components/common/ui/Input';
+import Card from '../components/common/layout/Card';
+import FormField from '../components/common/ui/FormField';
+import { Alert } from '../components/common/ui/Alert';
+import { Badge } from '../components/common/ui/Badge';
 
 export default function RegisterPage() {
   const { login } = useAuth();
@@ -18,6 +24,15 @@ export default function RegisterPage() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState<{ companyId: string; companyName: string } | null>(null);
+  const highlights = useMemo(
+    () => [
+      'Onboard teammates in minutes',
+      'Company-level compliance guardrails',
+      'Campaign templates & auto-personalization',
+      'Live delivery insights + audit trail',
+    ],
+    []
+  );
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -105,42 +120,53 @@ export default function RegisterPage() {
   // Show success message
   if (success) {
     return (
-      <div className='mx-auto max-w-md p-6'>
-        <div className='rounded border border-green-300 bg-green-50 p-4 dark:border-green-800 dark:bg-green-900/20'>
-          <h2 className='text-lg font-semibold text-green-900 dark:text-green-100 mb-2'>🎉 Registration Successful!</h2>
-          <div className='space-y-2 text-sm text-green-800 dark:text-green-200'>
-            <p>Your company has been created:</p>
-            <div className='bg-white dark:bg-neutral-800 rounded p-3 font-mono text-xs'>
-              <div className='mb-1'>
-                <span className='text-neutral-500 dark:text-neutral-400'>Company Name:</span>{' '}
-                <span className='font-semibold'>{success.companyName}</span>
-              </div>
-              <div>
-                <span className='text-neutral-500 dark:text-neutral-400'>Company ID:</span>{' '}
-                <span className='font-semibold text-blue-600 dark:text-blue-400'>{success.companyId}</span>
+      <div className='relative min-h-screen overflow-hidden bg-gradient-to-br from-muted/60 via-background to-background'>
+        <div className='pointer-events-none absolute inset-0 opacity-60'>
+          <div className='absolute -left-16 top-10 h-64 w-64 rounded-full bg-primary/20 blur-3xl' />
+          <div className='absolute bottom-10 right-0 h-72 w-72 rounded-full bg-secondary/20 blur-3xl' />
+        </div>
+        <div className='relative z-10 mx-auto flex max-w-4xl flex-col px-4 py-12 sm:px-6 lg:px-8 lg:py-20'>
+          <Card
+            className='mx-auto w-full max-w-2xl backdrop-blur-sm'
+            title='Welcome aboard!'
+            description='Your workspace is ready—save the details below and jump right in.'
+          >
+            <Alert variant='success' title='Registration successful'>
+              <p className='text-sm text-success'>
+                Your company environment is live. Keep the identifiers below handy.
+              </p>
+            </Alert>
+            <div className='rounded-2xl border border-border bg-surface/40 p-4 text-left shadow-sm'>
+              <div className='space-y-3 text-sm'>
+                <div>
+                  <p className='text-muted-foreground'>Company name</p>
+                  <p className='text-lg font-semibold text-foreground'>{success.companyName}</p>
+                </div>
+                <div>
+                  <p className='text-muted-foreground'>Company ID</p>
+                  <p className='font-mono text-sm text-primary'>{success.companyId}</p>
+                </div>
+                <p className='text-xs text-muted-foreground'>Save this ID for integrations such as n8n workflows.</p>
               </div>
             </div>
-            <p className='mt-3 text-neutral-600 dark:text-neutral-300'>
-              ℹ️ Save your Company ID - you'll need it for n8n configuration.
-            </p>
-            <div className='flex gap-2 mt-2'>
-              <button
-                type='button'
+            <div className='flex flex-col gap-3 sm:flex-row'>
+              <Button
+                variant='secondary'
+                className='flex-1'
                 onClick={async () => {
                   try {
                     await navigator.clipboard.writeText(success.companyId);
-                    // small visual feedback: replace error with success message briefly
                     setError(null);
                   } catch (err) {
-                    // ignore clipboard errors
+                    // Ignore clipboard errors silently
                   }
                 }}
-                className='inline-flex items-center gap-2 rounded border border-neutral-300 bg-white px-3 py-1 text-sm text-neutral-700 hover:bg-neutral-50'
               >
-                Copy Company ID
-              </button>
-              <button
-                type='button'
+                Copy company ID
+              </Button>
+              <Button
+                className='flex-1'
+                loading={loading}
                 onClick={async () => {
                   try {
                     setLoading(true);
@@ -152,155 +178,162 @@ export default function RegisterPage() {
                     setLoading(false);
                   }
                 }}
-                className='inline-flex items-center gap-2 rounded bg-blue-600 px-3 py-1 text-sm font-medium text-white hover:bg-blue-700'
               >
                 Continue to dashboard
-              </button>
+              </Button>
             </div>
-          </div>
+            {error ? <Alert variant='destructive' title='Heads up' description={error} /> : null}
+          </Card>
         </div>
       </div>
     );
   }
 
   return (
-    <div className='mx-auto max-w-md p-6'>
-      <h1 className='mb-4 text-xl font-semibold text-neutral-900 dark:text-neutral-100'>Create Account</h1>
-      {error && (
-        <div className='mb-4 rounded-lg border border-red-300 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20'>
-          <div className='flex items-start gap-3'>
-            <div className='flex-shrink-0 text-red-600 dark:text-red-400 text-lg'>⚠️</div>
-            <div className='flex-1'>
-              <h3 className='font-semibold text-red-800 dark:text-red-300 mb-2'>Registration Error</h3>
-              <div className='text-sm text-red-700 dark:text-red-400 whitespace-pre-line'>{error}</div>
-              <details className='mt-3'>
-                <summary className='cursor-pointer text-xs text-red-600 dark:text-red-500 hover:underline'>
-                  Show technical details
-                </summary>
-                <div className='mt-2 p-2 bg-red-100 dark:bg-red-950/30 rounded text-xs font-mono text-red-800 dark:text-red-300 overflow-x-auto'>
-                  <div>
-                    <strong>API URL:</strong> {import.meta.env.VITE_API_BASE_URL || 'Not set (using default)'}
-                  </div>
-                  <div>
-                    <strong>Target:</strong>{' '}
-                    {`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001'}/auth/register`}
-                  </div>
-                  <div>
-                    <strong>Timestamp:</strong> {new Date().toISOString()}
-                  </div>
-                </div>
-              </details>
+    <div className='relative min-h-screen overflow-hidden bg-gradient-to-br from-muted/60 via-background to-background'>
+      <div className='pointer-events-none absolute inset-0 opacity-60'>
+        <div className='absolute -left-16 top-10 h-64 w-64 rounded-full bg-primary/20 blur-3xl' />
+        <div className='absolute bottom-10 right-0 h-72 w-72 rounded-full bg-secondary/20 blur-3xl' />
+      </div>
+      <div className='relative z-10 mx-auto flex max-w-6xl flex-col px-4 py-12 sm:px-6 lg:px-8 lg:py-20'>
+        <div className='grid gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:items-start'>
+          <section className='space-y-6 text-center lg:text-left'>
+            <Badge variant='primary' size='md' className='mx-auto w-fit lg:mx-0'>
+              Create your workspace
+            </Badge>
+            <div>
+              <h1 className='text-4xl font-semibold text-foreground sm:text-5xl'>Set up Messaging in minutes</h1>
+              <p className='mt-3 text-base text-muted-foreground sm:text-lg'>
+                Launch a fully branded messaging hub with secure roles, automated reminders, and real-time delivery
+                insight.
+              </p>
             </div>
-          </div>
+            <div className='grid gap-4 sm:grid-cols-2'>
+              {highlights.map((item) => (
+                <div key={item} className='rounded-2xl border border-border/70 bg-card/60 p-4 text-left shadow-sm'>
+                  <p className='text-sm font-medium text-foreground/90'>{item}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <Card
+            title='Create an account'
+            description='Provide company details and a valid registration code to access the workspace.'
+            className='backdrop-blur-sm'
+          >
+            {error ? (
+              <Alert variant='destructive' title='Registration error' description={error} className='text-sm' />
+            ) : null}
+
+            <form onSubmit={onSubmit} className='space-y-6'>
+              <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+                <FormField label='First name' htmlFor='firstName' error={fieldErrors.firstName}>
+                  <Input
+                    id='firstName'
+                    name='firstName'
+                    value={formData.firstName}
+                    onChange={handleChange}
+                    required
+                    error={fieldErrors.firstName}
+                  />
+                </FormField>
+                <FormField label='Last name' htmlFor='lastName' error={fieldErrors.lastName}>
+                  <Input
+                    id='lastName'
+                    name='lastName'
+                    value={formData.lastName}
+                    onChange={handleChange}
+                    required
+                    error={fieldErrors.lastName}
+                  />
+                </FormField>
+              </div>
+
+              <FormField label='Work email' htmlFor='email' error={fieldErrors.email}>
+                <Input
+                  id='email'
+                  name='email'
+                  type='email'
+                  value={formData.email}
+                  onChange={handleChange}
+                  required
+                  error={fieldErrors.email}
+                />
+              </FormField>
+
+              <FormField label='Company name' htmlFor='companyName' error={fieldErrors.companyName}>
+                <Input
+                  id='companyName'
+                  name='companyName'
+                  value={formData.companyName}
+                  onChange={handleChange}
+                  required
+                  error={fieldErrors.companyName}
+                />
+              </FormField>
+
+              <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+                <FormField
+                  label='Password'
+                  htmlFor='password'
+                  helpText='Minimum 8 characters'
+                  error={fieldErrors.password}
+                >
+                  <Input
+                    id='password'
+                    name='password'
+                    type='password'
+                    minLength={8}
+                    required
+                    value={formData.password}
+                    onChange={handleChange}
+                    error={fieldErrors.password}
+                  />
+                </FormField>
+                <FormField label='Confirm password' htmlFor='confirmPassword'>
+                  <Input
+                    id='confirmPassword'
+                    name='confirmPassword'
+                    type='password'
+                    minLength={8}
+                    required
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                  />
+                </FormField>
+              </div>
+
+              <FormField
+                label='Registration code'
+                htmlFor='registrationCode'
+                helpText='Your administrator can provide this code.'
+                error={fieldErrors.registrationCode}
+              >
+                <Input
+                  id='registrationCode'
+                  name='registrationCode'
+                  value={formData.registrationCode}
+                  onChange={handleChange}
+                  required
+                  placeholder='e.g., TEAM-ALPHA-2025'
+                  error={fieldErrors.registrationCode}
+                />
+              </FormField>
+
+              <Button type='submit' className='w-full' loading={loading}>
+                Create account
+              </Button>
+            </form>
+
+            <p className='pt-4 text-center text-sm text-muted-foreground'>
+              Already have access?{' '}
+              <Link to='/login' className='font-semibold text-primary hover:text-primary/90 hover:underline'>
+                Sign in
+              </Link>
+            </p>
+          </Card>
         </div>
-      )}
-      <form onSubmit={onSubmit} className='space-y-3'>
-        <div className='grid grid-cols-2 gap-3'>
-          <div>
-            <label className='block text-sm mb-1 text-neutral-700 dark:text-neutral-300'>First Name</label>
-            <input
-              className='w-full rounded border border-neutral-300 bg-white px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900 dark:text-white'
-              type='text'
-              name='firstName'
-              value={formData.firstName}
-              onChange={handleChange}
-              required
-            />
-            {fieldErrors.firstName && <div className='text-xs text-red-600 mt-1'>{fieldErrors.firstName}</div>}
-          </div>
-          <div>
-            <label className='block text-sm mb-1 text-neutral-700 dark:text-neutral-300'>Last Name</label>
-            <input
-              className='w-full rounded border border-neutral-300 bg-white px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900 dark:text-white'
-              type='text'
-              name='lastName'
-              value={formData.lastName}
-              onChange={handleChange}
-              required
-            />
-            {fieldErrors.lastName && <div className='text-xs text-red-600 mt-1'>{fieldErrors.lastName}</div>}
-          </div>
-        </div>
-        <div>
-          <label className='block text-sm mb-1 text-neutral-700 dark:text-neutral-300'>Email</label>
-          <input
-            className='w-full rounded border border-neutral-300 bg-white px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900 dark:text-white'
-            type='email'
-            name='email'
-            value={formData.email}
-            onChange={handleChange}
-            required
-          />
-          {fieldErrors.email && <div className='text-xs text-red-600 mt-1'>{fieldErrors.email}</div>}
-        </div>
-        <div>
-          <label className='block text-sm mb-1 text-neutral-700 dark:text-neutral-300'>Company Name</label>
-          <input
-            className='w-full rounded border border-neutral-300 bg-white px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900 dark:text-white'
-            type='text'
-            name='companyName'
-            value={formData.companyName}
-            onChange={handleChange}
-            required
-          />
-          {fieldErrors.companyName && <div className='text-xs text-red-600 mt-1'>{fieldErrors.companyName}</div>}
-        </div>
-        <div>
-          <label className='block text-sm mb-1 text-neutral-700 dark:text-neutral-300'>Password</label>
-          <input
-            className='w-full rounded border border-neutral-300 bg-white px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900 dark:text-white'
-            type='password'
-            name='password'
-            value={formData.password}
-            onChange={handleChange}
-            required
-            minLength={8}
-          />
-          {fieldErrors.password && <div className='text-xs text-red-600 mt-1'>{fieldErrors.password}</div>}
-          <p className='text-xs text-neutral-500 dark:text-neutral-400 mt-1'>Minimum 8 characters</p>
-        </div>
-        <div>
-          <label className='block text-sm mb-1 text-neutral-700 dark:text-neutral-300'>Confirm Password</label>
-          <input
-            className='w-full rounded border border-neutral-300 bg-white px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900 dark:text-white'
-            type='password'
-            name='confirmPassword'
-            value={formData.confirmPassword}
-            onChange={handleChange}
-            required
-            minLength={8}
-          />
-        </div>
-        <div>
-          <label className='block text-sm mb-1 text-neutral-700 dark:text-neutral-300'>Registration Code</label>
-          <input
-            className='w-full rounded border border-neutral-300 bg-white px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900 dark:text-white'
-            type='text'
-            name='registrationCode'
-            value={formData.registrationCode}
-            onChange={handleChange}
-            required
-            placeholder='Enter your registration code'
-          />
-          {fieldErrors.registrationCode && (
-            <div className='text-xs text-red-600 mt-1'>{fieldErrors.registrationCode}</div>
-          )}
-          <p className='text-xs text-neutral-500 dark:text-neutral-400 mt-1'>
-            Contact your administrator for a registration code
-          </p>
-        </div>
-        <button
-          disabled={loading}
-          className='w-full inline-flex items-center justify-center rounded bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60'
-        >
-          {loading ? 'Creating account…' : 'Create Account'}
-        </button>
-      </form>
-      <div className='mt-4 text-center text-sm text-neutral-600 dark:text-neutral-400'>
-        Already have an account?{' '}
-        <Link to='/login' className='text-blue-600 hover:underline dark:text-blue-400'>
-          Sign in
-        </Link>
       </div>
     </div>
   );

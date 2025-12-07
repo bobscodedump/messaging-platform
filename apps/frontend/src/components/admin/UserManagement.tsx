@@ -40,7 +40,7 @@ export default function UserManagement() {
   if (!isAdmin) {
     return (
       <Card title='Access Denied'>
-        <p className='text-neutral-600 dark:text-neutral-400'>You don't have permission to access user management.</p>
+        <p className='text-slate-600'>You don't have permission to access user management.</p>
       </Card>
     );
   }
@@ -66,12 +66,8 @@ export default function UserManagement() {
       setSelectedUserIds([]);
       setShowDeactivateConfirm(false);
     } catch (error: any) {
-      // Ideally use a toast here, but for now we'll rely on the mutation error state if we were displaying it,
-      // or just alert as a fallback since we haven't implemented a global toast yet.
-      // But wait, ConfirmationModal doesn't show error.
-      // Let's just log it for now as the mutation hook usually handles error states if we use them.
       console.error('Failed to deactivate users', error);
-      alert(error.message || 'Failed to deactivate users'); // Keep alert for error for now
+      alert(error.message || 'Failed to deactivate users');
     }
   };
 
@@ -102,7 +98,7 @@ export default function UserManagement() {
                 setSearch(e.target.value);
                 setPage(1);
               }}
-              className='flex-1 min-w-[200px] rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800'
+              className='flex-1 min-w-[200px] rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-blue-500 focus:ring-blue-500'
             />
             <select
               value={roleFilter}
@@ -110,7 +106,7 @@ export default function UserManagement() {
                 setRoleFilter(e.target.value);
                 setPage(1);
               }}
-              className='rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800'
+              className='rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-blue-500 focus:ring-blue-500'
             >
               <option value=''>All Roles</option>
               <option value='PLATFORM_ADMIN'>Platform Admin</option>
@@ -124,7 +120,7 @@ export default function UserManagement() {
                 setStatusFilter(e.target.value);
                 setPage(1);
               }}
-              className='rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-800'
+              className='rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-blue-500 focus:ring-blue-500'
             >
               <option value=''>All Status</option>
               <option value='active'>Active</option>
@@ -136,10 +132,8 @@ export default function UserManagement() {
           </div>
 
           {selectedUserIds.length > 0 && (
-            <div className='flex items-center gap-3 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 dark:border-blue-800 dark:bg-blue-900/20'>
-              <span className='text-sm text-blue-700 dark:text-blue-300'>
-                {selectedUserIds.length} user(s) selected
-              </span>
+            <div className='flex items-center gap-3 rounded-md border border-blue-200 bg-blue-50 px-3 py-2'>
+              <span className='text-sm text-blue-700'>{selectedUserIds.length} user(s) selected</span>
               <Button
                 onClick={handleBulkDeactivateClick}
                 size='sm'
@@ -148,10 +142,7 @@ export default function UserManagement() {
               >
                 {bulkDeactivateMutation.isPending ? 'Deactivating...' : 'Deactivate Selected'}
               </Button>
-              <button
-                onClick={() => setSelectedUserIds([])}
-                className='text-sm text-blue-700 hover:underline dark:text-blue-300'
-              >
+              <button onClick={() => setSelectedUserIds([])} className='text-sm text-blue-700 hover:underline'>
                 Clear
               </button>
             </div>
@@ -160,7 +151,7 @@ export default function UserManagement() {
 
         {/* Users Table */}
         {isLoading ? (
-          <div className='py-12 text-center text-neutral-500'>Loading users...</div>
+          <div className='py-12 text-center text-slate-500'>Loading users...</div>
         ) : error ? (
           <div className='rounded-md border border-red-300 bg-red-50 p-4 text-red-700'>Error: {error.message}</div>
         ) : data && data.users.length > 0 ? (
@@ -175,8 +166,8 @@ export default function UserManagement() {
             />
 
             {/* Pagination */}
-            <div className='mt-4 flex items-center justify-between border-t border-neutral-200 pt-4 dark:border-neutral-800'>
-              <div className='text-sm text-neutral-600 dark:text-neutral-400'>
+            <div className='mt-4 flex items-center justify-between border-t border-slate-200 pt-4'>
+              <div className='text-sm text-slate-600'>
                 Showing {(page - 1) * limit + 1} to {Math.min(page * limit, data.total)} of {data.total} users
               </div>
               <div className='flex items-center gap-2'>
@@ -186,7 +177,7 @@ export default function UserManagement() {
                     setLimit(Number(e.target.value));
                     setPage(1);
                   }}
-                  className='rounded-md border border-neutral-300 bg-white px-2 py-1 text-sm dark:border-neutral-700 dark:bg-neutral-800'
+                  className='rounded-md border border-slate-300 bg-white px-2 py-1 text-sm text-slate-900 focus:border-blue-500 focus:ring-blue-500'
                 >
                   <option value='10'>10 per page</option>
                   <option value='20'>20 per page</option>
@@ -201,7 +192,7 @@ export default function UserManagement() {
                 >
                   Previous
                 </Button>
-                <span className='text-sm text-neutral-600 dark:text-neutral-400'>
+                <span className='text-sm text-slate-600'>
                   Page {page} of {data.totalPages}
                 </span>
                 <Button
@@ -216,7 +207,7 @@ export default function UserManagement() {
             </div>
           </>
         ) : (
-          <div className='py-12 text-center text-neutral-500'>
+          <div className='py-12 text-center text-slate-500'>
             No users found. {search || roleFilter || statusFilter ? 'Try adjusting your filters.' : ''}
           </div>
         )}
@@ -241,7 +232,7 @@ export default function UserManagement() {
       {showEditModal && selectedUser && (
         <UserEditModal
           isOpen={showEditModal}
-          user={selectedUser}
+          userId={selectedUser.id}
           onClose={() => {
             setShowEditModal(false);
             setSelectedUser(null);

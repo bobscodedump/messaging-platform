@@ -1,4 +1,4 @@
-import { ReactNode, useEffect } from 'react';
+import { ReactNode, useEffect, useId } from 'react';
 
 interface ModalProps {
   isOpen: boolean;
@@ -22,6 +22,8 @@ export default function Modal({ isOpen, onClose, title, children, size = 'md' }:
 
   if (!isOpen) return null;
 
+  const headingId = useId();
+
   const sizeClasses = {
     sm: 'max-w-md',
     md: 'max-w-lg',
@@ -30,20 +32,26 @@ export default function Modal({ isOpen, onClose, title, children, size = 'md' }:
   };
 
   return (
-    <div className='fixed inset-0 z-50 flex items-center justify-center p-4'>
-      {/* Backdrop */}
-      <div className='absolute inset-0 bg-black/50' onClick={onClose} aria-hidden='true' />
-
-      {/* Modal */}
+    <div className='fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6'>
       <div
-        className={`relative w-full ${sizeClasses[size]} max-h-[90vh] overflow-y-auto rounded-lg bg-white shadow-xl dark:bg-neutral-900`}
+        className='absolute inset-0 bg-slate-950/55 backdrop-blur-sm transition-opacity'
+        onClick={onClose}
+        aria-hidden='true'
+      />
+
+      <div
+        role='dialog'
+        aria-modal='true'
+        aria-labelledby={headingId}
+        className={`relative w-full ${sizeClasses[size]} max-h-[90vh] overflow-y-auto rounded-2xl border border-white/25 bg-white/95 text-foreground shadow-[0_45px_130px_rgba(15,23,42,0.22)] ring-1 ring-black/5`}
       >
-        {/* Header */}
-        <div className='flex items-center justify-between border-b border-neutral-200 px-6 py-4 dark:border-neutral-800'>
-          <h2 className='text-lg font-semibold text-neutral-900 dark:text-neutral-100'>{title}</h2>
+        <div className='flex items-center justify-between border-b border-white/40 px-6 py-5'>
+          <h2 id={headingId} className='text-lg font-semibold text-foreground'>
+            {title}
+          </h2>
           <button
             onClick={onClose}
-            className='text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300'
+            className='inline-flex h-9 w-9 items-center justify-center rounded-full border border-transparent bg-muted/40 text-muted-foreground transition hover:bg-muted/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-white'
             aria-label='Close'
           >
             <svg
@@ -60,8 +68,7 @@ export default function Modal({ isOpen, onClose, title, children, size = 'md' }:
           </button>
         </div>
 
-        {/* Content */}
-        <div className='px-6 py-4'>{children}</div>
+        <div className='px-6 py-5'>{children}</div>
       </div>
     </div>
   );

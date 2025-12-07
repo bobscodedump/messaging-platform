@@ -1,26 +1,31 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { useAuth } from '../lib/auth/auth-context';
 import { useCompany, useUpdateCompany } from '../lib/companies/hooks';
+import Button from '../components/common/ui/Button';
+import Input from '../components/common/ui/Input';
+import Label from '../components/common/ui/Label';
+import Select from '../components/common/ui/Select';
+import Card from '../components/common/layout/Card';
 
 // Common timezones for the dropdown
 const TIMEZONES = [
-  'UTC',
-  'America/New_York',
-  'America/Chicago',
-  'America/Denver',
-  'America/Los_Angeles',
-  'America/Sao_Paulo',
-  'Europe/London',
-  'Europe/Paris',
-  'Europe/Berlin',
-  'Asia/Dubai',
-  'Asia/Kolkata',
-  'Asia/Singapore',
-  'Asia/Hong_Kong',
-  'Asia/Tokyo',
-  'Asia/Seoul',
-  'Australia/Sydney',
-  'Pacific/Auckland',
+  { value: 'UTC', label: 'UTC' },
+  { value: 'America/New_York', label: 'America/New_York' },
+  { value: 'America/Chicago', label: 'America/Chicago' },
+  { value: 'America/Denver', label: 'America/Denver' },
+  { value: 'America/Los_Angeles', label: 'America/Los_Angeles' },
+  { value: 'America/Sao_Paulo', label: 'America/Sao_Paulo' },
+  { value: 'Europe/London', label: 'Europe/London' },
+  { value: 'Europe/Paris', label: 'Europe/Paris' },
+  { value: 'Europe/Berlin', label: 'Europe/Berlin' },
+  { value: 'Asia/Dubai', label: 'Asia/Dubai' },
+  { value: 'Asia/Kolkata', label: 'Asia/Kolkata' },
+  { value: 'Asia/Singapore', label: 'Asia/Singapore' },
+  { value: 'Asia/Hong_Kong', label: 'Asia/Hong_Kong' },
+  { value: 'Asia/Tokyo', label: 'Asia/Tokyo' },
+  { value: 'Asia/Seoul', label: 'Asia/Seoul' },
+  { value: 'Australia/Sydney', label: 'Australia/Sydney' },
+  { value: 'Pacific/Auckland', label: 'Pacific/Auckland' },
 ];
 
 export default function SettingsPage() {
@@ -90,7 +95,7 @@ export default function SettingsPage() {
   if (!isAdmin) {
     return (
       <div className='mx-auto max-w-5xl p-4 sm:p-6'>
-        <div className='rounded-lg border border-yellow-500/40 bg-yellow-500/10 p-4 text-yellow-200'>
+        <div className='rounded-lg border border-yellow-200 bg-yellow-50 p-4 text-yellow-800'>
           <h2 className='font-medium'>Access Denied</h2>
           <p className='text-sm'>Only company administrators can access settings.</p>
         </div>
@@ -99,18 +104,18 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className='mx-auto max-w-5xl p-4 sm:p-6 space-y-8'>
+    <div className='mx-auto max-w-5xl space-y-8 p-4 sm:p-6'>
       <div>
-        <h1 className='text-2xl font-semibold text-neutral-900 dark:text-white'>Company Settings</h1>
-        <p className='text-sm text-neutral-600 dark:text-neutral-400'>
+        <h1 className='text-2xl font-semibold text-foreground'>Company Settings</h1>
+        <p className='text-sm text-muted-foreground'>
           Configure your company's WhatsApp integration, messaging behavior, and calendar settings.
         </p>
       </div>
 
-      {companyLoading && <div className='text-sm text-neutral-500 dark:text-neutral-400'>Loading settings…</div>}
+      {companyLoading && <div className='text-sm text-muted-foreground'>Loading settings…</div>}
 
       {companyError && (
-        <div className='rounded-lg border border-red-500/40 bg-red-500/10 p-4 text-red-200'>
+        <div className='rounded-lg border border-destructive/20 bg-destructive/10 p-4 text-destructive'>
           {(companyErrorObj as Error)?.message || 'Failed to load company settings'}
         </div>
       )}
@@ -118,185 +123,158 @@ export default function SettingsPage() {
       {!companyLoading && !companyError && (
         <form onSubmit={handleSubmit} className='space-y-8'>
           {/* Company Info Section */}
-          <section className='rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900/60 p-6 shadow-sm'>
-            <header className='mb-4'>
-              <h2 className='text-lg font-medium text-neutral-900 dark:text-white'>Company Information</h2>
-              <p className='text-xs text-neutral-500'>Basic company details</p>
-            </header>
-            <div className='grid gap-4 sm:grid-cols-2'>
-              <label className='flex flex-col gap-1 sm:col-span-2'>
-                <span className='text-xs uppercase tracking-wide text-neutral-500 dark:text-neutral-400'>
-                  Company Name
-                </span>
-                <input
+          <Card title='Company Information' description='Basic company details'>
+            <div className='grid gap-6 sm:grid-cols-2'>
+              <div className='sm:col-span-2'>
+                <Label htmlFor='companyName'>Company Name</Label>
+                <Input
+                  id='companyName'
                   type='text'
                   value={formData.name}
                   onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
-                  className='rounded border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-950 px-3 py-2 text-sm text-neutral-900 dark:text-white focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40'
                   required
                   disabled={updateCompanyMutation.isPending}
+                  className='w-full'
                 />
-              </label>
-              <div className='sm:col-span-2 text-xs text-neutral-500'>
+              </div>
+              <div className='text-sm text-muted-foreground sm:col-span-2'>
                 Company ID:{' '}
-                <code className='bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 rounded'>{company?.id ?? '—'}</code>
+                <code className='rounded border border-border bg-muted px-2 py-0.5 text-foreground'>
+                  {company?.id ?? '—'}
+                </code>
               </div>
             </div>
-          </section>
+          </Card>
 
           {/* WhatsApp Configuration Section */}
-          <section className='rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900/60 p-6 shadow-sm'>
-            <header className='mb-4'>
-              <h2 className='text-lg font-medium text-neutral-900 dark:text-white'>WhatsApp Configuration</h2>
-              <p className='text-xs text-neutral-500'>
-                Configure your WaSender API integration for sending WhatsApp messages
-              </p>
-            </header>
-            <div className='grid gap-4 sm:grid-cols-2'>
-              <label className='flex flex-col gap-1'>
-                <span className='text-xs uppercase tracking-wide text-neutral-500 dark:text-neutral-400'>
-                  WhatsApp Phone Number
-                </span>
-                <input
+          <Card
+            title='WhatsApp Configuration'
+            description='Configure your WaSender API integration for sending WhatsApp messages'
+          >
+            <div className='grid gap-6 sm:grid-cols-2'>
+              <div>
+                <Label htmlFor='whatsappPhone'>WhatsApp Phone Number</Label>
+                <Input
+                  id='whatsappPhone'
                   type='text'
                   value={formData.whatsappPhone}
                   onChange={(e) => setFormData((prev) => ({ ...prev, whatsappPhone: e.target.value }))}
-                  className='rounded border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-950 px-3 py-2 text-sm text-neutral-900 dark:text-white focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40'
                   placeholder='+65 1234 5678'
                   disabled={updateCompanyMutation.isPending}
+                  className='w-full'
                 />
-                <span className='text-xs text-neutral-400'>The phone number connected to your WhatsApp Business</span>
-              </label>
-              <label className='flex flex-col gap-1'>
-                <span className='text-xs uppercase tracking-wide text-neutral-500 dark:text-neutral-400'>
-                  WaSender API Key
-                </span>
+                <p className='mt-1 text-xs text-muted-foreground'>
+                  The phone number connected to your WhatsApp Business
+                </p>
+              </div>
+              <div>
+                <Label htmlFor='whatsappApiKey'>WaSender API Key</Label>
                 <div className='relative'>
-                  <input
+                  <Input
+                    id='whatsappApiKey'
                     type={showApiKey ? 'text' : 'password'}
                     value={formData.whatsappApiKey}
                     onChange={(e) => setFormData((prev) => ({ ...prev, whatsappApiKey: e.target.value }))}
-                    className='w-full rounded border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-950 px-3 py-2 pr-16 text-sm text-neutral-900 dark:text-white focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40'
                     placeholder='Your API key'
                     disabled={updateCompanyMutation.isPending}
+                    className='w-full pr-16'
                   />
                   <button
                     type='button'
                     onClick={() => setShowApiKey(!showApiKey)}
-                    className='absolute right-2 top-1/2 -translate-y-1/2 text-xs text-indigo-500 hover:text-indigo-400'
+                    className='absolute right-2 top-1/2 -translate-y-1/2 px-2 text-xs font-medium text-primary hover:text-primary/80'
                   >
                     {showApiKey ? 'Hide' : 'Show'}
                   </button>
                 </div>
-                <span className='text-xs text-neutral-400'>Get this from your WaSender dashboard</span>
-              </label>
-              <label className='flex flex-col gap-1 sm:col-span-2'>
-                <span className='text-xs uppercase tracking-wide text-neutral-500 dark:text-neutral-400'>
-                  WhatsApp API URL
-                </span>
-                <input
+                <p className='mt-1 text-xs text-muted-foreground'>Get this from your WaSender dashboard</p>
+              </div>
+              <div className='sm:col-span-2'>
+                <Label htmlFor='whatsappApiUrl'>WhatsApp API URL</Label>
+                <Input
+                  id='whatsappApiUrl'
                   type='url'
                   value={formData.whatsappApiUrl}
                   onChange={(e) => setFormData((prev) => ({ ...prev, whatsappApiUrl: e.target.value }))}
-                  className='rounded border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-950 px-3 py-2 text-sm text-neutral-900 dark:text-white focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40'
                   placeholder='https://wasenderapi.com/api (default)'
                   disabled={updateCompanyMutation.isPending}
+                  className='w-full'
                 />
-                <span className='text-xs text-neutral-400'>Leave blank to use default WaSender API URL</span>
-              </label>
+                <p className='mt-1 text-xs text-muted-foreground'>Leave blank to use default WaSender API URL</p>
+              </div>
             </div>
-          </section>
+          </Card>
 
           {/* Messaging Settings Section */}
-          <section className='rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900/60 p-6 shadow-sm'>
-            <header className='mb-4'>
-              <h2 className='text-lg font-medium text-neutral-900 dark:text-white'>Messaging Settings</h2>
-              <p className='text-xs text-neutral-500'>Configure message sending behavior</p>
-            </header>
-            <div className='grid gap-4 sm:grid-cols-2'>
-              <label className='flex flex-col gap-1'>
-                <span className='text-xs uppercase tracking-wide text-neutral-500 dark:text-neutral-400'>
-                  Message Send Delay (ms)
-                </span>
-                <input
+          <Card title='Messaging Settings' description='Configure message sending behavior'>
+            <div className='grid gap-6 sm:grid-cols-2'>
+              <div>
+                <Label htmlFor='messageSendDelayMs'>Message Send Delay (ms)</Label>
+                <Input
+                  id='messageSendDelayMs'
                   type='number'
                   value={formData.messageSendDelayMs}
                   onChange={(e) =>
                     setFormData((prev) => ({ ...prev, messageSendDelayMs: parseInt(e.target.value) || 0 }))
                   }
-                  className='rounded border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-950 px-3 py-2 text-sm text-neutral-900 dark:text-white focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40'
                   min='0'
                   max='60000'
                   step='100'
                   disabled={updateCompanyMutation.isPending}
+                  className='w-full'
                 />
-                <span className='text-xs text-neutral-400'>
+                <p className='mt-1 text-xs text-muted-foreground'>
                   Delay between sending messages to prevent rate limiting. Default: 5000ms (5 seconds)
-                </span>
-              </label>
-              <label className='flex flex-col gap-1'>
-                <span className='text-xs uppercase tracking-wide text-neutral-500 dark:text-neutral-400'>Timezone</span>
-                <select
+                </p>
+              </div>
+              <div>
+                <Label htmlFor='timezone'>Timezone</Label>
+                <Select
+                  id='timezone'
                   value={formData.timezone}
                   onChange={(e) => setFormData((prev) => ({ ...prev, timezone: e.target.value }))}
-                  className='rounded border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-950 px-3 py-2 text-sm text-neutral-900 dark:text-white focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40'
+                  options={TIMEZONES}
                   disabled={updateCompanyMutation.isPending}
-                >
-                  {TIMEZONES.map((tz) => (
-                    <option key={tz} value={tz}>
-                      {tz}
-                    </option>
-                  ))}
-                </select>
-                <span className='text-xs text-neutral-400'>Used for scheduling messages and displaying times</span>
-              </label>
+                  className='w-full'
+                />
+                <p className='mt-1 text-xs text-muted-foreground'>Used for scheduling messages and displaying times</p>
+              </div>
             </div>
-          </section>
+          </Card>
 
           {/* Calendar Integration Section */}
-          <section className='rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900/60 p-6 shadow-sm'>
-            <header className='mb-4'>
-              <h2 className='text-lg font-medium text-neutral-900 dark:text-white'>Calendar Integration</h2>
-              <p className='text-xs text-neutral-500'>Connect your Google Calendar for appointment reminders</p>
-            </header>
-            <div className='grid gap-4'>
-              <label className='flex flex-col gap-1'>
-                <span className='text-xs uppercase tracking-wide text-neutral-500 dark:text-neutral-400'>
-                  Google Calendar ID
-                </span>
-                <input
+          <Card title='Calendar Integration' description='Connect your Google Calendar for appointment reminders'>
+            <div className='grid gap-6'>
+              <div>
+                <Label htmlFor='googleCalendarId'>Google Calendar ID</Label>
+                <Input
+                  id='googleCalendarId'
                   type='text'
                   value={formData.googleCalendarId}
                   onChange={(e) => setFormData((prev) => ({ ...prev, googleCalendarId: e.target.value }))}
-                  className='rounded border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-950 px-3 py-2 text-sm text-neutral-900 dark:text-white focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40'
                   placeholder='your-calendar-id@group.calendar.google.com'
                   disabled={updateCompanyMutation.isPending}
+                  className='w-full'
                 />
-                <span className='text-xs text-neutral-400'>
+                <p className='mt-1 text-xs text-muted-foreground'>
                   Find this in Google Calendar → Settings → Calendar ID. Used for n8n appointment reminder workflows.
-                </span>
-              </label>
+                </p>
+              </div>
             </div>
-          </section>
+          </Card>
 
           {/* Submit Section */}
-          <div className='flex items-center justify-between'>
+          <div className='flex items-center justify-between border-t border-border pt-4'>
             <div>
               {feedback && (
-                <p
-                  className={`text-sm ${feedback.type === 'error' ? 'text-red-600 dark:text-red-300' : 'text-emerald-600 dark:text-emerald-300'}`}
-                >
+                <p className={`text-sm ${feedback.type === 'error' ? 'text-destructive' : 'text-success'}`}>
                   {feedback.message}
                 </p>
               )}
             </div>
-            <button
-              type='submit'
-              className='rounded bg-indigo-500 px-6 py-2 text-sm font-medium text-white hover:bg-indigo-400 disabled:cursor-not-allowed disabled:opacity-60'
-              disabled={updateCompanyMutation.isPending}
-            >
-              {updateCompanyMutation.isPending ? 'Saving…' : 'Save All Settings'}
-            </button>
+            <Button type='submit' loading={updateCompanyMutation.isPending}>
+              Save All Settings
+            </Button>
           </div>
         </form>
       )}

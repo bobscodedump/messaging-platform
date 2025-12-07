@@ -65,9 +65,9 @@ export default function TemplateModal({ templateId, onClose }: TemplateModalProp
           }
         >
           {isLoading ? (
-            <div className='py-6 text-center text-sm text-neutral-500'>Loading…</div>
+            <div className='py-6 text-center text-sm text-slate-500'>Loading…</div>
           ) : error ? (
-            <div className='rounded-md border border-red-300 bg-red-50 p-3 text-red-700'>{error.message}</div>
+            <div className='rounded-md border border-red-200 bg-red-50 p-3 text-red-700'>{error.message}</div>
           ) : form ? (
             <div className='space-y-4'>
               <FormField label='Name' error={errors.name}>
@@ -76,9 +76,7 @@ export default function TemplateModal({ templateId, onClose }: TemplateModalProp
               <FormField label='Content' error={errors.content} helpText='Use {{name}} for variables.'>
                 <Textarea rows={8} value={form.content} onChange={(e) => onChange('content', e.target.value)} />
               </FormField>
-              <div className='text-sm text-neutral-600 dark:text-neutral-400'>
-                Detected variables: {detected.join(', ') || 'none'}
-              </div>
+              <div className='text-sm text-slate-600'>Detected variables: {detected.join(', ') || 'none'}</div>
             </div>
           ) : null}
         </Card>

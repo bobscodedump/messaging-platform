@@ -34,23 +34,23 @@ export default function ContactList({
 
   return (
     <Box className={className}>
-      <Box className='rounded-xl border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900'>
+      <Box className='bg-card'>
         {loading ? (
           <Box className='flex items-center justify-center p-10'>
             <CircularProgress size={24} />
           </Box>
         ) : contacts.length === 0 ? (
-          <Box className='p-6 text-center text-sm text-neutral-500'>No contacts found.</Box>
+          <Box className='p-6 text-center text-sm text-muted-foreground'>No contacts found.</Box>
         ) : (
           <List disablePadding>
             {contacts.map((c, idx) => (
-              <>
-                <ListItemButton key={c.id} onClick={() => onSelect(c)} className='flex items-center'>
+              <Box key={c.id}>
+                <ListItemButton onClick={() => onSelect(c)} className='flex items-center hover:bg-muted/50'>
                   <div className='flex w-full items-center justify-between gap-4'>
                     <ListItemText
-                      primary={<span className='text-neutral-900 dark:text-neutral-100'>{fullName(c)}</span>}
+                      primary={<span className='text-foreground font-medium'>{fullName(c)}</span>}
                       secondary={
-                        <span className='text-neutral-600 dark:text-neutral-400'>
+                        <span className='text-muted-foreground'>
                           {[c.phoneNumber, c.email].filter(Boolean).join(' • ')}
                         </span>
                       }
@@ -62,7 +62,7 @@ export default function ContactList({
                           e.stopPropagation();
                           onSelect(c);
                         }}
-                        className='inline-flex items-center rounded-md bg-white px-2.5 py-1 text-xs font-medium text-indigo-700 shadow-sm ring-1 ring-inset ring-neutral-200 hover:bg-neutral-50 dark:bg-white/90 dark:text-indigo-600'
+                        className='inline-flex items-center rounded-md bg-card px-2.5 py-1.5 text-xs font-medium text-primary shadow-sm ring-1 ring-inset ring-border hover:bg-muted'
                       >
                         View data
                       </button>
@@ -73,7 +73,7 @@ export default function ContactList({
                             e.stopPropagation();
                             onDelete(c);
                           }}
-                          className='inline-flex items-center rounded-md bg-white px-2.5 py-1 text-xs font-medium text-red-700 shadow-sm ring-1 ring-inset ring-neutral-200 hover:bg-neutral-50 dark:bg-white/90 dark:text-red-600'
+                          className='inline-flex items-center rounded-md bg-card px-2.5 py-1.5 text-xs font-medium text-destructive shadow-sm ring-1 ring-inset ring-border hover:bg-destructive/10'
                         >
                           Delete
                         </button>
@@ -81,14 +81,14 @@ export default function ContactList({
                     </Stack>
                   </div>
                 </ListItemButton>
-                {idx < contacts.length - 1 ? <Divider component='li' /> : null}
-              </>
+                {idx < contacts.length - 1 ? <Divider component='li' className='border-border' /> : null}
+              </Box>
             ))}
           </List>
         )}
       </Box>
 
-      <Box className='flex justify-center py-4'>
+      <Box className='flex justify-center py-4 border-t border-border'>
         <Pagination count={pageCount} page={page} onChange={(_, p) => onPageChange(p)} color='primary' size='small' />
       </Box>
     </Box>

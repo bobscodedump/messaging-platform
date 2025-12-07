@@ -72,16 +72,16 @@ export function GroupsDashboard() {
       {/* Header */}
       <div className='flex items-end justify-between gap-4'>
         <div>
-          <h1 className='text-xl font-semibold text-neutral-900 dark:text-neutral-100'>Groups</h1>
-          <p className='text-sm text-neutral-600 dark:text-neutral-400'>Organize contacts into meaningful segments.</p>
+          <h1 className='text-xl font-semibold text-foreground'>Groups</h1>
+          <p className='text-sm text-muted-foreground'>Organize contacts into meaningful segments.</p>
         </div>
         {/* Quick stats */}
         <div className='inline-flex gap-2'>
-          <span className='rounded-md border border-neutral-200 px-3 py-1 text-sm dark:border-neutral-800'>
+          <span className='rounded-md border border-border bg-card px-3 py-1 text-sm text-card-foreground'>
             {totalGroups} group{totalGroups === 1 ? '' : 's'}
           </span>
           {activeGroup ? (
-            <span className='rounded-md border border-neutral-200 px-3 py-1 text-sm dark:border-neutral-800'>
+            <span className='rounded-md border border-border bg-card px-3 py-1 text-sm text-card-foreground'>
               {totalMembersSelected} member{totalMembersSelected === 1 ? '' : 's'}
             </span>
           ) : null}
@@ -91,11 +91,10 @@ export function GroupsDashboard() {
       {/* Layout */}
       <div className='grid grid-cols-1 gap-6 md:grid-cols-3'>
         {/* Left column: creation + selected group info */}
-        <div className='md:col-span-1'>
+        <div className='md:col-span-1 space-y-6'>
           <GroupCreateForm onCreate={handleCreate} loading={createGroupMutation.isPending} />
 
           <Card
-            className='mt-6'
             title={activeGroup ? activeGroup.name : 'No group selected'}
             description={activeGroup ? activeGroup.description || '—' : 'Select a group to manage its members.'}
             footer={
@@ -109,9 +108,9 @@ export function GroupsDashboard() {
             }
           >
             {activeGroup ? (
-              <div className='text-sm text-neutral-600 dark:text-neutral-400'>Members: {totalMembersSelected}</div>
+              <div className='text-sm text-muted-foreground'>Members: {totalMembersSelected}</div>
             ) : (
-              <div className='text-sm text-neutral-600 dark:text-neutral-400'>Choose a group from the list.</div>
+              <div className='text-sm text-muted-foreground'>Choose a group from the list.</div>
             )}
           </Card>
         </div>

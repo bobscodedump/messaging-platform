@@ -9,13 +9,12 @@ import 'react-phone-number-input/style.css';
 import PhoneInput, { isValidPhoneNumber } from 'react-phone-number-input';
 import type { E164Number } from 'libphonenumber-js/core';
 import '../../styles/phone-input.css';
+import { useAuth } from '../../lib/auth/auth-context';
 
 export type ContactCreateFormProps = {
   onCreate: (data: CreateContactDto) => Promise<void> | void;
   loading?: boolean;
 };
-
-import { useAuth } from '../../lib/auth/auth-context';
 
 export function ContactCreateForm({ onCreate, loading }: ContactCreateFormProps) {
   const { user } = useAuth();
@@ -59,13 +58,13 @@ export function ContactCreateForm({ onCreate, loading }: ContactCreateFormProps)
     setEmail('');
     setAddress('');
     setNote('');
+    setTouched({});
   };
 
   return (
     <Card title='Create Contact' description='Add a new contact to your address book.'>
-      <form onSubmit={handleSubmit} className='space-y-4'>
-        {/* companyId is inferred from the authenticated user */}
-        <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+      <form onSubmit={handleSubmit} className='space-y-5'>
+        <div className='grid grid-cols-1 gap-5 md:grid-cols-2'>
           <FormField
             label='First Name'
             htmlFor='firstName'
@@ -97,7 +96,7 @@ export function ContactCreateForm({ onCreate, loading }: ContactCreateFormProps)
           </FormField>
         </div>
 
-        <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+        <div className='grid grid-cols-1 gap-5 md:grid-cols-2'>
           <FormField
             label='Phone Number'
             htmlFor='phoneNumber'
@@ -146,7 +145,7 @@ export function ContactCreateForm({ onCreate, loading }: ContactCreateFormProps)
           />
         </FormField>
 
-        <div className='flex justify-end'>
+        <div className='flex justify-end pt-2'>
           <Button type='submit' loading={loading} disabled={!isValid}>
             Create Contact
           </Button>

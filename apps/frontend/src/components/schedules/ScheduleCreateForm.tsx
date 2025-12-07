@@ -4,6 +4,8 @@ import Card from '../common/layout/Card';
 import FormField from '../common/ui/FormField';
 import Input from '../common/ui/Input';
 import Button from '../common/ui/Button';
+import { Badge } from '../common/ui/Badge';
+import { Alert } from '../common/ui/Alert';
 import type { ScheduleType } from 'shared-types';
 import { useContacts } from '../../lib/contacts/hooks';
 import { useGroups } from '../../lib/groups/hooks';
@@ -92,6 +94,15 @@ export default function ScheduleCreateForm() {
   }
 
   const recipientCount = selectedContacts.size + selectedGroups.size; // rough count preview
+  const messageOptions: Array<{ label: string; value: 'content' | 'template' }> = [
+    { label: 'Direct Content', value: 'content' },
+    { label: 'Use Template', value: 'template' },
+  ];
+  const fieldControlClass =
+    'w-full rounded-md border border-input bg-background/90 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2';
+  const selectClass = `${fieldControlClass} appearance-none pr-10`;
+  const textareaClass = `${fieldControlClass} min-h-[140px] resize-none`; // fixed height prevents overlap
+  const checkboxClass = 'h-4 w-4 rounded border-border text-primary focus:ring-2 focus:ring-ring focus:ring-offset-0';
 
   async function onSubmit() {
     // Calculate adjusted scheduledAt by subtracting reminderDaysBefore
@@ -147,34 +158,69 @@ export default function ScheduleCreateForm() {
 
   return (
     <div className='space-y-6'>
-      <div className='flex items-center justify-between'>
-        <h1 className='text-xl font-semibold text-neutral-900 dark:text-neutral-100'>Create Schedule</h1>
-        <div className='text-sm text-neutral-500'>Recipients: {recipientCount}</div>
+      <div className='flex flex-wrap items-center justify-between gap-4'>
+        <div>
+          <p className='text-xs uppercase tracking-wide text-muted-foreground'>Schedule Builder</p>
+          <h1 className='text-2xl font-semibold text-foreground'>Create Schedule</h1>
+        </div>
+        <Badge variant='info' size='md' className='shadow-sm'>
+          {recipientCount} recipient{recipientCount === 1 ? '' : 's'} selected
+        </Badge>
       </div>
 
       {/* Recipients */}
-      <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-        <Card title='Contacts'>
-          <ul className='max-h-80 overflow-y-auto divide-y divide-neutral-200 dark:divide-neutral-800'>
+      <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
+        <Card
+          title={
+            <div className='flex items-center justify-between gap-2'>
+              <span>Contacts</span>
+              <Badge variant='muted' size='sm'>
+                {selectedContacts.size} selected
+              </Badge>
+            </div>
+          }
+          description='Individual recipients pulled from your directory.'
+        >
+          <ul className='max-h-80 divide-y divide-border/60 overflow-y-auto rounded-xl border border-border/70 bg-background/70'>
             {contacts.map((c) => (
-              <li key={c.id} className='flex items-center gap-3 p-2'>
-                <input type='checkbox' checked={selectedContacts.has(c.id)} onChange={() => toggleContact(c.id)} />
+              <li key={c.id} className='flex items-center gap-3 p-3 transition-colors hover:bg-muted/50'>
+                <input
+                  type='checkbox'
+                  checked={selectedContacts.has(c.id)}
+                  onChange={() => toggleContact(c.id)}
+                  className={checkboxClass}
+                />
                 <div className='flex-1'>
-                  <div className='font-medium'>{c.firstName + ' ' + c.lastName}</div>
-                  <div className='text-xs text-neutral-500'>{c.phoneNumber}</div>
+                  <div className='font-medium text-foreground'>{c.firstName + ' ' + c.lastName}</div>
+                  <div className='text-xs text-muted-foreground'>{c.phoneNumber}</div>
                 </div>
               </li>
             ))}
           </ul>
         </Card>
-        <Card title='Groups'>
-          <ul className='max-h-80 overflow-y-auto divide-y divide-neutral-200 dark:divide-neutral-800'>
+        <Card
+          title={
+            <div className='flex items-center justify-between gap-2'>
+              <span>Groups</span>
+              <Badge variant='muted' size='sm'>
+                {selectedGroups.size} selected
+              </Badge>
+            </div>
+          }
+          description='Send to saved segments in bulk.'
+        >
+          <ul className='max-h-80 divide-y divide-border/60 overflow-y-auto rounded-xl border border-border/70 bg-background/70'>
             {groups.map((g) => (
-              <li key={g.id} className='flex items-center gap-3 p-2'>
-                <input type='checkbox' checked={selectedGroups.has(g.id)} onChange={() => toggleGroup(g.id)} />
+              <li key={g.id} className='flex items-center gap-3 p-3 transition-colors hover:bg-muted/50'>
+                <input
+                  type='checkbox'
+                  checked={selectedGroups.has(g.id)}
+                  onChange={() => toggleGroup(g.id)}
+                  className={checkboxClass}
+                />
                 <div className='flex-1'>
-                  <div className='font-medium'>{g.name}</div>
-                  <div className='text-xs text-neutral-500'>group</div>
+                  <div className='font-medium text-foreground'>{g.name}</div>
+                  <div className='text-xs text-muted-foreground'>group</div>
                 </div>
               </li>
             ))}
@@ -184,35 +230,26 @@ export default function ScheduleCreateForm() {
 
       {/* Message setup */}
       <Card title='Message' description='Use a direct message or pick a template with variable fallbacks.'>
-        <div className='flex gap-3 text-sm'>
-          <button
-            className={`px-3 py-1 rounded-md border ${
-              messageSource === 'content'
-                ? 'bg-indigo-600 text-white border-indigo-600'
-                : 'border-neutral-300 dark:border-neutral-700'
-            }`}
-            onClick={() => setMessageSource('content')}
-          >
-            Direct Content
-          </button>
-          <button
-            className={`px-3 py-1 rounded-md border ${
-              messageSource === 'template'
-                ? 'bg-indigo-600 text-white border-indigo-600'
-                : 'border-neutral-300 dark:border-neutral-700'
-            }`}
-            onClick={() => setMessageSource('template')}
-          >
-            Use Template
-          </button>
+        <div className='mb-4 inline-flex flex-wrap gap-2 rounded-full bg-muted/50 p-1 text-sm'>
+          {messageOptions.map((option) => (
+            <Button
+              key={option.value}
+              type='button'
+              size='sm'
+              variant={messageSource === option.value ? 'primary' : 'ghost'}
+              className={`rounded-full px-4 ${messageSource === option.value ? 'shadow-sm' : 'text-muted-foreground'}`}
+              onClick={() => setMessageSource(option.value)}
+            >
+              {option.label}
+            </Button>
+          ))}
         </div>
 
         {messageSource === 'content' ? (
           <FormField label='Content' htmlFor='content' helpText='What message should be sent?'>
             <textarea
               id='content'
-              className='w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100'
-              rows={5}
+              className={textareaClass}
               value={content}
               onChange={(e) => setContent(e.target.value)}
             />
@@ -220,11 +257,7 @@ export default function ScheduleCreateForm() {
         ) : (
           <div className='space-y-4'>
             <FormField label='Template'>
-              <select
-                className='w-full rounded-md border-neutral-300 dark:border-neutral-700 dark:bg-neutral-800'
-                value={templateId}
-                onChange={(e) => setTemplateId(e.target.value)}
-              >
+              <select className={selectClass} value={templateId} onChange={(e) => setTemplateId(e.target.value)}>
                 <option value=''>-- Select a template --</option>
                 {templates.map((t) => (
                   <option key={t.id} value={t.id}>
@@ -234,12 +267,10 @@ export default function ScheduleCreateForm() {
               </select>
             </FormField>
             {selectedTemplate ? (
-              <div className='p-3 border rounded-md bg-neutral-50 dark:bg-neutral-900 dark:border-neutral-800'>
-                <div className='text-sm text-neutral-700 dark:text-neutral-300 whitespace-pre-wrap'>
-                  {selectedTemplate.content}
-                </div>
+              <div className='rounded-xl border border-border bg-surface/30 p-4'>
+                <div className='text-sm text-foreground/80 whitespace-pre-wrap'>{selectedTemplate.content}</div>
                 <div className='mt-3 space-y-3'>
-                  <h4 className='font-medium'>Variable fallbacks</h4>
+                  <h4 className='text-sm font-semibold text-foreground'>Variable fallbacks</h4>
                   {selectedTemplate.variables.map((v) => (
                     <FormField key={v} label={v} htmlFor={`var-${v}`} helpText={`Value for ${v}`}>
                       <Input
@@ -271,7 +302,7 @@ export default function ScheduleCreateForm() {
           <FormField label='Type' htmlFor='scheduleType'>
             <select
               id='scheduleType'
-              className='w-full rounded-md border-neutral-300 dark:border-neutral-700 dark:bg-neutral-800'
+              className={selectClass}
               value={scheduleType}
               onChange={(e) => setScheduleType(e.target.value as ScheduleType)}
             >
@@ -321,7 +352,7 @@ export default function ScheduleCreateForm() {
           <FormField label='Day of week' htmlFor='weeklyDay'>
             <select
               id='weeklyDay'
-              className='w-full rounded-md border-neutral-300 dark:border-neutral-700 dark:bg-neutral-800'
+              className={selectClass}
               value={weeklyDay}
               onChange={(e) => setWeeklyDay(e.target.value)}
             >
@@ -373,15 +404,20 @@ export default function ScheduleCreateForm() {
         )}
 
         {scheduleType === 'BIRTHDAY' && (
-          <div className='space-y-2'>
-            <p className='text-sm text-neutral-600 dark:text-neutral-400'>Will send at each contact's next birthday.</p>
-            <p className='text-sm'>
-              Selected with birthdays: <span className='font-medium'>{selectedWithBirthdays.length}</span>
+          <Alert
+            variant={canUseBirthday ? 'info' : 'warning'}
+            title='Birthday automation'
+            description="Messages send automatically on each contact's next birthday."
+          >
+            <p className='text-sm text-foreground/80'>
+              Contacts with birthdays selected: <span className='font-semibold'>{selectedWithBirthdays.length}</span>
             </p>
             {!canUseBirthday ? (
-              <div className='text-sm text-red-600'>At least one selected contact must have a birthday.</div>
+              <p className='text-sm font-medium text-warning-foreground'>
+                Add at least one contact with a birth date to enable this schedule.
+              </p>
             ) : null}
-          </div>
+          </Alert>
         )}
       </Card>
 

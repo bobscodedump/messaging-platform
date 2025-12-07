@@ -3,9 +3,20 @@ import { useAuth } from '../../lib/auth/auth-context';
 import { useSchedules } from '../../lib/schedules/hooks';
 import Card from '../common/layout/Card';
 import ConfirmationModal from '../common/ui/ConfirmationModal';
+import { Badge } from '../common/ui/Badge';
+import { Alert } from '../common/ui/Alert';
 import type { ScheduledMessageSummary } from 'shared-types';
+import type { BadgeVariant } from '../common/ui/Badge';
 
 type Tab = 'active' | 'past';
+
+const scheduleTypeMeta: Record<ScheduledMessageSummary['scheduleType'], { label: string; variant: BadgeVariant }> = {
+  ONE_TIME: { label: 'One-time', variant: 'info' },
+  WEEKLY: { label: 'Weekly', variant: 'success' },
+  MONTHLY: { label: 'Monthly', variant: 'primary' },
+  YEARLY: { label: 'Yearly', variant: 'warning' },
+  BIRTHDAY: { label: 'Birthday', variant: 'secondary' },
+};
 
 interface ScheduleRowProps {
   schedule: ScheduledMessageSummary;
@@ -42,49 +53,28 @@ function ScheduleRow({ schedule, onDelete }: ScheduleRowProps) {
   const scheduledDisplay = schedule.scheduledAt ? new Date(schedule.scheduledAt).toLocaleString() : recurringDisplay;
 
   const lastExecuted = schedule.lastExecutedAt ? new Date(schedule.lastExecutedAt).toLocaleString() : 'Never';
+  const typeMeta = scheduleTypeMeta[schedule.scheduleType] ?? {
+    label: schedule.scheduleType,
+    variant: 'muted' as BadgeVariant,
+  };
 
   return (
-    <tr className='border-t border-neutral-200 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-900'>
+    <tr className='border-t border-border hover:bg-muted/50'>
       <td className='px-4 py-3'>
-        <div className='font-medium text-neutral-900 dark:text-white'>{schedule.name}</div>
-        <div className='text-xs text-neutral-500 dark:text-neutral-400 mt-1 max-w-md truncate'>{schedule.content}</div>
+        <div className='font-medium text-foreground'>{schedule.name}</div>
+        <div className='text-xs text-muted-foreground mt-1 max-w-md truncate'>{schedule.content}</div>
       </td>
       <td className='px-4 py-3'>
-        <span
-          className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-            schedule.scheduleType === 'ONE_TIME'
-              ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
-              : schedule.scheduleType === 'WEEKLY'
-                ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
-                : schedule.scheduleType === 'MONTHLY'
-                  ? 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300'
-                  : schedule.scheduleType === 'YEARLY'
-                    ? 'bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300'
-                    : 'bg-pink-100 text-pink-700 dark:bg-pink-900 dark:text-pink-300'
-          }`}
-        >
-          {schedule.scheduleType}
-        </span>
+        <Badge variant={typeMeta.variant}>{typeMeta.label}</Badge>
       </td>
-      <td className='px-4 py-3 text-sm text-neutral-600 dark:text-neutral-400'>{scheduledDisplay}</td>
-      <td className='px-4 py-3 text-sm text-neutral-600 dark:text-neutral-400'>{lastExecuted}</td>
+      <td className='px-4 py-3 text-sm text-muted-foreground'>{scheduledDisplay}</td>
+      <td className='px-4 py-3 text-sm text-muted-foreground'>{lastExecuted}</td>
       <td className='px-4 py-3'>
-        <span
-          className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-            schedule.isActive
-              ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
-              : 'bg-gray-100 text-gray-700 dark:bg-gray-900 dark:text-gray-300'
-          }`}
-        >
-          {schedule.isActive ? 'Active' : 'Inactive'}
-        </span>
+        <Badge variant={schedule.isActive ? 'success' : 'muted'}>{schedule.isActive ? 'Active' : 'Inactive'}</Badge>
       </td>
       <td className='px-4 py-3'>
         {onDelete && (
-          <button
-            onClick={() => onDelete(schedule.id)}
-            className='text-sm text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300'
-          >
+          <button onClick={() => onDelete(schedule.id)} className='text-sm text-destructive hover:text-destructive/80'>
             Delete
           </button>
         )}
@@ -139,7 +129,7 @@ export function SchedulesList({ onDelete }: Props) {
     return (
       <Card title='Schedules' description='Loading schedules...'>
         <div className='flex items-center justify-center py-12'>
-          <div className='h-8 w-8 animate-spin rounded-full border-4 border-neutral-300 border-t-indigo-600' />
+          <div className='h-8 w-8 animate-spin rounded-full border-4 border-muted border-t-primary' />
         </div>
       </Card>
     );
@@ -148,7 +138,7 @@ export function SchedulesList({ onDelete }: Props) {
   if (error) {
     return (
       <Card title='Schedules' description='Error loading schedules'>
-        <div className='rounded-md border border-red-300 bg-red-50 p-4 text-sm text-red-700'>
+        <div className='rounded-md border border-destructive/20 bg-destructive/10 p-4 text-sm text-destructive'>
           {error instanceof Error ? error.message : 'Failed to load schedules'}
         </div>
       </Card>
@@ -188,14 +178,14 @@ export function SchedulesList({ onDelete }: Props) {
   return (
     <Card title='Schedules' description='View and manage all your scheduled messages'>
       {/* Tabs */}
-      <div className='border-b border-neutral-200 dark:border-neutral-800 mb-4'>
+      <div className='border-b border-border mb-4'>
         <nav className='-mb-px flex space-x-8'>
           <button
             onClick={() => handleTabChange('active')}
             className={`py-2 px-1 border-b-2 font-medium text-sm ${
               activeTab === 'active'
-                ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
-                : 'border-transparent text-neutral-500 hover:text-neutral-700 hover:border-neutral-300 dark:text-neutral-400 dark:hover:text-neutral-300'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
             }`}
           >
             Active ({activeSchedules.length})
@@ -204,8 +194,8 @@ export function SchedulesList({ onDelete }: Props) {
             onClick={() => handleTabChange('past')}
             className={`py-2 px-1 border-b-2 font-medium text-sm ${
               activeTab === 'past'
-                ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
-                : 'border-transparent text-neutral-500 hover:text-neutral-700 hover:border-neutral-300 dark:text-neutral-400 dark:hover:text-neutral-300'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
             }`}
           >
             Past/Inactive ({pastSchedules.length})
@@ -215,7 +205,7 @@ export function SchedulesList({ onDelete }: Props) {
 
       {/* Table */}
       {displaySchedules.length === 0 ? (
-        <div className='text-center py-12 text-neutral-500 dark:text-neutral-400'>
+        <div className='text-center py-12 text-muted-foreground'>
           <p className='text-sm'>
             {activeTab === 'active'
               ? 'No active schedules. Create one to get started!'
@@ -225,24 +215,24 @@ export function SchedulesList({ onDelete }: Props) {
       ) : (
         <div className='overflow-x-auto'>
           <table className='min-w-full'>
-            <thead className='bg-neutral-50 dark:bg-neutral-800'>
+            <thead className='bg-muted/50'>
               <tr>
-                <th className='px-4 py-3 text-left text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider'>
+                <th className='px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider'>
                   Name & Content
                 </th>
-                <th className='px-4 py-3 text-left text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider'>
+                <th className='px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider'>
                   Type
                 </th>
-                <th className='px-4 py-3 text-left text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider'>
+                <th className='px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider'>
                   Schedule
                 </th>
-                <th className='px-4 py-3 text-left text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider'>
+                <th className='px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider'>
                   Last Executed
                 </th>
-                <th className='px-4 py-3 text-left text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider'>
+                <th className='px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider'>
                   Status
                 </th>
-                <th className='px-4 py-3 text-left text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider'>
+                <th className='px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider'>
                   Actions
                 </th>
               </tr>
@@ -258,20 +248,20 @@ export function SchedulesList({ onDelete }: Props) {
 
       {/* Pagination */}
       {total > 0 && (
-        <div className='mt-4 flex items-center justify-between border-t border-neutral-200 dark:border-neutral-800 pt-4'>
+        <div className='mt-4 flex items-center justify-between border-t border-border pt-4'>
           <div className='flex items-center space-x-4'>
-            <div className='text-sm text-neutral-600 dark:text-neutral-400'>
+            <div className='text-sm text-muted-foreground'>
               Showing {(page - 1) * limit + 1} to {Math.min(page * limit, total)} of {total} schedules
             </div>
             <div className='flex items-center space-x-2'>
-              <label htmlFor='page-size' className='text-sm text-neutral-600 dark:text-neutral-400'>
+              <label htmlFor='page-size' className='text-sm text-muted-foreground'>
                 Per page:
               </label>
               <select
                 id='page-size'
                 value={limit}
                 onChange={(e) => handleLimitChange(Number(e.target.value))}
-                className='px-2 py-1 text-sm border border-neutral-300 rounded-md bg-white dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-300'
+                className='px-2 py-1 text-sm border border-input rounded-md bg-background text-foreground focus:border-ring focus:ring-ring'
               >
                 <option value={10}>10</option>
                 <option value={20}>20</option>
@@ -284,17 +274,17 @@ export function SchedulesList({ onDelete }: Props) {
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
-              className='px-3 py-1 text-sm font-medium text-neutral-700 bg-white border border-neutral-300 rounded-md hover:bg-neutral-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-neutral-800 dark:text-neutral-300 dark:border-neutral-700 dark:hover:bg-neutral-700'
+              className='px-3 py-1 text-sm font-medium text-foreground bg-background border border-input rounded-md hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed'
             >
               Previous
             </button>
-            <span className='text-sm text-neutral-600 dark:text-neutral-400'>
+            <span className='text-sm text-muted-foreground'>
               Page {page} of {totalPages}
             </span>
             <button
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
-              className='px-3 py-1 text-sm font-medium text-neutral-700 bg-white border border-neutral-300 rounded-md hover:bg-neutral-50 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-neutral-800 dark:text-neutral-300 dark:border-neutral-700 dark:hover:bg-neutral-700'
+              className='px-3 py-1 text-sm font-medium text-foreground bg-background border border-input rounded-md hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed'
             >
               Next
             </button>
@@ -305,13 +295,16 @@ export function SchedulesList({ onDelete }: Props) {
       {/* Recurring schedules info */}
       {activeTab === 'active' &&
         activeSchedules.some((s) => ['WEEKLY', 'MONTHLY', 'YEARLY', 'BIRTHDAY'].includes(s.scheduleType)) && (
-          <div className='mt-4 rounded-md border border-blue-200 bg-blue-50 p-3 text-xs text-blue-700 dark:border-blue-800 dark:bg-blue-900 dark:text-blue-300'>
-            <p className='font-medium'>ℹ️ About Recurring Schedules</p>
-            <p className='mt-1'>
-              Recurring schedules (Weekly, Monthly, Yearly, Birthday) will continue to execute based on their pattern
-              until you deactivate them. The "Last Executed" column shows when the schedule last ran.
+          <Alert
+            variant='info'
+            title='Recurring Schedules'
+            description='Weekly, Monthly, Yearly, and Birthday schedules keep running based on their pattern until you turn them off.'
+            className='mt-4 text-xs'
+          >
+            <p className='text-xs text-foreground/70'>
+              Check the “Last Executed” column to confirm the most recent run.
             </p>
-          </div>
+          </Alert>
         )}
 
       <ConfirmationModal

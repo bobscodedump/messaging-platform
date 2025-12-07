@@ -11,25 +11,26 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
     return (
       <div className={`relative ${className ?? ''}`}>
         {leftIcon ? (
-          <div className='pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-neutral-400'>
+          <div className='pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-muted-foreground'>
             {leftIcon}
           </div>
         ) : null}
         <input
           ref={ref}
           className={[
-            'w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100 dark:placeholder-neutral-500',
-            leftIcon ? 'pl-9' : '',
-            rightIcon ? 'pr-9' : '',
-            error ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : '',
+            'flex h-11 w-full rounded-lg border border-input bg-white/90 px-4 py-2 text-sm text-foreground shadow-sm transition-all duration-150 placeholder:text-muted-foreground/70 focus-visible:border-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-60',
+            leftIcon ? 'pl-11' : '',
+            rightIcon ? 'pr-11' : '',
+            error ? 'border-destructive focus-visible:ring-destructive/70' : '',
           ].join(' ')}
           {...props}
         />
         {rightIcon ? (
-          <div className='pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-neutral-400'>
+          <div className='pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4 text-muted-foreground'>
             {rightIcon}
           </div>
         ) : null}
+        {error && <p className='mt-1 text-xs font-medium text-destructive'>{error}</p>}
       </div>
     );
   }

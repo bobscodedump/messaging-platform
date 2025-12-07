@@ -5,13 +5,12 @@ import FormField from '../common/ui/FormField';
 import Input from '../common/ui/Input';
 import Textarea from '../common/ui/Textarea';
 import Button from '../common/ui/Button';
+import { useAuth } from '../../lib/auth/auth-context';
 
 export type GroupCreateFormProps = {
   onCreate: (data: CreateGroupDto) => Promise<void> | void;
   loading?: boolean;
 };
-
-import { useAuth } from '../../lib/auth/auth-context';
 
 export function GroupCreateForm({ onCreate, loading }: GroupCreateFormProps) {
   const { user } = useAuth();
@@ -40,12 +39,13 @@ export function GroupCreateForm({ onCreate, loading }: GroupCreateFormProps) {
     await onCreate(payload);
     setName('');
     setDescription('');
+    setTouched({});
   };
 
   return (
     <Card title='Create Group' description='Organize contacts by creating a new group.'>
-      <form onSubmit={handleSubmit} className='space-y-4'>
-        <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+      <form onSubmit={handleSubmit} className='space-y-5'>
+        <div className='grid grid-cols-1 gap-5 md:grid-cols-2'>
           <FormField label='Group Name' htmlFor='groupName' required error={touched.name ? errors.name : undefined}>
             <Input
               id='groupName'
@@ -67,7 +67,7 @@ export function GroupCreateForm({ onCreate, loading }: GroupCreateFormProps) {
           />
         </FormField>
 
-        <div className='flex justify-end'>
+        <div className='flex justify-end pt-2'>
           <Button type='submit' variant='primary' loading={loading} disabled={!isValid}>
             Create Group
           </Button>

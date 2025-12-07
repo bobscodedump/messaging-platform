@@ -119,11 +119,11 @@ export function ContactsCsvImport({ companyId }: Props) {
 
   return (
     <Card title='Bulk Import Contacts' description='Workflow: Upload → Validate → Preview → Confirm.'>
-      <div className='mb-3 flex flex-wrap items-center gap-3 text-xs text-neutral-600 dark:text-neutral-400'>
+      <div className='mb-4 flex flex-wrap items-center gap-3 text-xs text-muted-foreground'>
         <a
           href='/sample-contacts.csv'
           download
-          className='rounded border border-neutral-300 bg-white px-2 py-1 font-medium hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-700'
+          className='rounded border border-input bg-card px-3 py-1.5 font-medium hover:bg-muted text-foreground'
         >
           Download sample CSV
         </a>
@@ -139,14 +139,14 @@ export function ContactsCsvImport({ companyId }: Props) {
             { h: 'groups', tip: 'Comma or semicolon separated list' },
           ].map((meta) => {
             const base =
-              'group relative flex items-center rounded bg-neutral-100 px-1.5 py-0.5 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-200';
+              'group relative flex items-center rounded bg-muted px-2 py-1 text-foreground border border-border';
             return (
               <span key={meta.h} className={base}>
                 <span>{meta.h}</span>
                 {meta.tip && (
                   <span
                     role='tooltip'
-                    className='pointer-events-none absolute left-0 top-full z-10 mt-1 w-max max-w-xs translate-y-0 whitespace-nowrap rounded border border-neutral-300 bg-neutral-900 px-2 py-1 text-[10px] font-medium text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100 dark:border-neutral-700'
+                    className='pointer-events-none absolute left-0 top-full z-10 mt-1 w-max max-w-xs translate-y-0 whitespace-nowrap rounded border border-border bg-popover px-2 py-1 text-[10px] font-medium text-popover-foreground opacity-0 shadow-lg transition-opacity group-hover:opacity-100'
                   >
                     {meta.tip}
                   </span>
@@ -160,9 +160,9 @@ export function ContactsCsvImport({ companyId }: Props) {
         <div
           onDrop={handleDrop}
           onDragOver={handleDragOver}
-          className='flex flex-col items-center justify-center gap-3 rounded-md border border-dashed border-neutral-300 bg-neutral-50 p-6 text-center dark:border-neutral-700 dark:bg-neutral-900'
+          className='flex flex-col items-center justify-center gap-3 rounded-md border-2 border-dashed border-input bg-muted/30 p-8 text-center hover:bg-muted/50 transition-colors'
         >
-          <p className='text-sm text-neutral-600 dark:text-neutral-400'>Drag & drop CSV here or</p>
+          <p className='text-sm text-muted-foreground'>Drag & drop CSV here or</p>
           <Button
             size='sm'
             onClick={() => fileInputRef.current?.click()}
@@ -172,57 +172,64 @@ export function ContactsCsvImport({ companyId }: Props) {
             {step === 'validating' ? 'Validating…' : 'Choose File'}
           </Button>
           <input ref={fileInputRef} type='file' accept='.csv,text/csv' hidden onChange={onInputChange} />
-          {globalError && <p className='text-xs text-red-500'>{globalError}</p>}
+          {globalError && <p className='text-xs text-destructive'>{globalError}</p>}
         </div>
       ) : null}
 
       {step === 'preview' && parseResult && (
         <div className='space-y-4'>
           {headerErrors.length > 0 && (
-            <div className='rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-700'>
+            <div className='rounded-md border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive'>
               Header issues: {headerErrors.join('; ')}
             </div>
           )}
-          <div className='text-xs text-neutral-600'>
+          <div className='text-xs text-muted-foreground'>
             Rows: {rows.length} | Total field errors: {totalErrors}
           </div>
-          <div className='max-h-72 overflow-auto rounded-md border border-neutral-200 dark:border-neutral-800'>
+          <div className='max-h-72 overflow-auto rounded-md border border-border'>
             <table className='min-w-full text-xs'>
-              <thead className='bg-neutral-100 dark:bg-neutral-800 sticky top-0'>
+              <thead className='bg-muted/50 sticky top-0'>
                 <tr>
-                  <th className='px-2 py-1 text-left'>#</th>
+                  <th className='px-3 py-2 text-left font-medium text-foreground border-b border-border'>#</th>
                   {REQUIRED_HEADERS.map((h) => (
-                    <th key={h} className='px-2 py-1 text-left'>
+                    <th key={h} className='px-3 py-2 text-left font-medium text-foreground border-b border-border'>
                       {h}
                     </th>
                   ))}
-                  <th className='px-2 py-1 text-left'>Errors</th>
-                  <th className='px-2 py-1 text-left'>Warnings</th>
+                  <th className='px-3 py-2 text-left font-medium text-foreground border-b border-border'>Errors</th>
+                  <th className='px-3 py-2 text-left font-medium text-foreground border-b border-border'>Warnings</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className='bg-card'>
                 {rows.slice(0, 200).map((r) => (
-                  <tr key={r.index} className={r.errors.length ? 'bg-red-50 dark:bg-red-900/20' : ''}>
-                    <td className='px-2 py-1'>{r.index + 2}</td>
+                  <tr key={r.index} className={r.errors.length ? 'bg-destructive/10' : 'hover:bg-muted/50'}>
+                    <td className='px-3 py-2 border-b border-border text-muted-foreground'>{r.index + 2}</td>
                     {REQUIRED_HEADERS.map((h) => (
-                      <td key={h} className='px-2 py-1 whitespace-nowrap max-w-[140px] truncate'>
+                      <td
+                        key={h}
+                        className='px-3 py-2 whitespace-nowrap max-w-[140px] truncate border-b border-border text-foreground'
+                      >
                         {r.raw[h] || ''}
                       </td>
                     ))}
-                    <td className='px-2 py-1 text-red-600'>{r.errors.join(', ')}</td>
-                    <td className='px-2 py-1 text-amber-600'>{r.warnings.join(', ')}</td>
+                    <td className='px-3 py-2 text-destructive border-b border-border'>{r.errors.join(', ')}</td>
+                    <td className='px-3 py-2 text-warning-foreground border-b border-border'>
+                      {r.warnings.join(', ')}
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-          {rows.length > 200 && <div className='text-xs text-neutral-500'>Showing first 200 rows…</div>}
-          <div className='flex items-center justify-between'>
+          {rows.length > 200 && <div className='text-xs text-muted-foreground'>Showing first 200 rows…</div>}
+          <div className='flex items-center justify-between pt-2'>
             <Button variant='ghost' size='sm' onClick={reset}>
               Reset
             </Button>
             <div className='flex items-center gap-3'>
-              {totalErrors > 0 && <span className='text-xs text-red-600'>{totalErrors} error(s) present</span>}
+              {totalErrors > 0 && (
+                <span className='text-xs text-destructive font-medium'>{totalErrors} error(s) present</span>
+              )}
               <Button size='sm' onClick={confirmUpload} disabled={!file || importMutation.isPending}>
                 Confirm Upload
               </Button>
@@ -232,8 +239,8 @@ export function ContactsCsvImport({ companyId }: Props) {
       )}
 
       {step === 'uploading' && (
-        <div className='flex flex-col items-center gap-2 py-6 text-sm'>
-          <span className='animate-pulse'>Uploading to server…</span>
+        <div className='flex flex-col items-center gap-2 py-8 text-sm'>
+          <span className='animate-pulse text-muted-foreground'>Uploading to server…</span>
           <Button size='sm' variant='ghost' disabled>
             Working…
           </Button>
@@ -241,45 +248,49 @@ export function ContactsCsvImport({ companyId }: Props) {
       )}
 
       {step === 'done' && importMutation.data && (
-        <div className='space-y-3'>
+        <div className='space-y-4'>
           {importMutation.data.errorCount === 0 ? (
-            <div className='rounded-md border border-green-300 bg-green-50 p-3 text-sm text-green-700 dark:border-green-700 dark:bg-green-900/20 dark:text-green-400'>
-              <div className='font-medium'>✓ Import Successful!</div>
-              <div className='text-xs mt-1'>Imported {importMutation.data.createdCount} contact(s).</div>
+            <div className='rounded-md border border-green-500/20 bg-green-500/10 p-4 text-sm text-green-700'>
+              <div className='font-medium flex items-center gap-2'>
+                <span className='text-lg'>✓</span> Import Successful!
+              </div>
+              <div className='text-xs mt-1 ml-6'>Imported {importMutation.data.createdCount} contact(s).</div>
             </div>
           ) : importMutation.data.createdCount === 0 ? (
-            <div className='rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-700 dark:border-red-700 dark:bg-red-900/20 dark:text-red-400'>
-              <div className='font-medium'>✗ Import Failed</div>
-              <div className='text-xs mt-1'>All {importMutation.data.errorCount} row(s) had errors.</div>
+            <div className='rounded-md border border-destructive/20 bg-destructive/10 p-4 text-sm text-destructive'>
+              <div className='font-medium flex items-center gap-2'>
+                <span className='text-lg'>✗</span> Import Failed
+              </div>
+              <div className='text-xs mt-1 ml-6'>All {importMutation.data.errorCount} row(s) had errors.</div>
             </div>
           ) : (
-            <div className='rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-700 dark:border-amber-700 dark:bg-amber-900/20 dark:text-amber-400'>
-              <div className='font-medium'>⚠ Partial Success</div>
-              <div className='text-xs mt-1'>
+            <div className='rounded-md border border-warning/30 bg-warning/10 p-4 text-sm text-warning-foreground'>
+              <div className='font-medium flex items-center gap-2'>
+                <span className='text-lg'>⚠</span> Partial Success
+              </div>
+              <div className='text-xs mt-1 ml-6'>
                 Imported {importMutation.data.createdCount} contact(s). {importMutation.data.errorCount} failed.
               </div>
             </div>
           )}
           {importMutation.data.errors.length > 0 && (
-            <div className='max-h-40 overflow-auto rounded-md border border-red-300 bg-red-50 p-3 dark:border-red-800 dark:bg-red-900/20'>
-              <p className='mb-2 text-xs font-semibold text-red-800 dark:text-red-300'>
+            <div className='max-h-48 overflow-auto rounded-md border border-destructive/20 bg-destructive/10 p-4'>
+              <p className='mb-2 text-xs font-semibold text-destructive'>
                 {importMutation.data.errors.length} Error(s):
               </p>
               <ul className='space-y-1 text-xs'>
                 {importMutation.data.errors.slice(0, 50).map((er) => (
-                  <li key={er.index} className='text-red-700 dark:text-red-400 font-mono'>
+                  <li key={er.index} className='text-destructive font-mono'>
                     <span className='font-semibold'>Row {er.index + 2}</span>: {er.error}
                   </li>
                 ))}
                 {importMutation.data.errors.length > 50 && (
-                  <li className='text-neutral-500 dark:text-neutral-400'>
-                    + {importMutation.data.errors.length - 50} more errors…
-                  </li>
+                  <li className='text-muted-foreground'>+ {importMutation.data.errors.length - 50} more errors…</li>
                 )}
               </ul>
             </div>
           )}
-          <div className='flex justify-end'>
+          <div className='flex justify-end pt-2'>
             <Button size='sm' variant='secondary' onClick={reset}>
               Import Another
             </Button>
@@ -288,7 +299,7 @@ export function ContactsCsvImport({ companyId }: Props) {
       )}
 
       {importMutation.isError && step !== 'uploading' && step !== 'done' && (
-        <div className='mt-4 rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-700'>
+        <div className='mt-4 rounded-md border border-destructive/20 bg-destructive/10 p-4 text-sm text-destructive'>
           Upload failed: {(importMutation.error as any)?.message}
         </div>
       )}

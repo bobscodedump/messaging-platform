@@ -75,8 +75,6 @@ export function ContactCard({
     note: contact.note ?? '',
   });
 
-  console.log(contact);
-
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const errors = useMemo(() => validate(values), [values]);
   const isValid = Object.keys(errors).length === 0;
@@ -110,12 +108,12 @@ export function ContactCard({
   };
 
   return (
-    <form onSubmit={handleSave} className={['max-w-2xl mx-auto p-6', className ?? ''].join(' ')}>
+    <form onSubmit={handleSave} className={['max-w-2xl mx-auto', className ?? ''].join(' ')}>
       <Card
         title={
           <div>
-            <div className='text-lg font-semibold text-neutral-900 dark:text-neutral-100'>{fullName}</div>
-            {subTitle ? <div className='text-sm text-neutral-600 dark:text-neutral-400'>{subTitle}</div> : null}
+            <div className='text-lg font-semibold text-slate-900'>{fullName}</div>
+            {subTitle ? <div className='text-sm text-slate-500'>{subTitle}</div> : null}
           </div>
         }
         footer={
@@ -134,9 +132,9 @@ export function ContactCard({
         <Section title='Contact details'>
           <div className='grid grid-cols-1 gap-5 sm:grid-cols-2'>
             <div className='space-y-1 opacity-60' aria-disabled>
-              <div className='text-xs font-medium text-neutral-500 dark:text-neutral-400'>Company ID</div>
-              <div className='min-h-[2rem] rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm font-mono text-neutral-900 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-100'>
-                {values.companyId || <span className='text-neutral-400'>—</span>}
+              <div className='text-xs font-medium text-slate-500'>Company ID</div>
+              <div className='min-h-[2rem] rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-mono text-slate-900'>
+                {values.companyId || <span className='text-slate-400'>—</span>}
               </div>
             </div>
 

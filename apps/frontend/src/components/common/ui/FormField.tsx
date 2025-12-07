@@ -1,5 +1,7 @@
 import React from 'react';
 import Label from './Label';
+import HelperText from './HelperText';
+import ErrorText from './ErrorText';
 
 export type FormFieldProps = {
   label: React.ReactNode;
@@ -21,13 +23,13 @@ export default function FormField({
   editingEnabled = true,
 }: FormFieldProps) {
   return (
-    <div className={['space-y-1', editingEnabled ? '' : 'opacity-60'].join(' ')} aria-disabled={!editingEnabled}>
+    <div className={['space-y-2', editingEnabled ? '' : 'opacity-60'].join(' ')} aria-disabled={!editingEnabled}>
       <Label htmlFor={htmlFor} required={required}>
         {label}
       </Label>
       {children}
-      {helpText && !error ? <p className='text-xs text-neutral-500'>{helpText}</p> : null}
-      {error ? <p className='text-xs text-red-600'>{error}</p> : null}
+      {helpText && !error ? <HelperText>{helpText}</HelperText> : null}
+      {error ? <ErrorText>{error}</ErrorText> : null}
     </div>
   );
 }

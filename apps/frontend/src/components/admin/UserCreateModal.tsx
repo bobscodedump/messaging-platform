@@ -62,11 +62,7 @@ export default function UserCreateModal({ isOpen, onClose }: UserCreateModalProp
   return (
     <Modal isOpen={isOpen} onClose={onClose} title='Create New User'>
       <form onSubmit={handleSubmit} className='space-y-4'>
-        {error && (
-          <div className='rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400'>
-            {error}
-          </div>
-        )}
+        {error && <div className='rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-700'>{error}</div>}
 
         <div className='grid grid-cols-2 gap-4'>
           <div>
@@ -113,7 +109,7 @@ export default function UserCreateModal({ isOpen, onClose }: UserCreateModalProp
             placeholder='Min. 8 characters'
             required
           />
-          <p className='mt-1 text-xs text-neutral-500 dark:text-neutral-400'>Minimum 8 characters</p>
+          <p className='mt-1 text-xs text-slate-500'>Minimum 8 characters</p>
         </div>
 
         <div>
@@ -123,7 +119,7 @@ export default function UserCreateModal({ isOpen, onClose }: UserCreateModalProp
             value={formData.role}
             onChange={(e) => handleChange('role', e.target.value)}
             required
-            className='w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm dark:border-neutral-700 dark:bg-neutral-900'
+            className='w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-blue-500 focus:ring-blue-500'
           >
             {isPlatformAdmin && (
               <>
@@ -146,9 +142,7 @@ export default function UserCreateModal({ isOpen, onClose }: UserCreateModalProp
               placeholder='Enter company ID'
               required
             />
-            <p className='mt-1 text-xs text-neutral-500 dark:text-neutral-400'>
-              Company admins can only create users in their own company
-            </p>
+            <p className='mt-1 text-xs text-slate-500'>Company admins can only create users in their own company</p>
           </div>
         )}
 

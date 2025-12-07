@@ -27,20 +27,23 @@ export default function TemplateDashboard({ companyId }: { companyId: string }) 
       <Section title='Existing templates'>
         <Card>
           {isLoading ? (
-            <div className='py-8 text-center text-sm text-neutral-500'>Loading…</div>
+            <div className='py-8 text-center text-sm text-slate-500'>Loading…</div>
           ) : error ? (
-            <div className='rounded-md border border-red-300 bg-red-50 p-3 text-red-700'>
+            <div className='rounded-md border border-red-200 bg-red-50 p-3 text-red-700'>
               Failed to load templates: {error.message}
             </div>
           ) : templates.length === 0 ? (
-            <div className='py-8 text-center text-sm text-neutral-500'>No templates</div>
+            <div className='py-8 text-center text-sm text-slate-500'>No templates</div>
           ) : (
-            <ul className='divide-y divide-neutral-200 dark:divide-neutral-800'>
+            <ul className='divide-y divide-slate-200'>
               {templates.map((t) => (
-                <li key={t.id} className='flex items-center justify-between gap-3 py-3'>
+                <li
+                  key={t.id}
+                  className='flex items-center justify-between gap-3 py-3 hover:bg-slate-50 transition-colors px-2 -mx-2 rounded-md'
+                >
                   <button className='min-w-0 text-left' onClick={() => setOpenId(t.id)}>
-                    <div className='truncate font-medium text-neutral-900 dark:text-neutral-100'>{t.name}</div>
-                    <div className='truncate text-xs text-neutral-500'>Vars: {t.variables.join(', ') || 'none'}</div>
+                    <div className='truncate font-medium text-slate-900'>{t.name}</div>
+                    <div className='truncate text-xs text-slate-500'>Vars: {t.variables.join(', ') || 'none'}</div>
                   </button>
                   <Button variant='ghost' size='sm' onClick={() => handleDeleteClick(t.id, t.name)}>
                     Delete

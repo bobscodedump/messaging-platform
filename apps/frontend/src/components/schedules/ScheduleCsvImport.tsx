@@ -1,6 +1,8 @@
 import { useRef, useState, useCallback } from 'react';
 import Button from '../common/ui/Button';
 import Card from '../common/layout/Card';
+import { Alert } from '../common/ui/Alert';
+import { Badge } from '../common/ui/Badge';
 import { useImportSchedules } from '../../lib/schedules/hooks';
 
 interface Props {
@@ -359,15 +361,17 @@ export function ScheduleCsvImport({ companyId }: Props) {
 
   return (
     <Card title='Bulk Import Schedules' description='Workflow: Upload → Validate → Preview → Confirm.'>
-      <div className='mb-2 rounded border border-blue-200 bg-blue-50 p-2 text-xs text-blue-700 dark:border-blue-800 dark:bg-blue-900/20 dark:text-blue-300'>
-        <strong>Important:</strong> Each schedule row must specify <em>either</em> recipientContacts <em>or</em>{' '}
-        recipientGroups, not both.
-      </div>
-      <div className='mb-3 flex flex-wrap items-center gap-3 text-xs text-neutral-600 dark:text-neutral-400'>
+      <Alert
+        variant='info'
+        title='Important'
+        description='Each schedule row must specify either recipientContacts or recipientGroups, never both.'
+        className='mb-3 text-xs'
+      />
+      <div className='mb-3 flex flex-wrap items-center gap-3 text-xs text-muted-foreground'>
         <a
           href='/sample-schedules.csv'
           download
-          className='rounded border border-neutral-300 bg-white px-2 py-1 font-medium hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:hover:bg-neutral-700'
+          className='rounded border border-input bg-card px-2 py-1 font-medium text-foreground hover:bg-muted'
         >
           Download sample CSV
         </a>
@@ -386,32 +390,30 @@ export function ScheduleCsvImport({ companyId }: Props) {
             { h: 'recurringDayOfMonth', tip: 'For MONTHLY: 1-28' },
             { h: 'recurringMonth', tip: 'For YEARLY: 1-12' },
             { h: 'recurringDayOfYear', tip: 'For YEARLY: 1-31' },
-          ].map((meta) => {
-            const base =
-              'group relative flex items-center rounded bg-neutral-100 px-1.5 py-0.5 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-200';
-            return (
-              <span key={meta.h} className={base}>
-                <span>{meta.h}</span>
-                {meta.tip && (
-                  <span
-                    role='tooltip'
-                    className='pointer-events-none absolute left-0 top-full z-10 mt-1 w-max max-w-xs translate-y-0 whitespace-nowrap rounded border border-neutral-300 bg-neutral-900 px-2 py-1 text-[10px] font-medium text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100 dark:border-neutral-700'
-                  >
-                    {meta.tip}
-                  </span>
-                )}
-              </span>
-            );
-          })}
+          ].map((meta) => (
+            <span key={meta.h} className='group relative inline-flex items-center'>
+              <Badge variant='muted' className='px-2 py-0.5 text-[11px]'>
+                {meta.h}
+              </Badge>
+              {meta.tip && (
+                <span
+                  role='tooltip'
+                  className='pointer-events-none absolute left-0 top-full z-10 mt-1 w-max max-w-xs translate-y-0 whitespace-nowrap rounded-md border border-border bg-popover px-2 py-1 text-[10px] font-medium text-popover-foreground opacity-0 shadow-lg transition-opacity group-hover:opacity-100'
+                >
+                  {meta.tip}
+                </span>
+              )}
+            </span>
+          ))}
         </div>
       </div>
       {step === 'idle' || step === 'validating' ? (
         <div
           onDrop={handleDrop}
           onDragOver={handleDragOver}
-          className='flex flex-col items-center justify-center gap-3 rounded-md border border-dashed border-neutral-300 bg-neutral-50 p-6 text-center dark:border-neutral-700 dark:bg-neutral-900'
+          className='flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border bg-muted/40 p-6 text-center'
         >
-          <p className='text-sm text-neutral-600 dark:text-neutral-400'>Drag & drop CSV here or</p>
+          <p className='text-sm text-muted-foreground'>Drag & drop CSV here or</p>
           <Button
             size='sm'
             onClick={() => fileInputRef.current?.click()}
@@ -421,33 +423,47 @@ export function ScheduleCsvImport({ companyId }: Props) {
             {step === 'validating' ? 'Validating…' : 'Choose File'}
           </Button>
           <input ref={fileInputRef} type='file' accept='.csv,text/csv' hidden onChange={onInputChange} />
-          {globalError && <p className='text-xs text-red-500'>{globalError}</p>}
+          {globalError && <p className='text-xs text-destructive'>{globalError}</p>}
         </div>
       ) : null}
 
       {step === 'preview' && parseResult && (
         <div className='space-y-4'>
           {headerErrors.length > 0 && (
-            <div className='rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-700'>
-              Header issues: {headerErrors.join('; ')}
-            </div>
+            <Alert variant='destructive' description={`Header issues: ${headerErrors.join('; ')}`} />
           )}
-          <div className='text-xs text-neutral-600'>
+          <div className='text-xs text-muted-foreground'>
             Rows: {rows.length} | Total field errors: {totalErrors}
           </div>
-          <div className='max-h-96 overflow-auto rounded-md border border-neutral-200 dark:border-neutral-800'>
+          <div className='max-h-96 overflow-auto rounded-xl border border-border'>
             <table className='min-w-full text-xs'>
-              <thead className='bg-neutral-100 dark:bg-neutral-800 sticky top-0 z-10'>
+              <thead className='sticky top-0 z-10 bg-muted/50'>
                 <tr>
-                  <th className='px-2 py-1 text-left'>#</th>
-                  <th className='px-2 py-1 text-left'>name</th>
-                  <th className='px-2 py-1 text-left'>type</th>
-                  <th className='px-2 py-1 text-left'>scheduledAt (parsed)</th>
-                  <th className='px-2 py-1 text-left'>content</th>
-                  <th className='px-2 py-1 text-left'>preview</th>
-                  <th className='px-2 py-1 text-left'>recipients</th>
-                  <th className='px-2 py-1 text-left'>Errors</th>
-                  <th className='px-2 py-1 text-left'>Warnings</th>
+                  <th className='px-2 py-1 text-left font-medium uppercase tracking-wide text-muted-foreground'>#</th>
+                  <th className='px-2 py-1 text-left font-medium uppercase tracking-wide text-muted-foreground'>
+                    name
+                  </th>
+                  <th className='px-2 py-1 text-left font-medium uppercase tracking-wide text-muted-foreground'>
+                    type
+                  </th>
+                  <th className='px-2 py-1 text-left font-medium uppercase tracking-wide text-muted-foreground'>
+                    scheduledAt (parsed)
+                  </th>
+                  <th className='px-2 py-1 text-left font-medium uppercase tracking-wide text-muted-foreground'>
+                    content
+                  </th>
+                  <th className='px-2 py-1 text-left font-medium uppercase tracking-wide text-muted-foreground'>
+                    preview
+                  </th>
+                  <th className='px-2 py-1 text-left font-medium uppercase tracking-wide text-muted-foreground'>
+                    recipients
+                  </th>
+                  <th className='px-2 py-1 text-left font-medium uppercase tracking-wide text-muted-foreground'>
+                    Errors
+                  </th>
+                  <th className='px-2 py-1 text-left font-medium uppercase tracking-wide text-muted-foreground'>
+                    Warnings
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -480,52 +496,44 @@ export function ScheduleCsvImport({ companyId }: Props) {
                   }
 
                   return (
-                    <tr key={r.index} className='border-t border-neutral-200 dark:border-neutral-800'>
-                      <td className='px-2 py-1'>{r.index + 1}</td>
-                      <td className='px-2 py-1 max-w-[150px] truncate'>{r.raw.name}</td>
+                    <tr key={r.index} className='border-t border-border hover:bg-muted/40'>
+                      <td className='px-2 py-1 text-muted-foreground'>{r.index + 1}</td>
+                      <td className='px-2 py-1 max-w-[150px] truncate text-foreground'>{r.raw.name}</td>
                       <td className='px-2 py-1'>
-                        <span className='rounded bg-neutral-200 px-1 py-0.5 text-[10px] dark:bg-neutral-700'>
+                        <Badge variant='outline' className='text-[10px] uppercase tracking-wide'>
                           {r.raw.scheduleType}
-                        </span>
+                        </Badge>
                       </td>
                       <td className='px-2 py-1 max-w-[200px]'>
                         {dateTimePreview ? (
-                          <div
-                            className={
-                              dateTimePreview.isValid
-                                ? 'text-neutral-700 dark:text-neutral-300'
-                                : 'text-red-600 dark:text-red-400'
-                            }
-                          >
-                            <div className='text-[10px] text-neutral-500 dark:text-neutral-500'>
-                              Input: {r.raw.scheduledAt}
-                            </div>
+                          <div className={dateTimePreview.isValid ? 'text-foreground' : 'text-destructive'}>
+                            <div className='text-[10px] text-muted-foreground'>Input: {r.raw.scheduledAt}</div>
                             <div className='font-medium mt-0.5'>{dateTimePreview.formatted}</div>
                           </div>
                         ) : scheduleType === 'ONE_TIME' ? (
-                          <span className='text-neutral-400 italic'>No date</span>
+                          <span className='text-muted-foreground/80 italic'>No date</span>
                         ) : (
-                          <span className='text-neutral-400 italic'>-</span>
+                          <span className='text-muted-foreground/80 italic'>-</span>
                         )}
                       </td>
-                      <td className='px-2 py-1 max-w-xs truncate' title={r.raw.content}>
+                      <td className='px-2 py-1 max-w-xs truncate text-muted-foreground' title={r.raw.content}>
                         {r.raw.content}
                       </td>
                       <td className='px-2 py-1 max-w-xs'>
-                        <div className='max-w-xs truncate text-neutral-600 dark:text-neutral-400' title={populated}>
+                        <div className='max-w-xs truncate text-muted-foreground' title={populated}>
                           {populated}
                         </div>
                         {unknownVars.length > 0 && (
-                          <div className='text-[10px] text-amber-600 dark:text-amber-400 mt-0.5'>
+                          <div className='text-[10px] text-warning-foreground mt-0.5'>
                             ⚠ Unknown: {unknownVars.join(', ')}
                           </div>
                         )}
                       </td>
-                      <td className='px-2 py-1 max-w-xs truncate'>
+                      <td className='px-2 py-1 max-w-xs truncate text-muted-foreground'>
                         {[r.raw.recipientContacts, r.raw.recipientGroups].filter(Boolean).join('; ')}
                       </td>
-                      <td className='px-2 py-1 text-red-600 dark:text-red-400'>{r.errors.join(', ') || '-'}</td>
-                      <td className='px-2 py-1 text-amber-600 dark:text-amber-400'>{allWarnings.join(', ') || '-'}</td>
+                      <td className='px-2 py-1 text-destructive'>{r.errors.join(', ') || '-'}</td>
+                      <td className='px-2 py-1 text-warning-foreground'>{allWarnings.join(', ') || '-'}</td>
                     </tr>
                   );
                 })}
@@ -545,40 +553,34 @@ export function ScheduleCsvImport({ companyId }: Props) {
 
       {step === 'uploading' && (
         <div className='flex flex-col items-center gap-3 py-6'>
-          <div className='h-8 w-8 animate-spin rounded-full border-4 border-neutral-300 border-t-indigo-600' />
-          <p className='text-sm text-neutral-600 dark:text-neutral-400'>Uploading...</p>
+          <div className='h-8 w-8 animate-spin rounded-full border-4 border-muted border-t-primary' />
+          <p className='text-sm text-muted-foreground'>Uploading...</p>
         </div>
       )}
 
       {step === 'done' && importMutation.data && (
         <div className='space-y-4'>
           {importMutation.data.errorCount === 0 ? (
-            <div className='rounded-md border border-green-300 bg-green-50 p-4 text-center text-sm text-green-700 dark:border-green-700 dark:bg-green-900/20 dark:text-green-400'>
-              ✓ Import completed successfully!
-            </div>
+            <Alert variant='success' description='Import completed successfully!' className='text-center' />
           ) : importMutation.data.createdCount === 0 ? (
-            <div className='rounded-md border border-red-300 bg-red-50 p-4 text-center text-sm text-red-700 dark:border-red-700 dark:bg-red-900/20 dark:text-red-400'>
-              ✗ Import failed - All rows had errors
-            </div>
+            <Alert variant='destructive' description='Import failed — all rows had errors.' className='text-center' />
           ) : (
-            <div className='rounded-md border border-amber-300 bg-amber-50 p-4 text-center text-sm text-amber-700 dark:border-amber-700 dark:bg-amber-900/20 dark:text-amber-400'>
-              ⚠ Import completed with errors
-            </div>
+            <Alert variant='warning' description='Import completed with errors.' className='text-center' />
           )}
-          <div className='text-xs text-neutral-600 dark:text-neutral-400'>
-            <p className='font-medium'>
+          <div className='text-xs text-muted-foreground'>
+            <p className='font-medium text-foreground'>
               Created: {importMutation.data.createdCount} | Failed: {importMutation.data.errorCount}
             </p>
             {importMutation.data.errors.length > 0 && (
               <details className='mt-2' open={importMutation.data.createdCount === 0}>
-                <summary className='cursor-pointer font-medium text-red-600 dark:text-red-400'>
+                <summary className='cursor-pointer font-medium text-destructive'>
                   View {importMutation.data.errors.length} Error(s)
                 </summary>
-                <ul className='mt-2 max-h-48 space-y-1 overflow-y-auto rounded border border-red-200 bg-red-50 p-2 text-red-700 dark:border-red-800 dark:bg-red-900/10 dark:text-red-400'>
+                <ul className='mt-2 max-h-48 space-y-1 overflow-y-auto rounded border border-destructive/30 bg-destructive/10 p-2 text-destructive'>
                   {importMutation.data.errors.map((e, i) => (
                     <li key={i} className='text-xs'>
                       <span className='font-medium'>Row {e.index + 1}</span>
-                      {e.row && <span className='text-red-600 dark:text-red-500'> ({e.row})</span>}: {e.error}
+                      {e.row && <span className='text-destructive'> ({e.row})</span>}: {e.error}
                     </li>
                   ))}
                 </ul>

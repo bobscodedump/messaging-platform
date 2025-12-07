@@ -12,31 +12,29 @@ export default function SendMessagePage() {
   if (!user) return null;
 
   return (
-    <div className='mx-auto max-w-7xl p-4 sm:p-6 space-y-6'>
-      <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4'>
+    <div className='mx-auto max-w-7xl space-y-6 p-4 sm:p-6'>
+      <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
         <div>
-          <h1 className='text-2xl font-bold text-neutral-900 dark:text-white'>Send Messages</h1>
-          <p className='text-sm text-neutral-600 dark:text-neutral-400 mt-1'>
-            Send individual messages or bulk import from CSV
-          </p>
+          <h1 className='text-2xl font-bold text-foreground'>Send Messages</h1>
+          <p className='mt-1 text-sm text-muted-foreground'>Send individual messages or bulk import from CSV</p>
         </div>
-        <div className='flex gap-2 bg-neutral-100 dark:bg-neutral-800 p-1 rounded-lg'>
+        <div className='flex gap-2 rounded-lg bg-muted p-1'>
           <button
             onClick={() => setActiveTab('single')}
-            className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+            className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
               activeTab === 'single'
-                ? 'bg-white dark:bg-neutral-700 text-neutral-900 dark:text-white shadow-sm'
-                : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
+                ? 'bg-card text-primary shadow-sm'
+                : 'text-muted-foreground hover:bg-background hover:text-foreground'
             }`}
           >
             Message Wizard
           </button>
           <button
             onClick={() => setActiveTab('bulk')}
-            className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+            className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
               activeTab === 'bulk'
-                ? 'bg-white dark:bg-neutral-700 text-neutral-900 dark:text-white shadow-sm'
-                : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
+                ? 'bg-card text-primary shadow-sm'
+                : 'text-muted-foreground hover:bg-background hover:text-foreground'
             }`}
           >
             Bulk Import (CSV)
@@ -49,7 +47,7 @@ export default function SendMessagePage() {
         {activeTab === 'single' ? (
           <MessageWizard />
         ) : (
-          <div className='max-w-3xl mx-auto'>
+          <div className='mx-auto max-w-3xl'>
             <MessageCsvImport companyId={user.companyId} userId={user.id} />
           </div>
         )}

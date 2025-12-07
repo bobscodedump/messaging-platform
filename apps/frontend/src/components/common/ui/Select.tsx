@@ -11,8 +11,8 @@ export default function Select({ options, className, error, ...props }: SelectPr
   return (
     <select
       className={[
-        'w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100 dark:placeholder-neutral-500',
-        error ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : '',
+        'w-full appearance-none rounded-lg border border-input bg-white/90 px-4 py-2.5 pr-10 text-sm text-foreground shadow-sm transition-all duration-150 focus-visible:border-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-60',
+        error ? 'border-destructive focus-visible:ring-destructive/70' : '',
         className ?? '',
       ].join(' ')}
       {...props}

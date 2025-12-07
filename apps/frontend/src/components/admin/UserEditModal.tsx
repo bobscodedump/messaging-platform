@@ -91,7 +91,7 @@ export default function UserEditModal({ isOpen, userId, onClose }: UserEditModal
   if (isLoading || !user) {
     return (
       <Modal isOpen={isOpen} onClose={onClose} title='Edit User' size='md'>
-        <div className='py-8 text-center text-neutral-500'>Loading...</div>
+        <div className='py-8 text-center text-slate-500'>Loading...</div>
       </Modal>
     );
   }
@@ -99,11 +99,7 @@ export default function UserEditModal({ isOpen, userId, onClose }: UserEditModal
   return (
     <Modal isOpen={isOpen} onClose={onClose} title='Edit User' size='md'>
       <form onSubmit={handleSubmit} className='space-y-4'>
-        {error && (
-          <div className='rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800 dark:border-red-800 dark:bg-red-900/20 dark:text-red-200'>
-            {error}
-          </div>
-        )}
+        {error && <div className='rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800'>{error}</div>}
 
         <div className='grid grid-cols-2 gap-4'>
           <div>
@@ -145,7 +141,7 @@ export default function UserEditModal({ isOpen, userId, onClose }: UserEditModal
             value={formData.role}
             onChange={(e) => handleChange('role', e.target.value)}
             required
-            className='w-full rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100'
+            className='w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500'
           >
             {roleOptions.map((option) => (
               <option key={option.value} value={option.value}>
@@ -161,14 +157,14 @@ export default function UserEditModal({ isOpen, userId, onClose }: UserEditModal
             id='isActive'
             checked={formData.isActive}
             onChange={(e) => handleChange('isActive', e.target.checked)}
-            className='h-4 w-4 rounded border-neutral-300 text-blue-600 focus:ring-blue-500 dark:border-neutral-700'
+            className='h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500'
           />
           <Label htmlFor='isActive' className='mb-0 cursor-pointer'>
             Active User
           </Label>
         </div>
 
-        <div className='flex justify-end gap-2 border-t border-neutral-200 pt-4 dark:border-neutral-800'>
+        <div className='flex justify-end gap-2 border-t border-slate-200 pt-4'>
           <Button type='button' onClick={onClose} variant='ghost'>
             Cancel
           </Button>

@@ -74,11 +74,11 @@ export function GroupMembersManager({
   };
 
   const RangeInfo = ({ total, page }: { total: number; page: number }) => {
-    if (total === 0) return <span className='text-xs text-neutral-500'>0 of 0</span>;
+    if (total === 0) return <span className='text-xs text-slate-500'>0 of 0</span>;
     const start = (page - 1) * PAGE_SIZE + 1;
     const end = Math.min(total, page * PAGE_SIZE);
     return (
-      <span className='text-xs text-neutral-500'>
+      <span className='text-xs text-slate-500'>
         {start}–{end} of {total}
       </span>
     );
@@ -97,25 +97,25 @@ export function GroupMembersManager({
               placeholder='Search name or phone…'
             />
           </FormField>
-          <div className='mt-3 max-h-64 overflow-auto rounded-md border border-neutral-200 dark:border-neutral-800'>
+          <div className='mt-3 max-h-64 overflow-auto rounded-md border border-slate-200'>
             {filtered.length === 0 ? (
-              <div className='p-3 text-sm text-neutral-500'>No contacts found</div>
+              <div className='p-3 text-sm text-slate-500'>No contacts found</div>
             ) : (
-              <ul className='divide-y divide-neutral-200 dark:divide-neutral-800'>
+              <ul className='divide-y divide-slate-200'>
                 {filteredPageItems.map((c) => (
-                  <li key={c.id} className='flex items-center justify-between gap-3 p-2'>
+                  <li key={c.id} className='flex items-center justify-between gap-3 p-2 hover:bg-slate-50'>
                     <div className='min-w-0'>
-                      <div className='truncate text-sm font-medium text-neutral-900 dark:text-neutral-100'>
+                      <div className='truncate text-sm font-medium text-slate-900'>
                         {c.firstName} {c.lastName}
                       </div>
-                      <div className='truncate text-xs text-neutral-500'>{c.phoneNumber}</div>
+                      <div className='truncate text-xs text-slate-500'>{c.phoneNumber}</div>
                     </div>
                     <label className='inline-flex items-center gap-2 text-sm'>
                       <input
                         type='checkbox'
                         checked={selected.includes(c.id)}
                         onChange={() => toggle(c.id)}
-                        className='h-4 w-4 rounded border-neutral-300 text-indigo-600 focus:ring-indigo-500 dark:border-neutral-700'
+                        className='h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500'
                       />
                     </label>
                   </li>
@@ -154,21 +154,19 @@ export function GroupMembersManager({
 
         {/* Current Members */}
         <div>
-          <div className='mb-2 text-xs font-medium uppercase tracking-wide text-neutral-500 dark:text-neutral-400'>
-            Current members
-          </div>
-          <div className='max-h-80 overflow-auto rounded-md border border-neutral-200 dark:border-neutral-800'>
+          <div className='mb-2 text-xs font-medium uppercase tracking-wide text-slate-500'>Current members</div>
+          <div className='max-h-80 overflow-auto rounded-md border border-slate-200'>
             {members.length === 0 ? (
-              <div className='p-3 text-sm text-neutral-500'>No members yet</div>
+              <div className='p-3 text-sm text-slate-500'>No members yet</div>
             ) : (
-              <ul className='divide-y divide-neutral-200 dark:divide-neutral-800'>
+              <ul className='divide-y divide-slate-200'>
                 {membersPageItems.map((c) => (
-                  <li key={c.id} className='flex items-center justify-between gap-3 p-2'>
+                  <li key={c.id} className='flex items-center justify-between gap-3 p-2 hover:bg-slate-50'>
                     <div className='min-w-0'>
-                      <div className='truncate text-sm font-medium text-neutral-900 dark:text-neutral-100'>
+                      <div className='truncate text-sm font-medium text-slate-900'>
                         {c.firstName} {c.lastName}
                       </div>
-                      <div className='truncate text-xs text-neutral-500'>{c.phoneNumber}</div>
+                      <div className='truncate text-xs text-slate-500'>{c.phoneNumber}</div>
                     </div>
                     <Button variant='secondary' size='sm' onClick={() => onRemoveMember(c.id)}>
                       Remove

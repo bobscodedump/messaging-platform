@@ -76,23 +76,63 @@ export default function MessageWizard() {
   };
 
   return (
-    <div className='mx-auto max-w-6xl p-6 space-y-6'>
+    <div className='mx-auto max-w-6xl space-y-6'>
       {sendSuccess && (
-        <div className='rounded-md bg-green-50 p-4 text-sm text-green-700 border border-green-200'>{sendSuccess}</div>
+        <div className='rounded-md bg-green-500/10 p-4 text-sm text-green-700 border border-green-500/20'>
+          {sendSuccess}
+        </div>
       )}
       {sendError && (
-        <div className='rounded-md bg-red-50 p-4 text-sm text-red-700 border border-red-200'>{sendError}</div>
-      )}
-      <div className='flex items-center justify-between'>
-        <h1 className='text-xl font-semibold text-neutral-900 dark:text-neutral-100'>Send Message</h1>
-        <div className='flex items-center gap-2 text-sm'>
-          <span className={`font-medium ${step === 'recipients' ? 'text-blue-600' : ''}`}>1. Recipients</span>
-          <span className='text-neutral-300'>&rarr;</span>
-          <span className={`font-medium ${step === 'template' ? 'text-blue-600' : ''}`}>2. Template</span>
-          <span className='text-neutral-300'>&rarr;</span>
-          <span className={`font-medium ${step === 'review' ? 'text-blue-600' : ''}`}>3. Review</span>
+        <div className='rounded-md bg-destructive/10 p-4 text-sm text-destructive border border-destructive/20'>
+          {sendError}
         </div>
-      </div>
+      )}
+
+      {/* Stepper */}
+      <Card>
+        <div className='flex items-center justify-between px-4 py-2'>
+          <div
+            className={`flex flex-col items-center ${step === 'recipients' ? 'text-primary' : 'text-muted-foreground'}`}
+          >
+            <div
+              className={`flex h-8 w-8 items-center justify-center rounded-full border-2 ${
+                step === 'recipients' || step === 'template' || step === 'review'
+                  ? 'border-primary bg-primary/10 text-primary'
+                  : 'border-input bg-card'
+              }`}
+            >
+              1
+            </div>
+            <span className='mt-1 text-xs font-medium'>Recipients</span>
+          </div>
+          <div className='h-0.5 flex-1 bg-border mx-4' />
+          <div
+            className={`flex flex-col items-center ${step === 'template' ? 'text-primary' : 'text-muted-foreground'}`}
+          >
+            <div
+              className={`flex h-8 w-8 items-center justify-center rounded-full border-2 ${
+                step === 'template' || step === 'review'
+                  ? 'border-primary bg-primary/10 text-primary'
+                  : 'border-input bg-card'
+              }`}
+            >
+              2
+            </div>
+            <span className='mt-1 text-xs font-medium'>Template</span>
+          </div>
+          <div className='h-0.5 flex-1 bg-border mx-4' />
+          <div className={`flex flex-col items-center ${step === 'review' ? 'text-primary' : 'text-muted-foreground'}`}>
+            <div
+              className={`flex h-8 w-8 items-center justify-center rounded-full border-2 ${
+                step === 'review' ? 'border-primary bg-primary/10 text-primary' : 'border-input bg-card'
+              }`}
+            >
+              3
+            </div>
+            <span className='mt-1 text-xs font-medium'>Review</span>
+          </div>
+        </div>
+      </Card>
 
       {step === 'recipients' && (
         <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
@@ -106,36 +146,45 @@ export default function MessageWizard() {
           title='Select a template'
           description='Choose the message template and provide fallback values for variables.'
         >
-          <div className='space-y-4'>
-            <select
-              className='w-full rounded-md border-neutral-300 dark:border-neutral-700 dark:bg-neutral-800'
-              onChange={(e) => setSelectedTemplateId(e.target.value)}
-              value={selectedTemplateId ?? ''}
-            >
-              <option value='' disabled>
-                -- Select a template --
-              </option>
-              {templates.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name}
+          <div className='space-y-6'>
+            <FormField label='Template'>
+              <select
+                className='w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus:border-ring focus:ring-ring'
+                onChange={(e) => setSelectedTemplateId(e.target.value)}
+                value={selectedTemplateId ?? ''}
+              >
+                <option value='' disabled>
+                  -- Select a template --
                 </option>
-              ))}
-            </select>
+                {templates.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name}
+                  </option>
+                ))}
+              </select>
+            </FormField>
+
             {selectedTemplate && (
-              <div className='p-4 border rounded-md bg-neutral-50 dark:bg-neutral-900'>
-                <h3 className='font-medium mb-2'>Template Preview</h3>
-                <p className='text-sm text-neutral-600 dark:text-neutral-300'>{selectedTemplate.content}</p>
-                <div className='mt-4'>
-                  <h4 className='font-medium mb-2'>Variable Fallbacks</h4>
-                  {selectedTemplate.variables.map((v) => (
-                    <FormField key={v} label={v}>
-                      <Input
-                        placeholder={`Default value for ${v}`}
-                        onChange={(e) => setVariableFallbacks((prev) => ({ ...prev, [v]: e.target.value }))}
-                      />
-                    </FormField>
-                  ))}
-                </div>
+              <div className='rounded border border-border bg-muted/30 p-4'>
+                <h3 className='font-medium mb-2 text-foreground'>Template Preview</h3>
+                <p className='text-sm text-muted-foreground whitespace-pre-wrap'>{selectedTemplate.content}</p>
+
+                {selectedTemplate.variables.length > 0 && (
+                  <div className='mt-4 pt-4 border-t border-border'>
+                    <h4 className='font-medium mb-3 text-sm text-foreground'>Variable Fallbacks</h4>
+                    <div className='grid grid-cols-1 gap-3 sm:grid-cols-2'>
+                      {selectedTemplate.variables.map((v) => (
+                        <FormField key={v} label={v}>
+                          <Input
+                            placeholder={`Default value for ${v}`}
+                            onChange={(e) => setVariableFallbacks((prev) => ({ ...prev, [v]: e.target.value }))}
+                            value={variableFallbacks[v] || ''}
+                          />
+                        </FormField>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -144,16 +193,21 @@ export default function MessageWizard() {
 
       {step === 'review' && (
         <Card title='Review and Send' description='Confirm the details before sending.'>
-          <div className='space-y-4'>
-            <div>
-              <strong>Recipients:</strong> {recipientCount} contacts
+          <div className='space-y-6'>
+            <div className='grid grid-cols-1 gap-4 sm:grid-cols-3'>
+              <div className='rounded border border-border p-3'>
+                <div className='text-xs text-muted-foreground uppercase font-semibold'>Recipients</div>
+                <div className='text-lg font-medium text-foreground'>{recipientCount}</div>
+              </div>
+              <div className='rounded border border-border p-3 col-span-2'>
+                <div className='text-xs text-muted-foreground uppercase font-semibold'>Template</div>
+                <div className='text-lg font-medium text-foreground'>{selectedTemplate?.name}</div>
+              </div>
             </div>
+
             <div>
-              <strong>Template:</strong> {selectedTemplate?.name}
-            </div>
-            <div>
-              <strong>Preview:</strong>
-              <div className='p-3 border rounded-md text-sm bg-neutral-50 dark:bg-neutral-900'>
+              <div className='text-sm font-medium text-foreground mb-2'>Message Preview (First Recipient)</div>
+              <div className='p-4 border border-border rounded-md text-sm bg-muted/30 text-foreground whitespace-pre-wrap'>
                 {recipientContacts[0]
                   ? resolveTemplate(selectedTemplate!.content, recipientContacts[0], variableFallbacks)
                   : 'No recipients to preview.'}
@@ -163,22 +217,22 @@ export default function MessageWizard() {
         </Card>
       )}
 
-      <div className='flex justify-between items-center pt-4 border-t dark:border-neutral-800'>
-        <div>
-          <span className='text-sm font-medium'>Recipients: {recipientCount}</span>
+      <div className='flex justify-between items-center pt-4'>
+        <div className='text-sm text-muted-foreground'>
+          Total Recipients: <span className='font-bold text-foreground'>{recipientCount}</span>
         </div>
-        <div className='flex gap-2'>
+        <div className='flex gap-3'>
           {step !== 'recipients' && (
-            <Button variant='ghost' onClick={() => setStep(step === 'template' ? 'recipients' : 'template')}>
+            <Button variant='secondary' onClick={() => setStep(step === 'template' ? 'recipients' : 'template')}>
               Back
             </Button>
           )}
           {step !== 'review' ? (
             <Button
               onClick={() => setStep(step === 'recipients' ? 'template' : 'review')}
-              disabled={recipientCount === 0}
+              disabled={recipientCount === 0 || (step === 'template' && !selectedTemplateId)}
             >
-              Next
+              Next Step
             </Button>
           ) : (
             <Button onClick={handleSend} disabled={!selectedTemplate || sendMessageMutation.isPending}>
@@ -203,29 +257,42 @@ function RecipientSelector({
   onToggle: (id: string) => void;
 }) {
   return (
-    <Card title={title}>
-      <div className='max-h-96 overflow-y-auto'>
-        <ul className='divide-y divide-neutral-200 dark:divide-neutral-800'>
-          {items.map((item) => (
-            <li key={item.id} className='flex items-center gap-3 p-2'>
-              <input type='checkbox' checked={selected.has(item.id)} onChange={() => onToggle(item.id)} />
-              <div className='flex-1'>
-                {'firstName' in item ? (
-                  <>
-                    <div className='font-medium'>
-                      {`${(item.firstName || '').trim()} ${(item.lastName || '').trim()}`.trim() || 'Unnamed contact'}
-                    </div>
-                    <div className='text-xs text-neutral-600 dark:text-neutral-400'>
-                      {[item.phoneNumber, item.email].filter(Boolean).join(' • ')}
-                    </div>
-                  </>
-                ) : (
-                  <div className='font-medium'>{(item as Group).name}</div>
-                )}
-              </div>
-            </li>
-          ))}
-        </ul>
+    <Card title={title} className='h-full flex flex-col'>
+      <div className='flex-1 min-h-[300px] max-h-[400px] overflow-y-auto -mx-6 px-6'>
+        {items.length === 0 ? (
+          <div className='text-sm text-muted-foreground py-4 text-center italic'>No items found</div>
+        ) : (
+          <ul className='divide-y divide-border'>
+            {items.map((item) => (
+              <li
+                key={item.id}
+                className='flex items-center gap-3 py-3 hover:bg-muted/50 -mx-2 px-2 rounded transition-colors cursor-pointer'
+                onClick={() => onToggle(item.id)}
+              >
+                <input
+                  type='checkbox'
+                  checked={selected.has(item.id)}
+                  onChange={() => {}} // Handled by li click
+                  className='h-4 w-4 rounded border-input text-primary focus:ring-ring'
+                />
+                <div className='flex-1'>
+                  {'firstName' in item ? (
+                    <>
+                      <div className='font-medium text-sm text-foreground'>
+                        {`${(item.firstName || '').trim()} ${(item.lastName || '').trim()}`.trim() || 'Unnamed contact'}
+                      </div>
+                      <div className='text-xs text-muted-foreground'>
+                        {[item.phoneNumber, item.email].filter(Boolean).join(' • ')}
+                      </div>
+                    </>
+                  ) : (
+                    <div className='font-medium text-sm text-foreground'>{(item as Group).name}</div>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </Card>
   );

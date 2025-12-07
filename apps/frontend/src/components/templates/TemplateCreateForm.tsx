@@ -39,7 +39,7 @@ export function TemplateCreateForm() {
   };
 
   const StepIndicator = () => (
-    <ol className='flex items-center gap-3 text-xs font-medium tracking-wide text-neutral-500 dark:text-neutral-400 mb-4'>
+    <ol className='flex items-center gap-3 text-xs font-medium tracking-wide text-slate-500 mb-4'>
       {['Edit', 'Review', 'Done'].map((label, i) => {
         const order: ('edit' | 'verify' | 'done')[] = ['edit', 'verify', 'done'];
         const active = step === order[i];
@@ -50,15 +50,15 @@ export function TemplateCreateForm() {
               className={
                 'h-5 w-5 rounded-full grid place-content-center text-[10px] ' +
                 (active
-                  ? 'bg-indigo-600 text-white shadow'
+                  ? 'bg-blue-600 text-white shadow'
                   : completed
                     ? 'bg-green-500 text-white'
-                    : 'bg-neutral-200 dark:bg-neutral-700 text-neutral-600 dark:text-neutral-300')
+                    : 'bg-slate-200 text-slate-600')
               }
             >
               {i + 1}
             </span>
-            <span className={active ? 'text-indigo-600 dark:text-indigo-400' : ''}>{label}</span>
+            <span className={active ? 'text-blue-600' : ''}>{label}</span>
             {i < 2 && <span className='opacity-50'>/</span>}
           </li>
         );
@@ -74,7 +74,7 @@ export function TemplateCreateForm() {
             <div className='space-y-4'>
               <StepIndicator />
               {step === 'done' && (
-                <div className='rounded-md border border-green-300 bg-green-50 px-4 py-3 text-sm text-green-800 flex items-start gap-3'>
+                <div className='rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800 flex items-start gap-3'>
                   <span className='mt-0.5 inline-block h-2 w-2 rounded-full bg-green-500' />
                   <div>
                     <strong>{lastCreatedName}</strong> created successfully.
@@ -117,13 +117,13 @@ export function TemplateCreateForm() {
                       {extracted.slice(0, 6).map((v) => (
                         <span
                           key={v}
-                          className='rounded bg-neutral-100 dark:bg-neutral-800 px-1.5 py-0.5 text-[10px] font-medium text-neutral-600 dark:text-neutral-300'
+                          className='rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-600'
                         >
                           {v}
                         </span>
                       ))}
                       {extracted.length > 6 && (
-                        <span className='rounded bg-neutral-200 dark:bg-neutral-700 px-1.5 py-0.5 text-[10px] font-medium text-neutral-700 dark:text-neutral-300'>
+                        <span className='rounded bg-slate-200 px-1.5 py-0.5 text-[10px] font-medium text-slate-700'>
                           +{extracted.length - 6}
                         </span>
                       )}
@@ -133,7 +133,7 @@ export function TemplateCreateForm() {
               </FormField>
 
               <div className='flex items-center justify-between'>
-                <div className='text-sm text-neutral-600 dark:text-neutral-400'>
+                <div className='text-sm text-slate-600'>
                   Detected variables: {extracted.length > 0 ? extracted.join(', ') : 'none'}
                 </div>
                 {step === 'edit' && (
@@ -158,17 +158,14 @@ export function TemplateCreateForm() {
           {step === 'verify' && (
             <Card className='mt-6' title='Review & preview' description='Confirm content before saving.'>
               <div className='space-y-4'>
-                <div className='rounded-md border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/40 p-4 text-sm leading-relaxed whitespace-pre-wrap'>
+                <div className='rounded-md border border-slate-200 bg-slate-50 p-4 text-sm leading-relaxed whitespace-pre-wrap text-slate-800'>
                   {form.content || '—'}
                 </div>
-                <div className='text-xs uppercase tracking-wide text-neutral-500'>Variables</div>
+                <div className='text-xs uppercase tracking-wide text-slate-500'>Variables</div>
                 <div className='flex flex-wrap gap-1'>
-                  {extracted.length === 0 && <span className='text-xs text-neutral-500'>None</span>}
+                  {extracted.length === 0 && <span className='text-xs text-slate-500'>None</span>}
                   {extracted.map((v) => (
-                    <span
-                      key={v}
-                      className='rounded bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300 px-2 py-0.5 text-[11px] font-medium'
-                    >
+                    <span key={v} className='rounded bg-blue-50 text-blue-700 px-2 py-0.5 text-[11px] font-medium'>
                       {v}
                     </span>
                   ))}
@@ -180,38 +177,40 @@ export function TemplateCreateForm() {
         <Card title='Reference' description='Built-in variables & authoring tips'>
           <div className='grid gap-8 md:grid-cols-2'>
             <div>
-              <h4 className='mb-2 text-xs font-semibold uppercase tracking-wide text-neutral-500'>Built-ins</h4>
-              <ul className='text-sm space-y-2 text-neutral-700 dark:text-neutral-300'>
+              <h4 className='mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500'>Built-ins</h4>
+              <ul className='text-sm space-y-2 text-slate-700'>
                 <li>
-                  <code className='px-1.5 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800'>
+                  <code className='px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200'>
                     {'{{contact.first_name}}'}
                   </code>{' '}
                   – Contact first name
                 </li>
                 <li>
-                  <code className='px-1.5 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800'>
+                  <code className='px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200'>
                     {'{{contact.last_name}}'}
                   </code>{' '}
                   – Contact last name
                 </li>
                 <li>
-                  <code className='px-1.5 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800'>
+                  <code className='px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200'>
                     {'{{contact.phone_number}}'}
                   </code>{' '}
                   – Contact phone number
                 </li>
                 <li>
-                  <code className='px-1.5 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800'>{'{{company.name}}'}</code>{' '}
+                  <code className='px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200'>
+                    {'{{company.name}}'}
+                  </code>{' '}
                   – Company name
                 </li>
               </ul>
-              <div className='mt-4 text-xs text-neutral-500 dark:text-neutral-400'>
+              <div className='mt-4 text-xs text-slate-500'>
                 These variables are auto-populated; no need to declare them.
               </div>
             </div>
             <div>
-              <h4 className='mb-2 text-xs font-semibold uppercase tracking-wide text-neutral-500'>Tips</h4>
-              <ul className='list-disc pl-5 text-sm text-neutral-600 dark:text-neutral-400 space-y-1'>
+              <h4 className='mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500'>Tips</h4>
+              <ul className='list-disc pl-5 text-sm text-slate-600 space-y-1'>
                 <li>
                   Wrap names in {'{{variable}}'} (e.g. {'{{promo_code}}'}).
                 </li>
